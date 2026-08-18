@@ -1,0 +1,9 @@
+/build
+*.iml
+.externalNativeBuild
+.cxx
+
+# IDE and Agent
+.idea/
+.agent/
+

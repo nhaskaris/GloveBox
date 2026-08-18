@@ -1,0 +1,51 @@
+*.iml
+.gradle
+/local.properties
+/.idea/
+.agent/
+.DS_Store
+Thumbs.db
+desktop.ini
+/build
+/captures
+.externalNativeBuild
+.cxx
+
+# Built application files
+*.apk
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# IntelliJ
+*.ipr
+*.iws
+
+# Android
+bin/
+gen/
+out/
+.navigation/
+
+# Log Files
+*.log
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services
+google-services.json
+
+# Crashlytics
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+
+# Secrets
+secrets.properties
