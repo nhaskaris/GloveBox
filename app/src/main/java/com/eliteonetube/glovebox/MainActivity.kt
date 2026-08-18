@@ -2,6 +2,7 @@ package com.eliteonetube.glovebox
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Spacer
@@ -11,12 +12,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
@@ -32,6 +31,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -64,6 +65,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+data class NavigationItem(
+    val label: String,
+    val icon: ImageVector,
+    val route: GloveboxRoute,
+    val onClick: () -> Unit
+)
+
 @Composable
 fun GloveboxApp(viewModel: MainViewModel) {
     val activeVehicleId by viewModel.activeVehicleId.collectAsStateWithLifecycle()
@@ -80,6 +88,20 @@ fun GloveboxApp(viewModel: MainViewModel) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
+    // Safely pop elements off the backStack
+    val safePopBackStack: () -> Unit = remember(backStack) {
+        {
+            if (backStack.size > 1) {
+                backStack.removeAt(backStack.lastIndex)
+            }
+        }
+    }
+
+    // Intercept hardware/gesture system back actions
+    BackHandler(enabled = backStack.size > 1) {
+        safePopBackStack()
+    }
+
     val navigationItems = listOf(
         NavigationItem(
             label = "Vehicles",
@@ -88,17 +110,6 @@ fun GloveboxApp(viewModel: MainViewModel) {
             onClick = {
                 backStack.clear()
                 backStack.add(GloveboxRoute.VehicleList)
-            }
-        ),
-        NavigationItem(
-            label = "History",
-            icon = Icons.Rounded.History,
-            route = GloveboxRoute.ServiceHistory(effectiveVehicleId),
-            onClick = {
-                if (effectiveVehicleId != 0L) {
-                    backStack.clear()
-                    backStack.add(GloveboxRoute.ServiceHistory(effectiveVehicleId))
-                }
             }
         ),
         NavigationItem(
@@ -123,81 +134,69 @@ fun GloveboxApp(viewModel: MainViewModel) {
         )
     )
 
+    @Composable
+    fun DrawerSheetContent(onItemClick: (NavigationItem) -> Unit) {
+        Spacer(Modifier.height(12.dp))
+        navigationItems.forEach { item ->
+            NavigationDrawerItem(
+                label = { Text(item.label) },
+                selected = when (item.route) {
+                    is GloveboxRoute.VehicleList -> currentRoute is GloveboxRoute.VehicleList
+                    is GloveboxRoute.Reminders -> currentRoute is GloveboxRoute.Reminders
+                    is GloveboxRoute.Settings -> currentRoute is GloveboxRoute.Settings
+                    else -> false
+                },
+                onClick = { onItemClick(item) },
+                icon = { Icon(item.icon, contentDescription = null) },
+                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+            )
+        }
+    }
+
     if (isExpanded) {
         PermanentNavigationDrawer(
             drawerContent = {
                 PermanentDrawerSheet(modifier = Modifier.width(240.dp)) {
-                    Spacer(Modifier.height(12.dp))
-                    navigationItems.forEach { item ->
-                        NavigationDrawerItem(
-                            label = { Text(item.label) },
-                            selected = when (item.route) {
-                                is GloveboxRoute.VehicleList -> currentRoute is GloveboxRoute.VehicleList
-                                is GloveboxRoute.ServiceHistory -> currentRoute is GloveboxRoute.ServiceHistory
-                                is GloveboxRoute.Reminders -> currentRoute is GloveboxRoute.Reminders
-                                is GloveboxRoute.Settings -> currentRoute is GloveboxRoute.Settings
-                                else -> false
-                            },
-                            onClick = item.onClick,
-                            icon = { Icon(item.icon, contentDescription = null) },
-                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                        )
-                    }
+                    DrawerSheetContent(onItemClick = { item -> item.onClick() })
                 }
             }
         ) {
-            MainContent(backStack, onOpenDrawer = null)
+            MainContent(
+                backStack = backStack,
+                onNavigateBack = safePopBackStack,
+                onOpenDrawer = null
+            )
         }
     } else {
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
                 ModalDrawerSheet {
-                    Spacer(Modifier.height(12.dp))
-                    navigationItems.forEach { item ->
-                        NavigationDrawerItem(
-                            label = { Text(item.label) },
-                            selected = when (item.route) {
-                                is GloveboxRoute.VehicleList -> currentRoute is GloveboxRoute.VehicleList
-                                is GloveboxRoute.ServiceHistory -> currentRoute is GloveboxRoute.ServiceHistory
-                                is GloveboxRoute.Reminders -> currentRoute is GloveboxRoute.Reminders
-                                is GloveboxRoute.Settings -> currentRoute is GloveboxRoute.Settings
-                                else -> false
-                            },
-                            onClick = {
-                                item.onClick()
-                                scope.launch { drawerState.close() }
-                            },
-                            icon = { Icon(item.icon, contentDescription = null) },
-                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                        )
-                    }
+                    DrawerSheetContent(onItemClick = { item ->
+                        item.onClick()
+                        scope.launch { drawerState.close() }
+                    })
                 }
             }
         ) {
             MainContent(
                 backStack = backStack,
+                onNavigateBack = safePopBackStack,
                 onOpenDrawer = { scope.launch { drawerState.open() } }
             )
         }
     }
 }
 
-data class NavigationItem(
-    val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val route: GloveboxRoute,
-    val onClick: () -> Unit
-)
-
 @Composable
 fun MainContent(
     backStack: MutableList<GloveboxRoute>,
+    onNavigateBack: () -> Unit,
     onOpenDrawer: (() -> Unit)?
 ) {
     NavDisplay(
         backStack = backStack,
-        onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
+        onBack = onNavigateBack,
         entryProvider = { key ->
             when (key) {
                 is GloveboxRoute.VehicleList -> NavEntry(key) {
@@ -211,7 +210,7 @@ fun MainContent(
                 is GloveboxRoute.VehicleProfile -> NavEntry(key) {
                     VehicleProfileScreen(
                         vehicleId = key.vehicleId,
-                        onNavigateBack = { backStack.removeLastOrNull() }
+                        onNavigateBack = onNavigateBack
                     )
                 }
 
@@ -235,7 +234,7 @@ fun MainContent(
                     AddServiceLogScreen(
                         vehicleId = key.vehicleId,
                         recordId = key.recordId,
-                        onNavigateBack = { backStack.removeLastOrNull() }
+                        onNavigateBack = onNavigateBack
                     )
                 }
 
@@ -254,7 +253,7 @@ fun MainContent(
     )
 }
 
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
+@Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
 @Composable
 fun GloveboxAppCompactPreview() {
     GloveboxTheme {
@@ -262,7 +261,7 @@ fun GloveboxAppCompactPreview() {
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240")
+@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240")
 @Composable
 fun GloveboxAppExpandedPreview() {
     GloveboxTheme {

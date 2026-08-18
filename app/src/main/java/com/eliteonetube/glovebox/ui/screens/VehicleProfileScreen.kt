@@ -13,7 +13,6 @@ import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -34,6 +33,9 @@ fun VehicleProfileScreen(
     })
 ) {
     val vehicle by viewModel.vehicle.collectAsStateWithLifecycle()
+    val makes by viewModel.makes.collectAsStateWithLifecycle()
+    val availableModels by viewModel.availableModels.collectAsStateWithLifecycle()
+
     val scrollState = rememberScrollState()
 
     var make by remember { mutableStateOf("") }
@@ -41,13 +43,31 @@ fun VehicleProfileScreen(
     var year by remember { mutableStateOf("") }
     var odometer by remember { mutableStateOf("") }
 
-    // Update local state when vehicle data is loaded
+    var makeExpanded by remember { mutableStateOf(false) }
+    var modelExpanded by remember { mutableStateOf(false) }
+
+    // Filtered lists based on user search input
+    val filteredMakes by remember(make, makes) {
+        derivedStateOf {
+            if (make.isBlank()) makes
+            else makes.filter { it.contains(make, ignoreCase = true) }
+        }
+    }
+
+    val filteredModels by remember(model, availableModels) {
+        derivedStateOf {
+            if (model.isBlank()) availableModels
+            else availableModels.filter { it.contains(model, ignoreCase = true) }
+        }
+    }
+
     LaunchedEffect(vehicle) {
         vehicle?.let {
             make = it.make
             model = it.model
             year = it.year.toString()
             odometer = it.odometer.toString()
+            viewModel.onMakeSelected(it.make)
         }
     }
 
@@ -95,6 +115,7 @@ fun VehicleProfileScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
+            // --- Year Input ---
             OutlinedTextField(
                 value = year,
                 onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) year = it },
@@ -105,26 +126,94 @@ fun VehicleProfileScreen(
                 shape = MaterialTheme.shapes.large
             )
 
-            OutlinedTextField(
-                value = make,
-                onValueChange = { make = it },
-                label = { Text("Make") },
-                leadingIcon = { Icon(Icons.Rounded.DirectionsCar, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("e.g. Toyota") },
-                shape = MaterialTheme.shapes.large
-            )
+            // --- Searchable Make Dropdown ---
+            ExposedDropdownMenuBox(
+                expanded = makeExpanded,
+                onExpandedChange = { makeExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = make,
+                    onValueChange = {
+                        make = it
+                        model = "" // Reset model when make query changes
+                        viewModel.onMakeSelected(it)
+                        makeExpanded = true
+                    },
+                    label = { Text("Make") },
+                    leadingIcon = { Icon(Icons.Rounded.DirectionsCar, contentDescription = null) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = makeExpanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    placeholder = { Text("Search or select Make") },
+                    shape = MaterialTheme.shapes.large,
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    singleLine = true
+                )
 
-            OutlinedTextField(
-                value = model,
-                onValueChange = { model = it },
-                label = { Text("Model") },
-                leadingIcon = { Icon(Icons.Rounded.Numbers, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("e.g. Camry") },
-                shape = MaterialTheme.shapes.large
-            )
+                if (filteredMakes.isNotEmpty()) {
+                    ExposedDropdownMenu(
+                        expanded = makeExpanded,
+                        onDismissRequest = { makeExpanded = false }
+                    ) {
+                        filteredMakes.forEach { item ->
+                            DropdownMenuItem(
+                                text = { Text(item) },
+                                onClick = {
+                                    make = item
+                                    model = ""
+                                    viewModel.onMakeSelected(item)
+                                    makeExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
 
+            // --- Searchable Model Dropdown ---
+            ExposedDropdownMenuBox(
+                expanded = modelExpanded && make.isNotEmpty(),
+                onExpandedChange = { if (make.isNotEmpty()) modelExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = model,
+                    onValueChange = {
+                        model = it
+                        modelExpanded = true
+                    },
+                    enabled = make.isNotEmpty(),
+                    label = { Text("Model") },
+                    leadingIcon = { Icon(Icons.Rounded.Numbers, contentDescription = null) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    placeholder = { Text(if (make.isEmpty()) "Select Make first" else "Search or select Model") },
+                    shape = MaterialTheme.shapes.large,
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    singleLine = true
+                )
+
+                if (filteredModels.isNotEmpty()) {
+                    ExposedDropdownMenu(
+                        expanded = modelExpanded && make.isNotEmpty(),
+                        onDismissRequest = { modelExpanded = false }
+                    ) {
+                        filteredModels.forEach { item ->
+                            DropdownMenuItem(
+                                text = { Text(item) },
+                                onClick = {
+                                    model = item
+                                    modelExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // --- Odometer Input ---
             OutlinedTextField(
                 value = odometer,
                 onValueChange = { if (it.all { char -> char.isDigit() }) odometer = it },
@@ -136,7 +225,7 @@ fun VehicleProfileScreen(
                 shape = MaterialTheme.shapes.large
             )
 
-            Spacer(modifier = Modifier.height(80.dp)) // Space for FAB
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }

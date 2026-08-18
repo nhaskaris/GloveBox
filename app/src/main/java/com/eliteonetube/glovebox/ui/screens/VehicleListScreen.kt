@@ -9,6 +9,7 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,8 +20,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eliteonetube.glovebox.data.entity.Vehicle
 import com.eliteonetube.glovebox.ui.viewmodels.VehicleListViewModel
-
-import androidx.compose.material.icons.rounded.Menu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +34,7 @@ fun VehicleListScreen(
 
     Scaffold(
         topBar = {
-            LargeTopAppBar(
+            TopAppBar(
                 title = { Text("My Vehicles") },
                 navigationIcon = {
                     if (onOpenDrawer != null) {
