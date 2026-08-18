@@ -31,12 +31,15 @@ import java.util.Locale
 import androidx.compose.ui.tooling.preview.Preview
 import com.eliteonetube.glovebox.ui.theme.GloveboxTheme
 
+import androidx.compose.material.icons.rounded.Menu
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServiceHistoryScreen(
     vehicleId: Long,
     onAddRecord: () -> Unit,
     onEditRecord: (Long) -> Unit,
+    onOpenDrawer: (() -> Unit)? = null,
     viewModel: ServiceHistoryViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
         override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
             val app = com.eliteonetube.glovebox.GloveboxApplication.instance
@@ -51,11 +54,17 @@ fun ServiceHistoryScreen(
             LargeTopAppBar(
                 title = { Text("Service History") },
                 navigationIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.History,
-                        contentDescription = null,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    if (onOpenDrawer != null) {
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(Icons.Rounded.Menu, contentDescription = "Open Drawer")
+                        }
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.History,
+                            contentDescription = null,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
                 }
             )
         },

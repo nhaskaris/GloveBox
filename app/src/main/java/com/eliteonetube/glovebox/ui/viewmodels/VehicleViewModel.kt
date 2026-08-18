@@ -8,10 +8,9 @@ import com.eliteonetube.glovebox.data.entity.Vehicle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
-class VehicleViewModel(application: Application) : AndroidViewModel(application) {
+class VehicleViewModel(application: Application, private val vehicleId: Long) : AndroidViewModel(application) {
     private val vehicleDao = GloveboxDatabase.getDatabase(application).vehicleDao()
 
     private val _vehicle = MutableStateFlow<Vehicle?>(null)
@@ -23,9 +22,11 @@ class VehicleViewModel(application: Application) : AndroidViewModel(application)
 
     private fun loadVehicle() {
         viewModelScope.launch {
-            // For now, we assume there's only one vehicle profile
-            val vehicles = vehicleDao.getAllVehicles().firstOrNull()
-            _vehicle.value = vehicles?.firstOrNull() ?: Vehicle(make = "", model = "", year = 2024, odometer = 0)
+            if (vehicleId != 0L) {
+                _vehicle.value = vehicleDao.getVehicleById(vehicleId)
+            } else {
+                _vehicle.value = Vehicle(make = "", model = "", year = 2024, odometer = 0)
+            }
         }
     }
 

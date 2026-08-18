@@ -4,26 +4,27 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Hexagonal Container -->
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="4"
-        android:pathData="M 54,26 L 78.2,40 L 78.2,68 L 54,82 L 29.8,68 L 29.8,40 Z" />
 
-    <!-- Stylized Wrench -->
-    <!-- Handle -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 43,65 L 65,43 L 69,47 L 47,69 Z" />
+    <!-- Stylized Car (Front View) -->
+    <group
+        android:translateX="18"
+        android:translateY="38"
+        android:scaleX="3"
+        android:scaleY="3">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M18.92,6.01C18.72,5.42 18.16,5 17.5,5h-11c-0.66,0 -1.21,0.42 -1.42,1.01L3,12v8c0,0.55 0.45,1 1,1h1c0.55,0 1,-0.45 1,-1v-1h12v1c0,0.55 0.45,1 1,1h1c0.55,0 1,-0.45 1,-1v-8l-2.08,-5.99z M6.5,16c-0.83,0 -1.5,-0.67 -1.5,-1.5S5.67,13 6.5,13s1.5,0.67 1.5,1.5S7.33,16 6.5,16z M17.5,16c-0.83,0 -1.5,-0.67 -1.5,-1.5s0.67,-1.5 1.5,-1.5s1.5,0.67 1.5,1.5 -0.67,1.5 -1.5,1.5z M5,11l1.5,-4.5h11L19,11H5z"/>
+    </group>
 
-    <!-- Wrench Head (Top Right) -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 63,33 C 59,33 56,36 56,40 L 60,40 C 60,38 61,37 63,37 C 65,37 66,38 66,40 L 66,44 L 70,44 L 70,40 C 70,36 67,33 63,33 Z" />
-
-    <!-- Wrench Head (Bottom Left) -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 45,75 C 49,75 52,72 52,68 L 48,68 C 48,70 47,71 45,71 C 43,71 42,70 42,68 L 42,64 L 38,64 L 38,68 C 38,72 41,75 45,75 Z" />
+    <!-- Success Checkmark (Tracking/Service Done) -->
+    <group
+        android:translateX="70"
+        android:translateY="20"
+        android:scaleX="1.4"
+        android:scaleY="1.4">
+        <path
+            android:fillColor="@color/md_theme_success"
+            android:pathData="M9,16.2L4.8,12l-1.4,1.4L9,19L21,7l-1.4,-1.4L9,16.2Z"/>
+    </group>
 
 </vector>

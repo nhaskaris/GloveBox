@@ -9,6 +9,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Speed
@@ -34,14 +35,21 @@ import com.eliteonetube.glovebox.ui.theme.GloveboxTheme
 @Composable
 fun RemindersScreenPreview() {
     GloveboxTheme {
-        RemindersScreen()
+        RemindersScreen(vehicleId = 1L)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RemindersScreen(
-    viewModel: RemindersViewModel = viewModel()
+    vehicleId: Long,
+    onOpenDrawer: (() -> Unit)? = null,
+    viewModel: RemindersViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+            val app = com.eliteonetube.glovebox.GloveboxApplication.instance
+            return RemindersViewModel(app, vehicleId) as T
+        }
+    })
 ) {
     val reminders by viewModel.reminders.collectAsStateWithLifecycle()
     val currentOdometer by viewModel.currentOdometer.collectAsStateWithLifecycle()
@@ -52,11 +60,17 @@ fun RemindersScreen(
             LargeTopAppBar(
                 title = { Text("Reminders") },
                 navigationIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Notifications,
-                        contentDescription = null,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    if (onOpenDrawer != null) {
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(Icons.Rounded.Menu, contentDescription = "Open Drawer")
+                        }
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Notifications,
+                            contentDescription = null,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
                 }
             )
         },

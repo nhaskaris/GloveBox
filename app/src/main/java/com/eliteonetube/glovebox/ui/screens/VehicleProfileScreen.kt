@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Numbers
@@ -23,7 +24,14 @@ import com.eliteonetube.glovebox.ui.viewmodels.VehicleViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VehicleProfileScreen(
-    viewModel: VehicleViewModel = viewModel()
+    vehicleId: Long,
+    onNavigateBack: () -> Unit,
+    viewModel: VehicleViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+            val app = com.eliteonetube.glovebox.GloveboxApplication.instance
+            return VehicleViewModel(app, vehicleId) as T
+        }
+    })
 ) {
     val vehicle by viewModel.vehicle.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
@@ -46,13 +54,14 @@ fun VehicleProfileScreen(
     Scaffold(
         topBar = {
             LargeTopAppBar(
-                title = { Text("Vehicle Profile") },
+                title = { Text(if (vehicleId == 0L) "Add Vehicle" else "Edit Vehicle") },
                 navigationIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.DirectionsCar,
-                        contentDescription = null,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
                 }
             )
         },
@@ -65,9 +74,10 @@ fun VehicleProfileScreen(
                         year = year.toIntOrNull() ?: 0,
                         odometer = odometer.toIntOrNull() ?: 0
                     )
+                    onNavigateBack()
                 },
                 icon = { Icon(Icons.Rounded.Save, contentDescription = null) },
-                text = { Text("Save Profile") }
+                text = { Text("Save Vehicle") }
             )
         }
     ) { innerPadding ->

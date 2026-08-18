@@ -4,7 +4,10 @@ import kotlinx.serialization.Serializable
 
 sealed interface GloveboxRoute {
     @Serializable
-    data object VehicleProfile : GloveboxRoute
+    data object VehicleList : GloveboxRoute
+
+    @Serializable
+    data class VehicleProfile(val vehicleId: Long = 0L) : GloveboxRoute
 
     @Serializable
     data class ServiceHistory(val vehicleId: Long) : GloveboxRoute
@@ -13,5 +16,8 @@ sealed interface GloveboxRoute {
     data class AddServiceLog(val vehicleId: Long, val recordId: Long = 0L) : GloveboxRoute
 
     @Serializable
-    data object Reminders : GloveboxRoute
+    data class Reminders(val vehicleId: Long) : GloveboxRoute
+
+    @Serializable
+    data object Settings : GloveboxRoute
 }
