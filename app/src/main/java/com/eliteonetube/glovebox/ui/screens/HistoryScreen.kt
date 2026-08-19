@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eliteonetube.glovebox.data.entity.FuelLog
 import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import com.eliteonetube.glovebox.ui.theme.GloveboxTheme
+import com.eliteonetube.glovebox.ui.viewmodels.HistoryFilter
 import com.eliteonetube.glovebox.ui.viewmodels.HistoryItem
 import com.eliteonetube.glovebox.ui.viewmodels.HistoryViewModel
 import java.time.Instant
@@ -72,6 +73,8 @@ fun HistoryScreenPreview() {
                 )
             ),
             vehicle = null,
+            currentFilter = HistoryFilter.ALL,
+            onFilterChange = {},
             onAddRecord = {},
             onEditRecord = {},
             onAddFuel = {},
@@ -103,31 +106,101 @@ fun HistoryScreen(
 ) {
     val items by viewModel.historyItems.collectAsStateWithLifecycle()
     val vehicle by viewModel.vehicle.collectAsStateWithLifecycle()
+    val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    var showExportDialog by remember { mutableStateOf(false) }
 
     HistoryContent(
         items = items,
         vehicle = vehicle,
+        currentFilter = currentFilter,
+        onFilterChange = { viewModel.setFilter(it) },
         onAddRecord = onAddRecord,
         onEditRecord = onEditRecord,
         onAddFuel = onAddFuel,
         onEditFuel = onEditFuel,
-        onExportPdf = {
-            viewModel.exportHistoryToPdf { file ->
-                if (file != null) {
-                    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "application/pdf"
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    context.startActivity(Intent.createChooser(intent, "Share History"))
-                }
-            }
-        },
+        onExportPdf = { showExportDialog = true },
         onDeleteService = { viewModel.deleteServiceRecord(it) },
         onDeleteFuel = { viewModel.deleteFuelLog(it) },
         onOpenDrawer = onOpenDrawer
+    )
+
+    if (showExportDialog) {
+        ExportOptionsDialog(
+            onDismiss = { showExportDialog = false },
+            onExport = { includeCosts, includeShop, includeMechanic, includeFuel, includeSummary ->
+                showExportDialog = false
+                viewModel.exportHistoryToPdf(includeCosts, includeShop, includeMechanic, includeFuel, includeSummary) { file ->
+                    if (file != null) {
+                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/pdf"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Share History"))
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun ExportOptionsDialog(
+    onDismiss: () -> Unit,
+    onExport: (Boolean, Boolean, Boolean, Boolean, Boolean) -> Unit
+) {
+    var includeCosts by remember { mutableStateOf(true) }
+    var includeShop by remember { mutableStateOf(true) }
+    var includeMechanic by remember { mutableStateOf(true) }
+    var includeFuel by remember { mutableStateOf(true) }
+    var includeSummary by remember { mutableStateOf(true) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("PDF Export Options") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Select what to include in the report:", style = MaterialTheme.typography.bodyMedium)
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = includeCosts, onCheckedChange = { includeCosts = it })
+                    Text("Include Costs & Financial Summary")
+                }
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = includeShop, onCheckedChange = { includeShop = it })
+                    Text("Include Shop/Station Locations")
+                }
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = includeMechanic, onCheckedChange = { includeMechanic = it })
+                    Text("Include Mechanic Names")
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = includeFuel, onCheckedChange = { includeFuel = it })
+                    Text("Include Fuel History")
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = includeSummary, onCheckedChange = { includeSummary = it })
+                    Text("Include Summary Section")
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onExport(includeCosts, includeShop, includeMechanic, includeFuel, includeSummary) }) {
+                Text("Generate PDF")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
     )
 }
 
@@ -136,6 +209,8 @@ fun HistoryScreen(
 fun HistoryContent(
     items: List<HistoryItem>,
     vehicle: com.eliteonetube.glovebox.data.entity.Vehicle?,
+    currentFilter: HistoryFilter,
+    onFilterChange: (HistoryFilter) -> Unit,
     onAddRecord: () -> Unit,
     onEditRecord: (Long) -> Unit,
     onAddFuel: () -> Unit,
@@ -161,7 +236,7 @@ fun HistoryContent(
                     }
                 },
                 actions = {
-                    if (items.any { it is HistoryItem.Service }) {
+                    if (items.isNotEmpty()) {
                         IconButton(onClick = onExportPdf) {
                             Icon(Icons.Rounded.PictureAsPdf, contentDescription = "Export PDF")
                         }
@@ -213,45 +288,68 @@ fun HistoryContent(
             }
         }
     ) { innerPadding ->
-        if (items.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
+        Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                Text(
-                    text = "No history yet.\nTap + to add service or fuel logs.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 80.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(items, key = { "${it.javaClass.simpleName}_${it.sortId}" }) { item ->
-                    when (item) {
-                        is HistoryItem.Service -> {
-                            ServiceRecordItem(
-                                record = item.record,
-                                mileageUnit = mileageUnit,
-                                onEdit = { onEditRecord(item.record.id) },
-                                onDelete = { recordPendingDelete = item }
+                HistoryFilter.values().forEachIndexed { index, filter ->
+                    SegmentedButton(
+                        selected = currentFilter == filter,
+                        onClick = { onFilterChange(filter) },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = HistoryFilter.values().size),
+                        label = {
+                            Text(
+                                text = when (filter) {
+                                    HistoryFilter.ALL -> "All"
+                                    HistoryFilter.SERVICE -> "Service"
+                                    HistoryFilter.FUEL -> "Fuel"
+                                }
                             )
                         }
-                        is HistoryItem.Fuel -> {
-                            FuelLogHistoryItem(
-                                log = item.log,
-                                mileageUnit = mileageUnit,
-                                onEdit = { onEditFuel(item.log.id) },
-                                onDelete = { recordPendingDelete = item }
-                            )
+                    )
+                }
+            }
+
+            if (items.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No history yet.\nTap + to add service or fuel logs.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 80.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(items, key = { "${it.javaClass.simpleName}_${it.sortId}" }) { item ->
+                        when (item) {
+                            is HistoryItem.Service -> {
+                                ServiceRecordItem(
+                                    record = item.record,
+                                    mileageUnit = mileageUnit,
+                                    onEdit = { onEditRecord(item.record.id) },
+                                    onDelete = { recordPendingDelete = item }
+                                )
+                            }
+                            is HistoryItem.Fuel -> {
+                                FuelLogHistoryItem(
+                                    log = item.log,
+                                    mileageUnit = mileageUnit,
+                                    onEdit = { onEditFuel(item.log.id) },
+                                    onDelete = { recordPendingDelete = item }
+                                )
+                            }
                         }
                     }
                 }

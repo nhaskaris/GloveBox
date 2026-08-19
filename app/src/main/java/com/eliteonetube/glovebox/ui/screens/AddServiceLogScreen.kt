@@ -168,12 +168,18 @@ fun AddServiceLogScreen(
             )
         },
         floatingActionButton = {
+            val isReadyToSave = uiState.serviceTypes.isNotEmpty() || uiState.notes.isNotBlank()
             ExtendedFloatingActionButton(
                 onClick = {
-                    viewModel.saveRecord(vehicleId, onNavigateBack)
+                    if (isReadyToSave) {
+                        viewModel.saveRecord(vehicleId, onNavigateBack)
+                    }
                 },
                 icon = { Icon(Icons.Rounded.Save, contentDescription = null) },
-                text = { Text("Save Record") }
+                text = { Text("Save Record") },
+                expanded = isReadyToSave,
+                containerColor = if (isReadyToSave) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = if (isReadyToSave) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
         }
     ) { innerPadding ->
@@ -312,7 +318,7 @@ fun AddServiceLogScreen(
                 OutlinedTextField(
                     value = uiState.cost,
                     onValueChange = viewModel::onCostChange,
-                    label = { Text("Cost") },
+                    label = { Text("Cost (Optional)") },
                     leadingIcon = { Icon(Icons.Rounded.AttachMoney, contentDescription = null) },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -337,7 +343,7 @@ fun AddServiceLogScreen(
                 OutlinedTextField(
                     value = uiState.serviceLocation,
                     onValueChange = viewModel::onLocationChange,
-                    label = { Text("Shop Name") },
+                    label = { Text("Shop Name (Optional)") },
                     leadingIcon = { Icon(Icons.Rounded.LocationOn, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("e.g. Precision Tune Auto Care") },
@@ -347,7 +353,7 @@ fun AddServiceLogScreen(
                 OutlinedTextField(
                     value = uiState.mechanicName,
                     onValueChange = viewModel::onMechanicNameChange,
-                    label = { Text("Mechanic Name") },
+                    label = { Text("Mechanic Name (Optional)") },
                     leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("Who performed the work?") },

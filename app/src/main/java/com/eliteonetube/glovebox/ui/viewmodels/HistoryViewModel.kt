@@ -8,10 +8,7 @@ import com.eliteonetube.glovebox.data.entity.FuelLog
 import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import com.eliteonetube.glovebox.util.PdfExportUtility
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -39,10 +36,17 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
     private val serviceRecords = serviceRecordDao.getServiceRecordsForVehicle(vehicleId)
     private val fuelLogs = fuelLogDao.getFuelLogsForVehicle(vehicleId)
 
-    val historyItems: StateFlow<List<HistoryItem>> = combine(serviceRecords, fuelLogs) { services, fuels ->
+    private val _filter = MutableStateFlow(HistoryFilter.ALL)
+    val filter: StateFlow<HistoryFilter> = _filter.asStateFlow()
+
+    val historyItems: StateFlow<List<HistoryItem>> = combine(serviceRecords, fuelLogs, _filter) { services, fuels, currentFilter ->
         val items = mutableListOf<HistoryItem>()
-        items.addAll(services.map { HistoryItem.Service(it) })
-        items.addAll(fuels.map { HistoryItem.Fuel(it) })
+        if (currentFilter == HistoryFilter.ALL || currentFilter == HistoryFilter.SERVICE) {
+            items.addAll(services.map { HistoryItem.Service(it) })
+        }
+        if (currentFilter == HistoryFilter.ALL || currentFilter == HistoryFilter.FUEL) {
+            items.addAll(fuels.map { HistoryItem.Fuel(it) })
+        }
         items.sortByDescending { it.date }
         items
     }.stateIn(
@@ -60,6 +64,10 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
         }
     }
 
+    fun setFilter(filter: HistoryFilter) {
+        _filter.value = filter
+    }
+
     fun deleteServiceRecord(record: ServiceRecord) {
         viewModelScope.launch {
             serviceRecordDao.deleteServiceRecord(record)
@@ -72,19 +80,34 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
         }
     }
 
-    fun exportHistoryToPdf(onResult: (File?) -> Unit) {
+    fun exportHistoryToPdf(
+        includeCosts: Boolean,
+        includeShop: Boolean,
+        includeMechanic: Boolean,
+        includeFuel: Boolean,
+        includeSummary: Boolean,
+        onResult: (File?) -> Unit
+    ) {
         val currentVehicle = vehicle.value
-        val items = historyItems.value
-        if (currentVehicle != null && items.isNotEmpty()) {
+        // For export, we might want to fetch all regardless of current filter
+        // or just export what's visible. Usually, the dialog options decide.
+        if (currentVehicle != null) {
             viewModelScope.launch {
+                val services = serviceRecordDao.getServiceRecordsForVehicle(vehicleId).first()
+                val fuels = fuelLogDao.getFuelLogsForVehicle(vehicleId).first()
+                
                 val file = withContext(Dispatchers.IO) {
                     try {
-                        // PDF currently only supports service records, we can keep it like that or update utility
-                        val services = items.filterIsInstance<HistoryItem.Service>().map { it.record }
-                        PdfExportUtility.generateVehicleServiceHistoryPdf(
+                        PdfExportUtility.generateFullVehicleHistoryPdf(
                             getApplication(),
                             currentVehicle,
-                            services
+                            services,
+                            fuels,
+                            includeCosts = includeCosts,
+                            includeShop = includeShop,
+                            includeMechanic = includeMechanic,
+                            includeFuel = includeFuel,
+                            includeSummary = includeSummary
                         )
                     } catch (e: Exception) {
                         null
@@ -96,4 +119,8 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
             onResult(null)
         }
     }
+}
+
+enum class HistoryFilter {
+    ALL, SERVICE, FUEL
 }
