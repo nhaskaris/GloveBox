@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ServiceRecordDao {
+    @Query("SELECT * FROM service_records ORDER BY date DESC")
+    fun getAllServiceRecords(): Flow<List<ServiceRecord>>
+
     @Query("SELECT * FROM service_records WHERE vehicleId = :vehicleId ORDER BY date DESC")
     fun getServiceRecordsForVehicle(vehicleId: Long): Flow<List<ServiceRecord>>
 

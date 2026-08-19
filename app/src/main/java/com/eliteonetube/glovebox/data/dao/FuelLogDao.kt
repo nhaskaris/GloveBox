@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FuelLogDao {
+    @Query("SELECT * FROM fuel_logs ORDER BY date DESC")
+    fun getAllFuelLogs(): Flow<List<FuelLog>>
+
     @Query("SELECT * FROM fuel_logs WHERE vehicleId = :vehicleId ORDER BY date DESC")
     fun getFuelLogsForVehicle(vehicleId: Long): Flow<List<FuelLog>>
 

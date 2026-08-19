@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.rounded.BarChart
+import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LocalGasStation
@@ -59,6 +61,8 @@ import com.eliteonetube.glovebox.ui.screens.AddDocumentScreen
 import com.eliteonetube.glovebox.ui.screens.AddFuelLogScreen
 import com.eliteonetube.glovebox.ui.screens.DigitalGloveboxScreen
 import com.eliteonetube.glovebox.ui.screens.HistoryScreen
+import com.eliteonetube.glovebox.ui.screens.InsightsScreen
+import com.eliteonetube.glovebox.ui.screens.InsightsScreen
 import com.eliteonetube.glovebox.ui.screens.RemindersScreen
 import com.eliteonetube.glovebox.ui.screens.SettingsScreen
 import com.eliteonetube.glovebox.ui.screens.VehicleListScreen
@@ -162,7 +166,7 @@ fun GloveboxApp(viewModel: MainViewModel) {
     val navigationItems = listOf(
         NavigationItem(
             label = "Garage",
-            icon = Icons.AutoMirrored.Rounded.List,
+            icon = Icons.Rounded.DirectionsCar,
             route = GloveboxRoute.VehicleList,
             onClick = {
                 backStack.clear()
@@ -177,6 +181,17 @@ fun GloveboxApp(viewModel: MainViewModel) {
                 if (effectiveVehicleId != 0L) {
                     backStack.clear()
                     backStack.add(GloveboxRoute.Reminders(effectiveVehicleId))
+                }
+            }
+        ),
+        NavigationItem(
+            label = "Insights",
+            icon = Icons.Rounded.BarChart,
+            route = GloveboxRoute.Insights(effectiveVehicleId),
+            onClick = {
+                if (effectiveVehicleId != 0L) {
+                    backStack.clear()
+                    backStack.add(GloveboxRoute.Insights(effectiveVehicleId))
                 }
             }
         ),
@@ -209,6 +224,7 @@ fun GloveboxApp(viewModel: MainViewModel) {
                 selected = when (item.route) {
                     is GloveboxRoute.VehicleList -> currentRoute is GloveboxRoute.VehicleList
                     is GloveboxRoute.Reminders -> currentRoute is GloveboxRoute.Reminders
+                    is GloveboxRoute.Insights -> currentRoute is GloveboxRoute.Insights
                     is GloveboxRoute.DigitalGlovebox -> currentRoute is GloveboxRoute.DigitalGlovebox
                     is GloveboxRoute.Settings -> currentRoute is GloveboxRoute.Settings
                     else -> false
@@ -316,6 +332,13 @@ fun MainContent(
 
                 is GloveboxRoute.Reminders -> NavEntry(key) {
                     RemindersScreen(
+                        vehicleId = key.vehicleId,
+                        onOpenDrawer = onOpenDrawer
+                    )
+                }
+
+                is GloveboxRoute.Insights -> NavEntry(key) {
+                    InsightsScreen(
                         vehicleId = key.vehicleId,
                         onOpenDrawer = onOpenDrawer
                     )

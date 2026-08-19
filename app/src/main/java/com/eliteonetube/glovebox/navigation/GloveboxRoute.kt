@@ -28,6 +28,9 @@ sealed interface GloveboxRoute {
     data class DigitalGlovebox(val vehicleId: Long) : GloveboxRoute
 
     @Serializable
+    data class Insights(val vehicleId: Long) : GloveboxRoute
+
+    @Serializable
     data class AddDocument(val vehicleId: Long, val docId: Long = 0L) : GloveboxRoute
 
     @Serializable

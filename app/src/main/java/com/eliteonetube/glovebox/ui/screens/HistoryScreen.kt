@@ -292,11 +292,11 @@ fun HistoryContent(
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                HistoryFilter.values().forEachIndexed { index, filter ->
+                HistoryFilter.entries.forEachIndexed { index, filter ->
                     SegmentedButton(
                         selected = currentFilter == filter,
                         onClick = { onFilterChange(filter) },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = HistoryFilter.values().size),
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = HistoryFilter.entries.size),
                         label = {
                             Text(
                                 text = when (filter) {
