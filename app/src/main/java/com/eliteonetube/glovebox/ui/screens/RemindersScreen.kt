@@ -35,7 +35,17 @@ import com.eliteonetube.glovebox.ui.theme.GloveboxTheme
 @Composable
 fun RemindersScreenPreview() {
     GloveboxTheme {
-        RemindersScreen(vehicleId = 1L)
+        RemindersContent(
+            reminders = listOf(
+                Reminder(1, 1, "Oil Change", 10000, null, false),
+                Reminder(2, 1, "Tire Rotation", null, System.currentTimeMillis() + 86400000, false)
+            ),
+            currentOdometer = 5000,
+            odometerUnit = "km",
+            onToggleCompletion = {},
+            onDelete = {},
+            onAddReminder = { _, _, _ -> }
+        )
     }
 }
 
@@ -53,11 +63,35 @@ fun RemindersScreen(
 ) {
     val reminders by viewModel.reminders.collectAsStateWithLifecycle()
     val currentOdometer by viewModel.currentOdometer.collectAsStateWithLifecycle()
+    val odometerUnit by viewModel.odometerUnit.collectAsStateWithLifecycle()
+
+    RemindersContent(
+        reminders = reminders,
+        currentOdometer = currentOdometer,
+        odometerUnit = odometerUnit,
+        onToggleCompletion = { viewModel.toggleReminderCompletion(it) },
+        onDelete = { viewModel.deleteReminder(it) },
+        onAddReminder = { desc, mileage, date -> viewModel.addReminder(desc, mileage, date) },
+        onOpenDrawer = onOpenDrawer
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RemindersContent(
+    reminders: List<Reminder>,
+    currentOdometer: Int,
+    odometerUnit: String,
+    onToggleCompletion: (Reminder) -> Unit,
+    onDelete: (Reminder) -> Unit,
+    onAddReminder: (String, Int?, Long?) -> Unit,
+    onOpenDrawer: (() -> Unit)? = null
+) {
     var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            LargeTopAppBar(
+            TopAppBar(
                 title = { Text("Reminders") },
                 navigationIcon = {
                     if (onOpenDrawer != null) {
@@ -106,8 +140,9 @@ fun RemindersScreen(
                     ReminderItem(
                         reminder = reminder,
                         currentOdometer = currentOdometer,
-                        onToggleCompletion = { viewModel.toggleReminderCompletion(reminder) },
-                        onDelete = { viewModel.deleteReminder(reminder) }
+                        odometerUnit = odometerUnit,
+                        onToggleCompletion = { onToggleCompletion(reminder) },
+                        onDelete = { onDelete(reminder) }
                     )
                 }
             }
@@ -115,9 +150,10 @@ fun RemindersScreen(
 
         if (showAddDialog) {
             AddReminderDialog(
+                odometerUnit = odometerUnit,
                 onDismiss = { showAddDialog = false },
                 onConfirm = { desc, mileage, date ->
-                    viewModel.addReminder(desc, mileage, date)
+                    onAddReminder(desc, mileage, date)
                     showAddDialog = false
                 }
             )
@@ -129,6 +165,7 @@ fun RemindersScreen(
 fun ReminderItem(
     reminder: Reminder,
     currentOdometer: Int,
+    odometerUnit: String,
     onToggleCompletion: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -180,7 +217,7 @@ fun ReminderItem(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Icon(Icons.Rounded.Speed, contentDescription = null, modifier = Modifier.size(14.dp))
                             Text(
-                                text = "${reminder.targetMileage} km",
+                                text = "${reminder.targetMileage} $odometerUnit",
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -232,6 +269,7 @@ fun ReminderItem(
 
 @Composable
 fun AddReminderDialog(
+    odometerUnit: String,
     onDismiss: () -> Unit,
     onConfirm: (String, Int?, Long?) -> Unit
 ) {
@@ -257,7 +295,7 @@ fun AddReminderDialog(
                 OutlinedTextField(
                     value = mileage,
                     onValueChange = { if (it.all { c -> c.isDigit() }) mileage = it },
-                    label = { Text("Target Mileage (optional)") },
+                    label = { Text("Target $odometerUnit (optional)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )

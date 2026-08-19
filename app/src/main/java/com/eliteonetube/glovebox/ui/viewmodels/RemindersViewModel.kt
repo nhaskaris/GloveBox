@@ -19,6 +19,9 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
     private val _currentOdometer = MutableStateFlow(0)
     val currentOdometer: StateFlow<Int> = _currentOdometer.asStateFlow()
 
+    private val _odometerUnit = MutableStateFlow("km")
+    val odometerUnit: StateFlow<String> = _odometerUnit.asStateFlow()
+
     init {
         loadVehicleData()
     }
@@ -27,6 +30,7 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
         viewModelScope.launch {
             vehicleDao.getVehicleById(vehicleId)?.let { vehicle ->
                 _currentOdometer.value = vehicle.odometer
+                _odometerUnit.value = vehicle.odometerUnit
             }
         }
     }

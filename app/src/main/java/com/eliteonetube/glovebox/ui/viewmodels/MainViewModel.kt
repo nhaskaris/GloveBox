@@ -25,6 +25,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val vehicles: StateFlow<List<Vehicle>> = vehicleDao.getAllVehicles()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val isOnboardingCompleted: StateFlow<Boolean?> = userPreferencesRepository.isOnboardingCompleted
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val isVinFeatureEnabled: StateFlow<Boolean> = userPreferencesRepository.isVinFeatureEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
     fun setThemePreference(theme: ThemePreference) {
         viewModelScope.launch {
             userPreferencesRepository.setThemePreference(theme)
@@ -34,6 +40,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setActiveVehicleId(vehicleId: Long) {
         viewModelScope.launch {
             userPreferencesRepository.setActiveVehicleId(vehicleId)
+        }
+    }
+
+    fun setOnboardingCompleted() {
+        viewModelScope.launch {
+            userPreferencesRepository.setOnboardingCompleted(true)
+        }
+    }
+
+    fun setVinFeatureEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setVinFeatureEnabled(enabled)
         }
     }
 }

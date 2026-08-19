@@ -23,6 +23,7 @@ fun SettingsScreen(
     viewModel: MainViewModel = viewModel()
 ) {
     val themePreference by viewModel.themePreference.collectAsStateWithLifecycle()
+    val isVinEnabled by viewModel.isVinFeatureEnabled.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -75,6 +76,35 @@ fun SettingsScreen(
                     text = "Dark",
                     selected = themePreference == ThemePreference.DARK,
                     onClick = { viewModel.setThemePreference(ThemePreference.DARK) }
+                )
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            ListItem(
+                headlineContent = { Text("Vehicle Tools") },
+                supportingContent = { Text("Manage special features") },
+                leadingContent = { Icon(Icons.Rounded.Settings, contentDescription = null) }
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(start = 40.dp)) {
+                    Text("VIN Decoding", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Automatically fill car details from VIN",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = isVinEnabled,
+                    onCheckedChange = { viewModel.setVinFeatureEnabled(it) }
                 )
             }
         }

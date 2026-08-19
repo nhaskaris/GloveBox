@@ -4,17 +4,11 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.eliteonetube.glovebox.data.dao.ReminderDao
-import com.eliteonetube.glovebox.data.dao.ServiceRecordDao
-import com.eliteonetube.glovebox.data.dao.VehicleDao
-import com.eliteonetube.glovebox.data.entity.Reminder
-import com.eliteonetube.glovebox.data.entity.ServiceRecord
-import com.eliteonetube.glovebox.data.entity.Vehicle
-import com.eliteonetube.glovebox.data.entity.VehicleCatalog
+import com.eliteonetube.glovebox.data.dao.*
+import com.eliteonetube.glovebox.data.entity.*
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.eliteonetube.glovebox.data.dao.VehicleCatalogDao
 import org.json.JSONArray
 
 class VehicleDatabaseCallback(
@@ -52,16 +46,17 @@ class VehicleDatabaseCallback(
 }
 
 @Database(
-    entities = [Vehicle::class, ServiceRecord::class, Reminder::class, VehicleCatalog::class],
-    version = 3,
+    entities = [Vehicle::class, ServiceRecord::class, Reminder::class, VehicleCatalog::class, FuelLog::class, VehicleDocument::class],
+    version = 6,
     exportSchema = false
 )
 abstract class GloveboxDatabase : RoomDatabase() {
     abstract fun vehicleDao(): VehicleDao
     abstract fun serviceRecordDao(): ServiceRecordDao
     abstract fun reminderDao(): ReminderDao
-
     abstract fun vehicleCatalogDao(): VehicleCatalogDao
+    abstract fun fuelLogDao(): FuelLogDao
+    abstract fun vehicleDocumentDao(): VehicleDocumentDao
 
     companion object {
         @Volatile

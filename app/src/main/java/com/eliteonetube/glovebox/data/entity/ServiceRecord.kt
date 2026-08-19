@@ -27,6 +27,8 @@ data class ServiceRecord(
     val currency: String = "USD",
     val partsUsed: String? = null,
     val laborHours: Double? = null,
+    val isDiy: Boolean = false,
+    val mechanicName: String? = null,
     val notes: String = "",
     val receiptPhotoUri: String? = null,
     val nextDueDate: Long? = null,

@@ -26,9 +26,15 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
                     recordId = it.id,
                     date = it.date,
                     mileage = it.mileage.toString(),
-                    serviceType = it.serviceType,
-                    cost = it.cost.toString(),
-                    notes = it.notes
+                    serviceTypes = it.serviceType.split(", ").filter { type -> type.isNotBlank() },
+                    cost = it.cost?.toString() ?: "",
+                    notes = it.notes,
+                    receiptPhotoUri = it.receiptPhotoUri,
+                    serviceLocation = it.serviceLocation ?: "",
+                    laborHours = it.laborHours?.toString() ?: "",
+                    partsUsed = it.partsUsed ?: "",
+                    isDiy = it.isDiy,
+                    mechanicName = it.mechanicName ?: ""
                 )
             }
         }
@@ -42,8 +48,14 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
         _uiState.value = _uiState.value.copy(mileage = mileage)
     }
 
-    fun onServiceTypeChange(serviceType: String) {
-        _uiState.value = _uiState.value.copy(serviceType = serviceType)
+    fun onServiceTypeToggle(type: String) {
+        val currentTypes = _uiState.value.serviceTypes.toMutableList()
+        if (currentTypes.contains(type)) {
+            currentTypes.remove(type)
+        } else {
+            currentTypes.add(type)
+        }
+        _uiState.value = _uiState.value.copy(serviceTypes = currentTypes)
     }
 
     fun onCostChange(cost: String) {
@@ -54,6 +66,30 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
         _uiState.value = _uiState.value.copy(notes = notes)
     }
 
+    fun onPhotoChange(uri: String?) {
+        _uiState.value = _uiState.value.copy(receiptPhotoUri = uri)
+    }
+
+    fun onLocationChange(location: String) {
+        _uiState.value = _uiState.value.copy(serviceLocation = location)
+    }
+
+    fun onLaborHoursChange(hours: String) {
+        _uiState.value = _uiState.value.copy(laborHours = hours)
+    }
+
+    fun onPartsUsedChange(parts: String) {
+        _uiState.value = _uiState.value.copy(partsUsed = parts)
+    }
+
+    fun onDiyToggle(isDiy: Boolean) {
+        _uiState.value = _uiState.value.copy(isDiy = isDiy)
+    }
+
+    fun onMechanicNameChange(name: String) {
+        _uiState.value = _uiState.value.copy(mechanicName = name)
+    }
+
     fun saveRecord(vehicleId: Long, onResult: () -> Unit) {
         val state = _uiState.value
         val record = ServiceRecord(
@@ -61,9 +97,16 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
             vehicleId = vehicleId,
             date = state.date,
             mileage = state.mileage.toIntOrNull() ?: 0,
-            serviceType = state.serviceType,
-            cost = state.cost.toDoubleOrNull() ?: 0.0,
-            notes = state.notes
+            serviceType = state.serviceTypes.joinToString(", "),
+            cost = state.cost.toDoubleOrNull(),
+            notes = state.notes,
+            receiptPhotoUri = state.receiptPhotoUri,
+            serviceLocation = if (state.isDiy) "DIY" else state.serviceLocation.takeIf { it.isNotBlank() },
+            laborHours = state.laborHours.toDoubleOrNull(),
+            partsUsed = state.partsUsed.takeIf { it.isNotBlank() },
+            isDiy = state.isDiy,
+            mechanicName = state.mechanicName.takeIf { it.isNotBlank() },
+            updatedAt = System.currentTimeMillis()
         )
 
         viewModelScope.launch {
@@ -81,7 +124,13 @@ data class ServiceLogFormState(
     val recordId: Long = 0,
     val date: Long = System.currentTimeMillis(),
     val mileage: String = "",
-    val serviceType: String = "",
+    val serviceTypes: List<String> = emptyList(),
     val cost: String = "",
-    val notes: String = ""
+    val notes: String = "",
+    val receiptPhotoUri: String? = null,
+    val serviceLocation: String = "",
+    val laborHours: String = "",
+    val partsUsed: String = "",
+    val isDiy: Boolean = false,
+    val mechanicName: String = ""
 )
