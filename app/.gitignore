@@ -6,4 +6,5 @@
 # IDE and Agent
 .idea/
 .agent/
+.artifacts/
 
