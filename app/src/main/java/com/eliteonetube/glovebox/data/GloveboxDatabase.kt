@@ -26,6 +26,9 @@ class VehicleDatabaseCallback(
     }
 
     private fun populateCatalog(db: SupportSQLiteDatabase) {
+        // Ensure table exists before inserting (Room might not have finished creating it in some cases)
+        db.execSQL("CREATE TABLE IF NOT EXISTS `vehicle_catalog` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `make` TEXT NOT NULL, `model` TEXT NOT NULL)")
+
         // Read JSON from assets
         val jsonString = try {
             context.assets.open("vehicles.json").bufferedReader().use { it.readText() }
@@ -59,8 +62,16 @@ class VehicleDatabaseCallback(
 }
 
 @Database(
-    entities = [Vehicle::class, ServiceRecord::class, Reminder::class, VehicleCatalog::class, FuelLog::class, VehicleDocument::class],
-    version = 6,
+    entities = [
+        Vehicle::class, 
+        ServiceRecord::class, 
+        Reminder::class, 
+        VehicleCatalog::class, 
+        FuelLog::class, 
+        VehicleDocument::class,
+        ProspectVehicle::class
+    ],
+    version = 8,
     exportSchema = false
 )
 abstract class GloveboxDatabase : RoomDatabase() {
@@ -70,6 +81,7 @@ abstract class GloveboxDatabase : RoomDatabase() {
     abstract fun vehicleCatalogDao(): VehicleCatalogDao
     abstract fun fuelLogDao(): FuelLogDao
     abstract fun vehicleDocumentDao(): VehicleDocumentDao
+    abstract fun prospectVehicleDao(): ProspectVehicleDao
 
     companion object {
         @Volatile

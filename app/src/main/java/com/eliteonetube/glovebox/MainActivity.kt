@@ -10,6 +10,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
@@ -82,12 +84,12 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
         return
     }
 
-    val currentRoute = backStack.last() as GloveboxRoute
+    val currentRoute = backStack.lastOrNull() as? GloveboxRoute ?: GloveboxRoute.VehicleList
     val effectiveVehicleId = activeVehicleId ?: 0L
     val hasVehicles = vehicles.isNotEmpty()
 
     val navigationItems = listOfNotNull(
-        NavigationItem(
+        GloveboxNavItem(
             label = "Garage",
             icon = Icons.Rounded.DirectionsCar,
             route = GloveboxRoute.VehicleList,
@@ -97,7 +99,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
                 backStack.add(GloveboxRoute.VehicleList)
             }
         ),
-        if (hasVehicles) NavigationItem(
+        if (hasVehicles) GloveboxNavItem(
             label = "History",
             icon = Icons.Rounded.History,
             route = GloveboxRoute.History(effectiveVehicleId),
@@ -109,7 +111,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
                 }
             }
         ) else null,
-        if (hasVehicles) NavigationItem(
+        if (hasVehicles) GloveboxNavItem(
             label = "Reminders",
             icon = Icons.Rounded.Notifications,
             route = GloveboxRoute.Reminders(effectiveVehicleId),
@@ -121,7 +123,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
                 }
             }
         ) else null,
-        if (hasVehicles) NavigationItem(
+        if (hasVehicles) GloveboxNavItem(
             label = "Insights",
             icon = Icons.Rounded.BarChart,
             route = GloveboxRoute.Insights(effectiveVehicleId),
@@ -133,7 +135,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
                 }
             }
         ) else null,
-        if (hasVehicles) NavigationItem(
+        if (hasVehicles) GloveboxNavItem(
             label = "Digital Glovebox",
             icon = Icons.Rounded.Folder,
             route = GloveboxRoute.DigitalGlovebox(effectiveVehicleId),
@@ -145,8 +147,8 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
                 }
             }
         ) else null,
-        NavigationItem(
-            label = "Buy Checklist",
+        GloveboxNavItem(
+            label = "Buying Guide",
             icon = Icons.Rounded.Checklist,
             route = GloveboxRoute.BuyChecklist,
             onClick = {
@@ -155,7 +157,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
                 backStack.add(GloveboxRoute.BuyChecklist)
             }
         ),
-        NavigationItem(
+        GloveboxNavItem(
             label = "Settings",
             icon = Icons.Rounded.Settings,
             route = GloveboxRoute.Settings,
@@ -176,109 +178,128 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
         navigationItems = navigationItems,
         currentRoute = currentRoute
     ) {
-        NavDisplay(
-            backStack = backStack
-        ) { key ->
-            when (key) {
-                is GloveboxRoute.Onboarding -> NavEntry(key) {
-                    OnboardingScreen(onComplete = {
-                        viewModel.setOnboardingCompleted()
-                        backStack.removeAt(backStack.size - 1)
-                    })
-                }
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            NavDisplay(
+                backStack = backStack
+            ) { key ->
+                when (key) {
+                    is GloveboxRoute.Onboarding -> NavEntry(key) {
+                        OnboardingScreen(onComplete = {
+                            viewModel.setOnboardingCompleted()
+                            backStack.removeAt(backStack.size - 1)
+                        })
+                    }
 
-                is GloveboxRoute.VehicleList -> NavEntry(key) {
-                    VehicleListScreen(
-                        onSelectVehicle = { id ->
-                            viewModel.setActiveVehicleId(id)
-                            backStack.add(GloveboxRoute.History(id))
-                        },
-                        onAddVehicle = { backStack.add(GloveboxRoute.VehicleProfile()) },
-                        onEditVehicle = { id -> backStack.add(GloveboxRoute.VehicleProfile(id)) },
-                        onOpenDrawer = onOpenDrawer
-                    )
-                }
+                    is GloveboxRoute.VehicleList -> NavEntry(key) {
+                        VehicleListScreen(
+                            onSelectVehicle = { id ->
+                                viewModel.setActiveVehicleId(id)
+                                backStack.add(GloveboxRoute.History(id))
+                            },
+                            onAddVehicle = { backStack.add(GloveboxRoute.VehicleProfile()) },
+                            onEditVehicle = { id -> backStack.add(GloveboxRoute.VehicleProfile(id)) },
+                            onOpenDrawer = onOpenDrawer
+                        )
+                    }
 
-                is GloveboxRoute.VehicleProfile -> NavEntry(key) {
-                    VehicleProfileScreen(
-                        vehicleId = key.vehicleId,
-                        onNavigateBack = onNavigateBack
-                    )
-                }
+                    is GloveboxRoute.VehicleProfile -> NavEntry(key) {
+                        VehicleProfileScreen(
+                            vehicleId = key.vehicleId,
+                            onNavigateBack = onNavigateBack
+                        )
+                    }
 
-                is GloveboxRoute.History -> NavEntry(key) {
-                    HistoryScreen(
-                        vehicleId = key.vehicleId,
-                        onAddRecord = { backStack.add(GloveboxRoute.AddServiceLog(key.vehicleId)) },
-                        onEditRecord = { id -> backStack.add(GloveboxRoute.AddServiceLog(key.vehicleId, id)) },
-                        onAddFuel = { backStack.add(GloveboxRoute.AddFuelLog(key.vehicleId)) },
-                        onEditFuel = { id -> backStack.add(GloveboxRoute.AddFuelLog(key.vehicleId, id)) },
-                        onOpenDrawer = onOpenDrawer
-                    )
-                }
+                    is GloveboxRoute.History -> NavEntry(key) {
+                        HistoryScreen(
+                            vehicleId = key.vehicleId,
+                            onAddRecord = { backStack.add(GloveboxRoute.AddServiceLog(key.vehicleId)) },
+                            onEditRecord = { id -> backStack.add(GloveboxRoute.AddServiceLog(key.vehicleId, id)) },
+                            onAddFuel = { backStack.add(GloveboxRoute.AddFuelLog(key.vehicleId)) },
+                            onEditFuel = { id -> backStack.add(GloveboxRoute.AddFuelLog(key.vehicleId, id)) },
+                            onOpenDrawer = onOpenDrawer
+                        )
+                    }
 
-                is GloveboxRoute.AddServiceLog -> NavEntry(key) {
-                    AddServiceLogScreen(
-                        vehicleId = key.vehicleId,
-                        recordId = key.recordId,
-                        prefilledType = key.prefilledType,
-                        onNavigateBack = onNavigateBack
-                    )
-                }
+                    is GloveboxRoute.AddServiceLog -> NavEntry(key) {
+                        AddServiceLogScreen(
+                            vehicleId = key.vehicleId,
+                            recordId = key.recordId,
+                            prefilledType = key.prefilledType,
+                            onNavigateBack = onNavigateBack
+                        )
+                    }
 
-                is GloveboxRoute.Reminders -> NavEntry(key) {
-                    RemindersScreen(
-                        vehicleId = key.vehicleId,
-                        onLogService = { type ->
-                            backStack.add(GloveboxRoute.AddServiceLog(key.vehicleId, prefilledType = type))
-                        },
-                        onOpenDrawer = onOpenDrawer
-                    )
-                }
+                    is GloveboxRoute.Reminders -> NavEntry(key) {
+                        RemindersScreen(
+                            vehicleId = key.vehicleId,
+                            onLogService = { type ->
+                                backStack.add(GloveboxRoute.AddServiceLog(key.vehicleId, prefilledType = type))
+                            },
+                            onOpenDrawer = onOpenDrawer
+                        )
+                    }
 
-                is GloveboxRoute.Insights -> NavEntry(key) {
-                    InsightsScreen(
-                        vehicleId = key.vehicleId,
-                        onOpenDrawer = onOpenDrawer
-                    )
-                }
+                    is GloveboxRoute.Insights -> NavEntry(key) {
+                        InsightsScreen(
+                            vehicleId = key.vehicleId,
+                            onOpenDrawer = onOpenDrawer
+                        )
+                    }
 
-                is GloveboxRoute.AddFuelLog -> NavEntry(key) {
-                    AddFuelLogScreen(
-                        vehicleId = key.vehicleId,
-                        logId = key.logId,
-                        onNavigateBack = onNavigateBack
-                    )
-                }
+                    is GloveboxRoute.AddFuelLog -> NavEntry(key) {
+                        AddFuelLogScreen(
+                            vehicleId = key.vehicleId,
+                            logId = key.logId,
+                            onNavigateBack = onNavigateBack
+                        )
+                    }
 
-                is GloveboxRoute.DigitalGlovebox -> NavEntry(key) {
-                    DigitalGloveboxScreen(
-                        vehicleId = key.vehicleId,
-                        onAddDocument = { backStack.add(GloveboxRoute.AddDocument(key.vehicleId)) },
-                        onViewDocument = { id -> backStack.add(GloveboxRoute.AddDocument(key.vehicleId, id)) },
-                        onOpenDrawer = onOpenDrawer
-                    )
-                }
+                    is GloveboxRoute.DigitalGlovebox -> NavEntry(key) {
+                        DigitalGloveboxScreen(
+                            vehicleId = key.vehicleId,
+                            onAddDocument = { backStack.add(GloveboxRoute.AddDocument(key.vehicleId)) },
+                            onViewDocument = { id -> backStack.add(GloveboxRoute.AddDocument(key.vehicleId, id)) },
+                            onOpenDrawer = onOpenDrawer
+                        )
+                    }
 
-                is GloveboxRoute.AddDocument -> NavEntry(key) {
-                    AddDocumentScreen(
-                        vehicleId = key.vehicleId,
-                        docId = key.docId,
-                        onNavigateBack = onNavigateBack
-                    )
-                }
+                    is GloveboxRoute.AddDocument -> NavEntry(key) {
+                        AddDocumentScreen(
+                            vehicleId = key.vehicleId,
+                            docId = key.docId,
+                            onNavigateBack = onNavigateBack
+                        )
+                    }
 
-                is GloveboxRoute.BuyChecklist -> NavEntry(key) {
-                    PrePurchaseChecklistScreen(
-                        onOpenDrawer = onOpenDrawer
-                    )
-                }
+                    is GloveboxRoute.BuyChecklist -> NavEntry(key) {
+                        ProspectListScreen(
+                            onAddProspect = { backStack.add(GloveboxRoute.ProspectForm()) },
+                            onViewProspect = { id -> backStack.add(GloveboxRoute.ProspectForm(id)) },
+                            onOpenDrawer = onOpenDrawer
+                        )
+                    }
 
-                is GloveboxRoute.Settings -> NavEntry(key) {
-                    SettingsScreen(onOpenDrawer = onOpenDrawer)
+                    is GloveboxRoute.ProspectForm -> NavEntry(key) {
+                        ProspectFormScreen(
+                            prospectId = key.prospectId,
+                            onNavigateBack = onNavigateBack,
+                            onPromoted = { newId ->
+                                viewModel.setActiveVehicleId(newId)
+                                backStack.clear()
+                                backStack.add(GloveboxRoute.History(newId))
+                            }
+                        )
+                    }
+
+                    is GloveboxRoute.Settings -> NavEntry(key) {
+                        SettingsScreen(onOpenDrawer = onOpenDrawer)
+                    }
+
+                    else -> error("Unknown route")
                 }
-                
-                else -> error("Unknown route")
             }
         }
     }
@@ -292,7 +313,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
 fun NavigationWrapper(
     isExpanded: Boolean,
     drawerState: DrawerState,
-    navigationItems: List<NavigationItem>,
+    navigationItems: List<GloveboxNavItem>,
     currentRoute: GloveboxRoute,
     content: @Composable () -> Unit
 ) {
@@ -336,7 +357,7 @@ fun NavigationWrapper(
     }
 }
 
-data class NavigationItem(
+data class GloveboxNavItem(
     val label: String,
     val icon: ImageVector,
     val route: GloveboxRoute,
@@ -349,7 +370,7 @@ data class NavigationItem(
             is GloveboxRoute.Reminders -> currentRoute is GloveboxRoute.Reminders
             is GloveboxRoute.Insights -> currentRoute is GloveboxRoute.Insights
             is GloveboxRoute.DigitalGlovebox -> currentRoute is GloveboxRoute.DigitalGlovebox || currentRoute is GloveboxRoute.AddDocument
-            is GloveboxRoute.BuyChecklist -> currentRoute is GloveboxRoute.BuyChecklist
+            is GloveboxRoute.BuyChecklist -> currentRoute is GloveboxRoute.BuyChecklist || currentRoute is GloveboxRoute.ProspectForm
             is GloveboxRoute.Settings -> currentRoute is GloveboxRoute.Settings
             else -> false
         }
