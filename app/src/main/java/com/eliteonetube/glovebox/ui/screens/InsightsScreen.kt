@@ -19,10 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.ui.viewmodels.*
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -52,12 +55,17 @@ fun InsightsScreen(
             TopAppBar(
                 title = { 
                     Column(modifier = Modifier.clickable { showPicker = true }) {
+                        val title = if (selectedId == 0L) {
+                            stringResource(R.string.fleet_insights)
+                        } else {
+                            stringResource(R.string.insights_title, selectedVehicle?.nickname ?: selectedVehicle?.model ?: "")
+                        }
                         Text(
-                            text = if (selectedId == 0L) "Fleet Insights" else "Insights: ${selectedVehicle?.nickname ?: selectedVehicle?.model}",
+                            text = title,
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = "Tap to switch vehicle",
+                            text = stringResource(R.string.tap_to_switch),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -97,21 +105,21 @@ fun InsightsScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Card(modifier = Modifier.weight(1f)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Total Spending", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.total_spending), style = MaterialTheme.typography.labelMedium)
                         Text("$${"%.2f".format(uiState.totalCost)}", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 Card(modifier = Modifier.weight(1f)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Avg Efficiency", style = MaterialTheme.typography.labelMedium)
-                        Text("${"%.1f".format(uiState.averageEfficiency)} L/100", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.secondary)
+                        Text(stringResource(R.string.avg_efficiency), style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.efficiency_unit_label, "%.1f".format(uiState.averageEfficiency)), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.secondary)
                     }
                 }
             }
 
             // 2. Smart Maintenance Predictions
             if (uiState.predictions.isNotEmpty()) {
-                Text("Predicted Maintenance", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.predicted_maintenance), style = MaterialTheme.typography.titleMedium)
                 uiState.predictions.take(3).forEach { prediction ->
                     PredictionCard(prediction, uiState.odometerUnit)
                 }
@@ -119,7 +127,7 @@ fun InsightsScreen(
 
             // 3. Efficiency Graph
             if (uiState.efficiencyHistory.isNotEmpty()) {
-                val chartTitle = if (uiState.odometerUnit == "mi") "Fuel Efficiency (MPG)" else "Fuel Efficiency (L/100km)"
+                val chartTitle = if (uiState.odometerUnit == "mi") stringResource(R.string.fuel_efficiency_mpg) else stringResource(R.string.fuel_efficiency_l100)
                 ChartCard(title = chartTitle) {
                     EfficiencyLineChart(points = uiState.efficiencyHistory)
                 }
@@ -127,21 +135,21 @@ fun InsightsScreen(
 
             // 3. Category Breakdown
             if (uiState.spendingByCategory.isNotEmpty()) {
-                ChartCard(title = "Spending Breakdown") {
+                ChartCard(title = stringResource(R.string.spending_breakdown)) {
                     DonutChart(items = uiState.spendingByCategory)
                 }
             }
 
             // 4. Monthly Spend
             if (uiState.monthlySpending.isNotEmpty()) {
-                ChartCard(title = "Monthly Spend") {
+                ChartCard(title = stringResource(R.string.monthly_spend)) {
                     SimpleBarChart(data = uiState.monthlySpending)
                 }
             }
 
             if (uiState.totalCost == 0.0) {
                 Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                    Text("No data yet. Log fuel or service to see insights.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.no_data_yet), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             
@@ -183,7 +191,7 @@ fun PredictionCard(prediction: MaintenancePrediction, unit: String) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = prediction.description,
+                        text = prediction.descriptionResId?.let { stringResource(it) } ?: prediction.description,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -198,20 +206,20 @@ fun PredictionCard(prediction: MaintenancePrediction, unit: String) {
                                 horizontalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 Icon(Icons.Rounded.AutoFixHigh, contentDescription = null, modifier = Modifier.size(10.dp))
-                                Text("SMART", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Black)
+                                Text(stringResource(R.string.smart_tag), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Black)
                             }
                         }
                     }
                 }
                 Text(
-                    text = "Expected at ${prediction.targetMileage} $unit",
+                    text = stringResource(R.string.expected_at, prediction.targetMileage.toString(), unit),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
             
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "In ${prediction.daysRemaining} days",
+                    text = stringResource(R.string.in_days, prediction.daysRemaining),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
@@ -238,12 +246,12 @@ fun VehiclePicker(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Switch Dashboard View") },
+        title = { Text(stringResource(R.string.switch_dashboard_view)) },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 // "All Vehicles" Option
                 ListItem(
-                    headlineContent = { Text("All Vehicles (Global View)") },
+                    headlineContent = { Text(stringResource(R.string.all_vehicles_global)) },
                     leadingContent = { Icon(Icons.Rounded.DirectionsCar, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                     trailingContent = { RadioButton(selected = selectedId == 0L, onClick = null) },
                     modifier = Modifier.clickable { onSelect(0L) }
@@ -261,7 +269,7 @@ fun VehiclePicker(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
         }
     )
 }

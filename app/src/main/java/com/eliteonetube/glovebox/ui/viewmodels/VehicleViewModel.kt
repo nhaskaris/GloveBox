@@ -66,6 +66,9 @@ class VehicleViewModel(application: Application, private val vehicleId: Long) : 
     private val _vinDecodingState = MutableStateFlow<VinDecodingState>(VinDecodingState.Idle)
     val vinDecodingState: StateFlow<VinDecodingState> = _vinDecodingState.asStateFlow()
 
+    private val _vinValidationErrorResId = MutableStateFlow<Int?>(null)
+    val vinValidationErrorResId: StateFlow<Int?> = _vinValidationErrorResId.asStateFlow()
+
     init {
         loadVehicle()
     }
@@ -98,6 +101,18 @@ class VehicleViewModel(application: Application, private val vehicleId: Long) : 
         _selectedMake.value = make
     }
 
+    fun validateVin(v: String): Int? {
+        val cleanVin = v.uppercase().filter { it.isLetterOrDigit() }
+        val errorResId = when {
+            cleanVin.isBlank() -> null
+            cleanVin.length != 17 -> com.eliteonetube.glovebox.R.string.vin_error_length
+            cleanVin.contains(Regex("[IOQ]")) -> com.eliteonetube.glovebox.R.string.vin_error_chars
+            else -> null
+        }
+        _vinValidationErrorResId.value = errorResId
+        return errorResId
+    }
+
     fun decodeVin(vin: String) {
         if (vin.length < 11) return
         
@@ -122,11 +137,11 @@ class VehicleViewModel(application: Application, private val vehicleId: Long) : 
                         trim = trim
                     )
                 } else {
-                    _vinDecodingState.value = VinDecodingState.Error("Vehicle not found")
+                    _vinDecodingState.value = VinDecodingState.Error(com.eliteonetube.glovebox.R.string.vehicle_not_found)
                 }
             } catch (e: Exception) {
                 Log.e("VehicleViewModel", "VIN Decoding Error", e)
-                _vinDecodingState.value = VinDecodingState.Error("Connection or Parsing error")
+                _vinDecodingState.value = VinDecodingState.Error(com.eliteonetube.glovebox.R.string.connection_error)
             }
         }
     }
@@ -185,5 +200,5 @@ sealed class VinDecodingState {
     data object Idle : VinDecodingState()
     data object Loading : VinDecodingState()
     data class Success(val make: String, val model: String, val year: Int, val fuelType: String, val trim: String) : VinDecodingState()
-    data class Error(val message: String) : VinDecodingState()
+    data class Error(val messageResId: Int) : VinDecodingState()
 }

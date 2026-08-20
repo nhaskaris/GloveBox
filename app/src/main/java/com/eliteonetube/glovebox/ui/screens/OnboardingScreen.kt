@@ -1,43 +1,50 @@
 package com.eliteonetube.glovebox.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.eliteonetube.glovebox.R
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
+    currentLanguage: String?,
+    onLanguageChange: (String?) -> Unit,
     onComplete: () -> Unit
 ) {
     val pages = listOf(
         OnboardingPage(
-            title = "Welcome to Glovebox",
-            description = "Your personal automotive assistant. Keep track of everything your car needs in one place.",
-            icon = Icons.Rounded.DirectionsCar
+            title = stringResource(R.string.welcome_title),
+            description = stringResource(R.string.welcome_desc),
+            icon = Icons.Rounded.DirectionsCar,
+            showLanguageSelector = true
         ),
         OnboardingPage(
-            title = "Maintenance History",
-            description = "Log your service records and fuel refills. Track your spending and vehicle health over time.",
+            title = stringResource(R.string.history_title),
+            description = stringResource(R.string.history_desc),
             icon = Icons.Rounded.History
         ),
         OnboardingPage(
-            title = "Digital Glovebox",
-            description = "Store your insurance, registration, and warranties. Get notified before they expire.",
+            title = stringResource(R.string.glovebox_intro_title),
+            description = stringResource(R.string.glovebox_intro_desc),
             icon = Icons.Rounded.Folder
         ),
         OnboardingPage(
-            title = "Smart VIN Decoder",
-            description = "Add cars instantly! Use the VIN to auto-fill technical details. This feature can be toggled in settings.",
+            title = stringResource(R.string.vin_title),
+            description = stringResource(R.string.vin_desc),
             icon = Icons.Rounded.AutoFixHigh
         )
     )
@@ -80,7 +87,7 @@ fun OnboardingScreen(
                         }
                     }
                 ) {
-                    Text(if (pagerState.currentPage == pages.size - 1) "Get Started" else "Next")
+                    Text(if (pagerState.currentPage == pages.size - 1) stringResource(R.string.get_started) else stringResource(R.string.next))
                 }
             }
         }
@@ -95,6 +102,7 @@ fun OnboardingScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
@@ -127,6 +135,63 @@ fun OnboardingScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
+
+                if (page.showLanguageSelector) {
+                    Spacer(Modifier.height(32.dp))
+                    LanguageSelector(
+                        currentLanguage = currentLanguage,
+                        onLanguageChange = onLanguageChange
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LanguageSelector(
+    currentLanguage: String?,
+    onLanguageChange: (String?) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val languages = listOf(
+        null to stringResource(R.string.system_language),
+        "en" to stringResource(R.string.language_english),
+        "el" to stringResource(R.string.language_greek)
+    )
+
+    val currentLabel = languages.find { it.first == currentLanguage }?.second ?: stringResource(R.string.system_language)
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = currentLabel,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(R.string.select_language)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .width(200.dp)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            languages.forEach { (code, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        onLanguageChange(code)
+                        expanded = false
+                    }
+                )
             }
         }
     }
@@ -135,5 +200,6 @@ fun OnboardingScreen(
 data class OnboardingPage(
     val title: String,
     val description: String,
-    val icon: ImageVector
+    val icon: ImageVector,
+    val showLanguageSelector: Boolean = false
 )

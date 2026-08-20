@@ -1,3 +1,247 @@
 <resources>
     <string name="app_name">Glovebox</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="close">Close</string>
+    <string name="back">Back</string>
+    <string name="camera">Camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="select_image_source">Select Image Source</string>
+    <string name="error">Error</string>
+    <string name="loading">Loading...</string>
+
+    <!-- Add Document -->
+    <string name="add_document">Add Document</string>
+    <string name="save_document">Save Document</string>
+    <string name="scan_or_upload">Scan or Upload Document</string>
+    <string name="auto_extract_expiry">Auto-Extract Expiry Date</string>
+    <string name="document_name">Document Name</string>
+    <string name="document_name_placeholder">e.g. 2024 Insurance</string>
+    <string name="category">Category</string>
+    <string name="link_to_specific_car">Link to specific car</string>
+    <string name="universal_document">Universal document (All cars)</string>
+    <string name="linked_to_car">Linked to selected car</string>
+    <string name="select_car">Select Car</string>
+    <string name="expiry_date">Expiry Date</string>
+    <string name="no_expiry_date">No expiry date set</string>
+    <string name="expiry_notification_info">We will notify you 30 days and 7 days before this date.</string>
+
+    <!-- Add Fuel Log -->
+    <string name="add_fuel_log">Add Fuel Log</string>
+    <string name="edit_fuel_log">Edit Fuel Log</string>
+    <string name="save_log">Save Log</string>
+    <string name="odometer_label">Odometer (%s)</string>
+    <string name="amount_label">Amount (%s)</string>
+    <string name="total_cost_label">Total Cost ($)</string>
+    <string name="gas_station_label">Gas Station / Location</string>
+    <string name="full_tank">Full Tank</string>
+    <string name="gallons">Gallons</string>
+    <string name="liters">Liters</string>
+
+    <!-- Add Service Log -->
+    <string name="add_service_log">Add Service Log</string>
+    <string name="edit_service_log">Edit Service Log</string>
+    <string name="save_record">Save Record</string>
+    <string name="search_service_type">Search Service Type</string>
+    <string name="service_type_placeholder">e.g. Oil Change, Brakes...</string>
+    <string name="mileage_label">Mileage (%s)</string>
+    <string name="cost_label">Cost (Optional)</string>
+    <string name="schedule_next_service">Schedule next service?</string>
+    <string name="next_service_distance">In (%s)</string>
+    <string name="next_service_months">Or (Months)</string>
+    <string name="performed_at_shop">Service performed at a shop?</string>
+    <string name="shop_name">Shop Name (Optional)</string>
+    <string name="shop_name_placeholder">e.g. Precision Tune Auto Care</string>
+    <string name="mechanic_name">Mechanic Name (Optional)</string>
+    <string name="mechanic_placeholder">Who performed the work?</string>
+    <string name="labor_hours">Labor Hours</string>
+    <string name="parts_used">Parts Used</string>
+    <string name="parts_placeholder">Filter, Oil, etc.</string>
+    <string name="service_date">Date</string>
+    <string name="notes">Notes</string>
+    <string name="diy">DIY</string>
+    <string name="shop">Shop</string>
+    <string name="add_receipt">Add Receipt</string>
+    <string name="services_performed">Services Performed</string>
+    <string name="diy_service_info">DIY Service recorded. Location will be saved as \'DIY\'.</string>
+    <string name="remove">Remove</string>
+
+    <!-- Digital Glovebox -->
+    <string name="digital_glovebox">Digital Glovebox</string>
+    <string name="glovebox_title">Glovebox: %s</string>
+    <string name="no_documents_stored">No documents stored. Tap + to scan your insurance or registration.</string>
+    <string name="universal_tag">Universal</string>
+
+    <!-- History -->
+    <string name="history">History</string>
+    <string name="pdf_export_options">PDF Export Options</string>
+    <string name="select_include_report">Select what to include in the report:</string>
+    <string name="include_costs">Include Costs &amp; Financial Summary</string>
+    <string name="include_shop">Include Shop/Station Locations</string>
+    <string name="include_mechanic">Include Mechanic Names</string>
+    <string name="include_fuel">Include Fuel History</string>
+    <string name="include_summary">Include Summary Section</string>
+    <string name="generate_pdf">Generate PDF</string>
+    <string name="fuel_refill">Fuel Refill</string>
+    <string name="service_record">Service</string>
+    <string name="delete_entry_title">Delete this entry?</string>
+    <string name="delete_entry_message">This will permanently remove this record. This can\'t be undone.</string>
+    <string name="no_history_yet">No history yet.\nTap + to add service or fuel logs.</string>
+    <string name="parts_label">Parts: %s</string>
+    <string name="share_history">Share History</string>
+
+    <!-- Insights -->
+    <string name="total_spending">Total Spending</string>
+    <string name="avg_efficiency">Avg Efficiency</string>
+    <string name="predicted_maintenance">Predicted Maintenance</string>
+    <string name="no_data_yet">No data yet. Log fuel or service to see insights.</string>
+    <string name="smart_tag">SMART</string>
+    <string name="currency_symbol">$</string>
+    <string name="switch_dashboard_view">Switch Dashboard View</string>
+    <string name="all_vehicles_global">All Vehicles (Global View)</string>
+    <string name="efficiency_unit_label">%s L/100</string>
+    <string name="fleet_insights">Fleet Insights</string>
+    <string name="insights_title">Insights: %s</string>
+    <string name="tap_to_switch">Tap to switch vehicle</string>
+    <string name="expected_at">Expected at %s %s</string>
+    <string name="in_days">In %d days</string>
+    <string name="spending_breakdown">Spending Breakdown</string>
+    <string name="monthly_spend">Monthly Spend</string>
+    <string name="fuel_efficiency_mpg">Fuel Efficiency (MPG)</string>
+    <string name="fuel_efficiency_l100">Fuel Efficiency (L/100km)</string>
+
+    <!-- Buying Guide / Prospect Form -->
+    <string name="buying_guide">Buying Guide</string>
+    <string name="new_car_inquiry">New Car Inquiry</string>
+    <string name="i_bought_it">I bought it!</string>
+    <string name="save_details">Save Details</string>
+    <string name="add_photo">Add Photo</string>
+    <string name="change_photo">Change Photo</string>
+    <string name="vin_label">VIN (17 characters)</string>
+    <string name="decode_vin">Decode VIN</string>
+    <string name="scan_vin">Scan VIN</string>
+    <string name="year">Year</string>
+    <string name="asked_price">Asked Price</string>
+    <string name="make">Make</string>
+    <string name="model">Model</string>
+    <string name="seller_location">Seller Location</string>
+    <string name="seller_notes">Seller Notes</string>
+    <string name="search_select_make">Search or select Make</string>
+    <string name="search_select_model">Search or select Model</string>
+    <string name="select_make_first">Select Make first</string>
+    <string name="details_tab">Details</string>
+    <string name="checklist_tab">Checklist</string>
+    <string name="valid_vin">Valid VIN</string>
+
+    <!-- Buying Guide List -->
+    <string name="looking_for_car">Looking for a new car?</string>
+    <string name="buying_guide_description">Add a car you\'re interested in to start a checklist.</string>
+    <string name="add_new_inquiry">Add New Inquiry</string>
+
+    <!-- Reminders -->
+    <string name="reminders">Reminders</string>
+    <string name="log_service_now">Log this Service now</string>
+    <string name="add_maintenance_reminder">Add Maintenance Reminder</string>
+    <string name="description">Description</string>
+    <string name="reminder_placeholder">e.g. Tire Rotation</string>
+    <string name="target_odometer">Target %s (optional)</string>
+    <string name="remind_by_date">Remind by date (next week)</string>
+    <string name="add">Add</string>
+    <string name="no_reminders">No reminders yet.\nTap + to set a maintenance reminder.</string>
+    <string name="due_now"> DUE NOW </string>
+    <string name="complete">Complete</string>
+    <string name="add_reminder">Add Reminder</string>
+
+    <!-- Vehicle List / Garage -->
+    <string name="garage">Garage</string>
+    <string name="no_vehicles_added">No vehicles added yet.</string>
+    <string name="delete_vehicle_title">Delete Vehicle?</string>
+    <string name="delete_vehicle_message">Are you sure you want to delete this vehicle and all its records? This cannot be undone.</string>
+
+    <!-- Vehicle Profile / Add to Garage -->
+    <string name="add_to_garage">Add to Garage</string>
+    <string name="edit_vehicle">Edit Vehicle</string>
+    <string name="save_vehicle">Save Vehicle</string>
+    <string name="vin">VIN</string>
+    <string name="nickname_label">Nickname (Optional)</string>
+    <string name="nickname_placeholder">e.g. My Daily Driver</string>
+    <string name="make_required">Make *</string>
+    <string name="model_required">Model *</string>
+    <string name="current_odometer">Current Odometer</string>
+    <string name="unit">Unit</string>
+    <string name="trim_variant">Trim / Variant</string>
+    <string name="trim_placeholder">e.g. Sport, EX-L</string>
+    <string name="license_plate">License Plate</string>
+    <string name="color">Color</string>
+    <string name="fuel_type">Fuel Type</string>
+    <string name="fuel_type_placeholder">Select or type Fuel Type</string>
+    <string name="auto_fill_vin">Auto-fill from VIN</string>
+    <string name="vehicle_not_found">Vehicle not found</string>
+    <string name="connection_error">Connection or Parsing error</string>
+    <string name="vin_auto_fill_description">Enter your vehicle details or use the VIN to auto-fill.</string>
+    <string name="vin_error_length">VIN must be 17 characters</string>
+    <string name="vin_error_chars">VIN cannot contain I, O, or Q</string>
+    <string name="vin_error_not_found">Vehicle not found</string>
+    <string name="vin_error_connection">Connection or Parsing error</string>
+
+    <!-- Service Types -->
+    <string name="oil_change">Oil Change</string>
+    <string name="brake_service">Brake Service</string>
+    <string name="tire_rotation">Tire Rotation</string>
+    <string name="air_filter">Air Filter</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="theme">Theme</string>
+    <string name="choose_theme">Choose how the app looks</string>
+    <string name="vehicle_tools">Vehicle Tools</string>
+    <string name="manage_special_features">Manage special features</string>
+    <string name="vin_decoding">VIN Decoding</string>
+    <string name="system_default">System Default</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+    <string name="vin_decoding_desc">Automatically fill car details from VIN</string>
+    <string name="cloud_backup">Cloud Backup</string>
+    <string name="google_drive_backup">Google Drive Backup</string>
+    <string name="google_drive_backup_desc">Securely back up your garage data to your Google Drive</string>
+    <string name="last_backup">Last backup: %s</string>
+    <string name="never_backed_up">Never backed up</string>
+    <string name="backup_now">Back Up Now</string>
+
+    <!-- VIN Scanner -->
+    <string name="camera_permission_required">Camera permission is required to scan VIN</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="point_camera_at_vin">Point the camera at the VIN barcode</string>
+
+    <!-- Onboarding -->
+    <string name="welcome_title">Welcome to Glovebox</string>
+    <string name="welcome_desc">Your personal automotive assistant. Keep track of everything your car needs in one place.</string>
+    <string name="history_title">Maintenance History</string>
+    <string name="history_desc">Log your service records and fuel refills. Track your spending and vehicle health over time.</string>
+    <string name="glovebox_intro_title">Digital Glovebox</string>
+    <string name="glovebox_intro_desc">Store your insurance, registration, and warranties. Get notified before they expire.</string>
+    <string name="vin_title">Smart VIN Decoder</string>
+    <string name="vin_desc">Add cars instantly! Use the VIN to auto-fill technical details. This feature can be toggled in settings.</string>
+    <string name="get_started">Get Started</string>
+    <string name="next">Next</string>
+    <string name="select_language">Select Language</string>
+    <string name="language_english">English</string>
+    <string name="language_greek">Ελληνικά</string>
+    <string name="system_language">System Default</string>
+
+    <!-- Navigation Drawer -->
+    <string name="nav_garage">Garage</string>
+    <string name="nav_history">History</string>
+    <string name="nav_reminders">Reminders</string>
+    <string name="nav_insights">Insights</string>
+    <string name="nav_glovebox">Digital Glovebox</string>
+    <string name="nav_buying_guide">Buying Guide</string>
+    <string name="nav_settings">Settings</string>
+    <string name="open_drawer">Open Drawer</string>
+    <string name="no_nickname">No nickname</string>
 </resources>

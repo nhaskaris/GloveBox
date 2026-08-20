@@ -11,10 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.ui.viewmodels.FuelLogFormViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -37,10 +39,10 @@ fun AddFuelLogScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (logId == 0L) "Add Fuel Log" else "Edit Fuel Log") },
+                title = { Text(if (logId == 0L) stringResource(R.string.add_fuel_log) else stringResource(R.string.edit_fuel_log)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -51,7 +53,7 @@ fun AddFuelLogScreen(
             ) {
                 Icon(Icons.Rounded.Save, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Save Log")
+                Text(stringResource(R.string.save_log))
             }
         }
     ) { innerPadding ->
@@ -66,25 +68,25 @@ fun AddFuelLogScreen(
             OutlinedTextField(
                 value = uiState.odometer,
                 onValueChange = viewModel::onOdometerChange,
-                label = { Text("Odometer (${uiState.unit})") },
+                label = { Text(stringResource(R.string.odometer_label, uiState.unit)) },
                 leadingIcon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                val volumeLabel = if (uiState.unit == "mi") "Gallons" else "Liters"
+                val volumeLabel = if (uiState.unit == "mi") stringResource(R.string.gallons) else stringResource(R.string.liters)
                 OutlinedTextField(
                     value = uiState.amount,
                     onValueChange = viewModel::onAmountChange,
-                    label = { Text("Amount ($volumeLabel)") },
+                    label = { Text(stringResource(R.string.amount_label, volumeLabel)) },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
                 OutlinedTextField(
                     value = uiState.totalCost,
                     onValueChange = viewModel::onTotalCostChange,
-                    label = { Text("Total Cost ($)") },
+                    label = { Text(stringResource(R.string.total_cost_label)) },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
@@ -93,14 +95,14 @@ fun AddFuelLogScreen(
             OutlinedTextField(
                 value = uiState.location,
                 onValueChange = viewModel::onLocationChange,
-                label = { Text("Gas Station / Location") },
+                label = { Text(stringResource(R.string.gas_station_label)) },
                 leadingIcon = { Icon(Icons.Rounded.LocationOn, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = uiState.isFullTank, onCheckedChange = viewModel::onFullTankToggle)
-                Text("Full Tank")
+                Text(stringResource(R.string.full_tank))
             }
         }
     }

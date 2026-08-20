@@ -1,0 +1,247 @@
+<resources>
+    <string name="app_name">Glovebox</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Ακύρωση</string>
+    <string name="save">Αποθήκευση</string>
+    <string name="delete">Διαγραφή</string>
+    <string name="edit">Επεξεργασία</string>
+    <string name="close">Κλείσιμο</string>
+    <string name="back">Πίσω</string>
+    <string name="camera">Κάμερα</string>
+    <string name="gallery">Συλλογή</string>
+    <string name="select_image_source">Επιλογή Πηγής Εικόνας</string>
+    <string name="error">Σφάλμα</string>
+    <string name="loading">Φόρτωση…</string>
+
+    <!-- Add Document -->
+    <string name="add_document">Προσθήκη Εγγράφου</string>
+    <string name="save_document">Αποθήκευση Εγγράφου</string>
+    <string name="scan_or_upload">Σάρωση ή Μεταφόρτωση Εγγράφου</string>
+    <string name="auto_extract_expiry">Αυτόματη Εξαγωγή Ημερομηνίας Λήξης</string>
+    <string name="document_name">Όνομα Εγγράφου</string>
+    <string name="document_name_placeholder">π.χ. Ασφάλεια 2024</string>
+    <string name="category">Κατηγορία</string>
+    <string name="link_to_specific_car">Σύνδεση με συγκεκριμένο αυτοκίνητο</string>
+    <string name="universal_document">Γενικό έγγραφο (Όλα τα αυτοκίνητα)</string>
+    <string name="linked_to_car">Συνδεδεμένο με το επιλεγμένο αυτοκίνητο</string>
+    <string name="select_car">Επιλογή Αυτοκινήτου</string>
+    <string name="expiry_date">Ημερομηνία Λήξης</string>
+    <string name="no_expiry_date">Δεν έχει οριστεί ημερομηνία λήξης</string>
+    <string name="expiry_notification_info">Θα σας ειδοποιήσουμε 30 ημέρες και 7 ημέρες πριν από αυτήν την ημερομηνία.</string>
+
+    <!-- Add Fuel Log -->
+    <string name="add_fuel_log">Προσθήκη Αρχείου Καυσίμων</string>
+    <string name="edit_fuel_log">Επεξεργασία Αρχείου Καυσίμων</string>
+    <string name="save_log">Αποθήκευση Αρχείου</string>
+    <string name="odometer_label">Οδόμετρο (%s)</string>
+    <string name="amount_label">Ποσότητα (%s)</string>
+    <string name="total_cost_label">Συνολικό Κόστος ($)</string>
+    <string name="gas_station_label">Πρατήριο Καυσίμων / Τοποθεσία</string>
+    <string name="full_tank">Γεμάτο Ρεζερβουάρ</string>
+    <string name="gallons">Γαλόνια</string>
+    <string name="liters">Λίτρα</string>
+
+    <!-- Add Service Log -->
+    <string name="add_service_log">Προσθήκη Αρχείου Συντήρησης</string>
+    <string name="edit_service_log">Επεξεργασία Αρχείου Συντήρησης</string>
+    <string name="save_record">Αποθήκευση Εγγραφής</string>
+    <string name="search_service_type">Αναζήτηση Τύπου Συντήρησης</string>
+    <string name="service_type_placeholder">π.χ. Αλλαγή Λαδιών, Φρένα…</string>
+    <string name="mileage_label">Χιλιόμετρα (%s)</string>
+    <string name="cost_label">Κόστος (Προαιρετικό)</string>
+    <string name="schedule_next_service">Προγραμματισμός επόμενης συντήρησης;</string>
+    <string name="next_service_distance">Σε (%s)</string>
+    <string name="next_service_months">Ή (Μήνες)</string>
+    <string name="performed_at_shop">Η συντήρηση έγινε σε συνεργείο;</string>
+    <string name="shop_name">Όνομα Συνεργείου (Προαιρετικό)</string>
+    <string name="shop_name_placeholder">π.χ. Precision Tune Auto Care</string>
+    <string name="mechanic_name">Όνομα Μηχανικού (Προαιρετικό)</string>
+    <string name="mechanic_placeholder">Ποιος έκανε την εργασία;</string>
+    <string name="labor_hours">Ώρες Εργασίας</string>
+    <string name="parts_used">Ανταλλακτικά που Χρησιμοποιήθηκαν</string>
+    <string name="parts_placeholder">Φίλτρο, Λάδι, κ.λπ.</string>
+    <string name="service_date">Ημερομηνία</string>
+    <string name="notes">Σημειώσεις</string>
+    <string name="diy">DIY (Ιδιοκατασκευή)</string>
+    <string name="shop">Συνεργείο</string>
+    <string name="add_receipt">Προσθήκη Απόδειξης</string>
+    <string name="services_performed">Εργασίες που Έγιναν</string>
+    <string name="diy_service_info">Καταγράφηκε DIY Συντήρηση. Η τοποθεσία θα αποθηκευτεί ως \'DIY\'.</string>
+    <string name="remove">Αφαίρεση</string>
+
+    <!-- Digital Glovebox -->
+    <string name="digital_glovebox">Ψηφιακό Ντουλαπάκι</string>
+    <string name="glovebox_title">Ντουλαπάκι: %s</string>
+    <string name="no_documents_stored">Δεν υπάρχουν αποθηκευμένα έγγραφα. Πατήστε + για να σαρώσετε την ασφάλεια ή την άδεια κυκλοφορίας σας.</string>
+    <string name="universal_tag">Γενικό</string>
+
+    <!-- History -->
+    <string name="history">Ιστορικό</string>
+    <string name="pdf_export_options">Επιλογές Εξαγωγής PDF</string>
+    <string name="select_include_report">Επιλέξτε τι θα περιλαμβάνεται στην αναφορά:</string>
+    <string name="include_costs">Περίληψη Κόστους &amp; Οικονομικών</string>
+    <string name="include_shop">Τοποθεσίες Συνεργείων/Πρατηρίων</string>
+    <string name="include_mechanic">Ονόματα Μηχανικών</string>
+    <string name="include_fuel">Ιστορικό Καυσίμων</string>
+    <string name="include_summary">Ενότητα Περίληψης</string>
+    <string name="generate_pdf">Δημιουργία PDF</string>
+    <string name="fuel_refill">Ανεφοδιασμός Καυσίμων</string>
+    <string name="service_record">Συντήρηση</string>
+    <string name="delete_entry_title">Διαγραφή αυτής της εγγραφής;</string>
+    <string name="delete_entry_message">Αυτό θα αφαιρέσει μόνιμα αυτήν την εγγραφή. Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.</string>
+    <string name="no_history_yet">Δεν υπάρχει ιστορικό ακόμα.\nΠατήστε + για να προσθέσετε συντήρηση ή αρχεία καυσίμων.</string>
+    <string name="parts_label">Ανταλλακτικά: %s</string>
+    <string name="share_history">Κοινοποίηση Ιστορικού</string>
+
+    <!-- Insights -->
+    <string name="total_spending">Συνολικά Έξοδα</string>
+    <string name="avg_efficiency">Μέση Κατανάλωση</string>
+    <string name="predicted_maintenance">Προβλεπόμενη Συντήρηση</string>
+    <string name="no_data_yet">Δεν υπάρχουν δεδομένα ακόμα. Καταχωρίστε καύσιμα ή συντήρηση για να δείτε στατιστικά.</string>
+    <string name="smart_tag">ΕΞΥΠΝΟ</string>
+    <string name="currency_symbol">€</string>
+    <string name="switch_dashboard_view">Αλλαγή Προβολής Πίνακα</string>
+    <string name="all_vehicles_global">Όλα τα Οχήματα (Γενική Προβολή)</string>
+    <string name="efficiency_unit_label">%s L/100</string>
+    <string name="fleet_insights">Στατιστικά Στόλου</string>
+    <string name="insights_title">Στατιστικά: %s</string>
+    <string name="tap_to_switch">Πατήστε για αλλαγή οχήματος</string>
+    <string name="expected_at">Αναμένεται στα %s %s</string>
+    <string name="in_days">Σε %d ημέρες</string>
+    <string name="spending_breakdown">Ανάλυση Εξόδων</string>
+    <string name="monthly_spend">Μηνιαία Έξοδα</string>
+    <string name="fuel_efficiency_mpg">Κατανάλωση Καυσίμου (MPG)</string>
+    <string name="fuel_efficiency_l100">Κατανάλωση Καυσίμου (L/100km)</string>
+
+    <!-- Buying Guide / Prospect Form -->
+    <string name="buying_guide">Οδηγός Αγοράς</string>
+    <string name="new_car_inquiry">Νέα Έρευνα Αυτοκινήτου</string>
+    <string name="i_bought_it">Το αγόρασα!</string>
+    <string name="save_details">Αποθήκευση Λεπτομερειών</string>
+    <string name="add_photo">Προσθήκη Φωτογραφίας</string>
+    <string name="change_photo">Αλλαγή Φωτογραφίας</string>
+    <string name="vin_label">VIN (17 χαρακτήρες)</string>
+    <string name="decode_vin">Αποκωδικοποίηση VIN</string>
+    <string name="scan_vin">Σάρωση VIN</string>
+    <string name="year">Έτος</string>
+    <string name="asked_price">Ζητούμενη Τιμή</string>
+    <string name="make">Μάρκα</string>
+    <string name="model">Μοντέλο</string>
+    <string name="seller_location">Τοποθεσία Πωλητή</string>
+    <string name="seller_notes">Σημειώσεις Πωλητή</string>
+    <string name="search_select_make">Αναζήτηση ή επιλογή Μάρκας</string>
+    <string name="search_select_model">Αναζήτηση ή επιλογή Μοντέλου</string>
+    <string name="select_make_first">Επιλέξτε Μάρκα πρώτα</string>
+    <string name="details_tab">Λεπτομέρειες</string>
+    <string name="checklist_tab">Λίστα Ελέγχου</string>
+    <string name="valid_vin">Έγκυρο VIN</string>
+
+    <!-- Buying Guide List -->
+    <string name="looking_for_car">Ψάχνετε για νέο αυτοκίνητο;</string>
+    <string name="buying_guide_description">Προσθέστε ένα αυτοκίνητο που σας ενδιαφέρει για να ξεκινήσετε μια λίστα ελέγχου.</string>
+    <string name="add_new_inquiry">Προσθήκη Νέας Έρευνας</string>
+
+    <!-- Reminders -->
+    <string name="reminders">Υπενθυμίσεις</string>
+    <string name="log_service_now">Καταγραφή αυτής της Συντήρησης τώρα</string>
+    <string name="add_maintenance_reminder">Προσθήκη Υπενθύμισης Συντήρησης</string>
+    <string name="description">Περιγραφή</string>
+    <string name="reminder_placeholder">π.χ. Εναλλαγή Ελαστικών</string>
+    <string name="target_odometer">Στόχος %s (προαιρετικά)</string>
+    <string name="remind_by_date">Υπενθύμιση βάσει ημερομηνίας (επόμενη εβδομάδα)</string>
+    <string name="add">Προσθήκη</string>
+    <string name="no_reminders">Δεν υπάρχουν υπενθυμίσεις ακόμα.\nΠατήστε + για να ορίσετε μια υπενθύμιση συντήρησης.</string>
+    <string name="due_now"> ΕΠΕΙΓΟΝ </string>
+    <string name="complete">Ολοκληρώθηκε</string>
+    <string name="add_reminder">Προσθήκη Υπενθύμισης</string>
+
+    <!-- Vehicle List / Garage -->
+    <string name="garage">Γκαράζ</string>
+    <string name="no_vehicles_added">Δεν έχουν προστεθεί οχήματα ακόμα.</string>
+    <string name="delete_vehicle_title">Διαγραφή Οχήματος;</string>
+    <string name="delete_vehicle_message">Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το όχημα και όλα τα αρχεία του; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.</string>
+
+    <!-- Vehicle Profile / Add to Garage -->
+    <string name="add_to_garage">Προσθήκη στο Γκαράζ</string>
+    <string name="edit_vehicle">Επεξεργασία Οχήματος</string>
+    <string name="save_vehicle">Αποθήκευση Οχήματος</string>
+    <string name="vin">VIN</string>
+    <string name="nickname_label">Ψευδώνυμο (Προαιρετικό)</string>
+    <string name="nickname_placeholder">π.χ. Το καθημερινό μου</string>
+    <string name="make_required">Μάρκα *</string>
+    <string name="model_required">Μοντέλο *</string>
+    <string name="current_odometer">Τρέχον Οδόμετρο</string>
+    <string name="unit">Μονάδα</string>
+    <string name="trim_variant">Έκδοση / Παραλλαγή</string>
+    <string name="trim_placeholder">π.χ. Sport, EX-L</string>
+    <string name="license_plate">Πινακίδα Κυκλοφορίας</string>
+    <string name="color">Χρώμα</string>
+    <string name="fuel_type">Τύπος Καυσίμου</string>
+    <string name="fuel_type_placeholder">Επιλέξτε ή πληκτρολογήστε Τύπο Καυσίμου</string>
+    <string name="auto_fill_vin">Αυτόματη συμπλήρωση από VIN</string>
+    <string name="vehicle_not_found">Το όχημα δεν βρέθηκε</string>
+    <string name="connection_error">Σφάλμα σύνδεσης ή ανάλυσης</string>
+    <string name="vin_auto_fill_description">Εισαγάγετε τα στοιχεία του οχήματός σας ή χρησιμοποιήστε το VIN για αυτόματη συμπλήρωση.</string>
+    <string name="vin_error_length">Το VIN πρέπει να έχει 17 χαρακτήρες</string>
+    <string name="vin_error_chars">Το VIN δεν μπορεί να περιέχει I, O ή Q</string>
+    <string name="vin_error_not_found">Το όχημα δεν βρέθηκε</string>
+    <string name="vin_error_connection">Σφάλμα σύνδεσης ή ανάλυσης</string>
+
+    <!-- Service Types -->
+    <string name="oil_change">Αλλαγή Λαδιών</string>
+    <string name="brake_service">Συντήρηση Φρένων</string>
+    <string name="tire_rotation">Εναλλαγή Ελαστικών</string>
+    <string name="air_filter">Φίλτρο Αέρα</string>
+
+    <!-- Settings -->
+    <string name="settings">Ρυθμίσεις</string>
+    <string name="theme">Θέμα</string>
+    <string name="choose_theme">Επιλέξτε την εμφάνιση της εφαρμογής</string>
+    <string name="vehicle_tools">Εργαλεία Οχήματος</string>
+    <string name="manage_special_features">Διαχείριση ειδικών λειτουργιών</string>
+    <string name="vin_decoding">Αποκωδικοποίηση VIN</string>
+    <string name="system_default">Προεπιλογή Συστήματος</string>
+    <string name="light">Φωτεινό</string>
+    <string name="dark">Σκοτεινό</string>
+    <string name="vin_decoding_desc">Αυτόματη συμπλήρωση στοιχείων αυτοκινήτου από το VIN</string>
+    <string name="cloud_backup">Αντίγραφο Ασφαλείας στο Cloud</string>
+    <string name="google_drive_backup">Αντίγραφο Ασφαλείας Google Drive</string>
+    <string name="google_drive_backup_desc">Δημιουργήστε με ασφάλεια αντίγραφα των δεδομένων σας στο Google Drive</string>
+    <string name="last_backup">Τελευταίο αντίγραφο: %s</string>
+    <string name="never_backed_up">Ποτέ</string>
+    <string name="backup_now">Δημιουργία Τώρα</string>
+
+    <!-- VIN Scanner -->
+    <string name="camera_permission_required">Απαιτείται άδεια κάμερας για τη σάρωση του VIN</string>
+    <string name="grant_permission">Παροχή Άδειας</string>
+    <string name="point_camera_at_vin">Στρέψτε την κάμερα στο barcode του VIN</string>
+
+    <!-- Onboarding -->
+    <string name="welcome_title">Καλώς ήρθατε στο Glovebox</string>
+    <string name="welcome_desc">Ο προσωπικός σας βοηθός αυτοκινήτου. Παρακολουθήστε όλα όσα χρειάζεται το αυτοκίνητό σας σε ένα μέρος.</string>
+    <string name="history_title">Ιστορικό Συντήρησης</string>
+    <string name="history_desc">Καταγράψτε αρχεία συντήρησης και ανεφοδιασμούς καυσίμων. Παρακολουθήστε τα έξοδά σας και την υγεία του οχήματος.</string>
+    <string name="glovebox_intro_title">Ψηφιακό Ντουλαπάκι</string>
+    <string name="glovebox_intro_desc">Αποθηκεύστε την ασφάλεια, την άδεια και τις εγγυήσεις σας. Λάβετε ειδοποιήσεις πριν λήξουν.</string>
+    <string name="vin_title">Έξυπνη Αποκωδικοποίηση VIN</string>
+    <string name="vin_desc">Προσθέστε αυτοκίνητα αμέσως! Χρησιμοποιήστε το VIN για αυτόματη συμπλήρωση τεχνικών λεπτομερειών.</string>
+    <string name="get_started">Ξεκινήστε</string>
+    <string name="next">Επόμενο</string>
+    <string name="select_language">Επιλογή Γλώσσας</string>
+    <string name="language_english">English</string>
+    <string name="language_greek">Ελληνικά</string>
+    <string name="system_language">Προεπιλογή Συστήματος</string>
+
+    <!-- Navigation Drawer -->
+    <string name="nav_garage">Γκαράζ</string>
+    <string name="nav_history">Ιστορικό</string>
+    <string name="nav_reminders">Υπενθυμίσεις</string>
+    <string name="nav_insights">Στατιστικά</string>
+    <string name="nav_glovebox">Ψηφιακό Ντουλαπάκι</string>
+    <string name="nav_buying_guide">Οδηγός Αγοράς</string>
+    <string name="nav_settings">Ρυθμίσεις</string>
+    <string name="open_drawer">Άνοιγμα Μενού</string>
+    <string name="no_nickname">Χωρίς ψευδώνυμο</string>
+</resources>

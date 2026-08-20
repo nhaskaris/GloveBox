@@ -1,32 +1,52 @@
 package com.eliteonetube.glovebox
 
 import android.Manifest
+import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.os.Build
+import android.content.res.Configuration
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.compose.LocalSavedStateRegistryOwner
+import androidx.navigationevent.NavigationEventDispatcherOwner
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.eliteonetube.glovebox.navigation.GloveboxRoute
@@ -34,30 +54,75 @@ import com.eliteonetube.glovebox.ui.screens.*
 import com.eliteonetube.glovebox.ui.theme.GloveboxTheme
 import com.eliteonetube.glovebox.ui.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
+import java.util.Locale
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            GloveboxTheme {
-                MainContent()
+            val viewModel: MainViewModel = viewModel()
+            val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+            val context = LocalContext.current
+            
+            // Apply language change using AppCompatDelegate
+            LaunchedEffect(appLanguage) {
+                val appLocales = if (appLanguage == null) {
+                    LocaleListCompat.getEmptyLocaleList()
+                } else {
+                    LocaleListCompat.forLanguageTags(appLanguage)
+                }
+                
+                if (AppCompatDelegate.getApplicationLocales() != appLocales) {
+                    AppCompatDelegate.setApplicationLocales(appLocales)
+                }
+            }
+
+            // Create a localized context for string extraction
+            val configuration = LocalConfiguration.current
+            val localizedContext = remember(context, appLanguage) {
+                val locale = if (appLanguage != null) Locale.forLanguageTag(appLanguage!!) else Locale.getDefault()
+                val config = Configuration(configuration)
+                config.setLocale(locale)
+                val configContext = context.createConfigurationContext(config)
+
+                object : ContextWrapper(context) {
+                    override fun getResources() = configContext.resources
+                    override fun getAssets() = configContext.assets
+                }
+            }
+
+            val backStack = rememberNavBackStack(GloveboxRoute.VehicleList)
+
+            // CRITICAL: We MUST provide all owners from the Activity to the Localized Context
+            CompositionLocalProvider(
+                LocalContext provides localizedContext,
+                LocalLifecycleOwner provides (context as LifecycleOwner),
+                LocalViewModelStoreOwner provides (context as ViewModelStoreOwner),
+                LocalSavedStateRegistryOwner provides (context as SavedStateRegistryOwner),
+                LocalActivityResultRegistryOwner provides (context as ActivityResultRegistryOwner),
+                LocalOnBackPressedDispatcherOwner provides (context as androidx.activity.OnBackPressedDispatcherOwner),
+                LocalNavigationEventDispatcherOwner provides (context as NavigationEventDispatcherOwner)
+            ) {
+                GloveboxTheme(dynamicColor = false) {
+                    MainContent(viewModel, appLanguage, backStack)
+                }
             }
         }
     }
 }
 
 @Composable
-fun MainContent(viewModel: MainViewModel = viewModel()) {
-    val backStack = rememberNavBackStack(GloveboxRoute.VehicleList)
+fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBackStack<NavKey>) {
     val activeVehicleId by viewModel.activeVehicleId.collectAsStateWithLifecycle()
     val vehicles by viewModel.vehicles.collectAsStateWithLifecycle()
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    val isExpanded = windowSizeClass.windowWidthSizeClass == androidx.window.core.layout.WindowWidthSizeClass.EXPANDED
-
+    val windowSizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
+    val isExpanded = windowSizeClass.isWidthAtLeastBreakpoint(
+        WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND
+    )
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -90,7 +155,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
 
     val navigationItems = listOfNotNull(
         GloveboxNavItem(
-            label = "Garage",
+            label = stringResource(R.string.nav_garage),
             icon = Icons.Rounded.DirectionsCar,
             route = GloveboxRoute.VehicleList,
             onClick = {
@@ -100,7 +165,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
             }
         ),
         if (hasVehicles) GloveboxNavItem(
-            label = "History",
+            label = stringResource(R.string.nav_history),
             icon = Icons.Rounded.History,
             route = GloveboxRoute.History(effectiveVehicleId),
             onClick = {
@@ -112,7 +177,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
             }
         ) else null,
         if (hasVehicles) GloveboxNavItem(
-            label = "Reminders",
+            label = stringResource(R.string.nav_reminders),
             icon = Icons.Rounded.Notifications,
             route = GloveboxRoute.Reminders(effectiveVehicleId),
             onClick = {
@@ -124,7 +189,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
             }
         ) else null,
         if (hasVehicles) GloveboxNavItem(
-            label = "Insights",
+            label = stringResource(R.string.nav_insights),
             icon = Icons.Rounded.BarChart,
             route = GloveboxRoute.Insights(effectiveVehicleId),
             onClick = {
@@ -136,7 +201,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
             }
         ) else null,
         if (hasVehicles) GloveboxNavItem(
-            label = "Digital Glovebox",
+            label = stringResource(R.string.nav_glovebox),
             icon = Icons.Rounded.Folder,
             route = GloveboxRoute.DigitalGlovebox(effectiveVehicleId),
             onClick = {
@@ -148,7 +213,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
             }
         ) else null,
         GloveboxNavItem(
-            label = "Buying Guide",
+            label = stringResource(R.string.nav_buying_guide),
             icon = Icons.Rounded.Checklist,
             route = GloveboxRoute.BuyChecklist,
             onClick = {
@@ -158,7 +223,7 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
             }
         ),
         GloveboxNavItem(
-            label = "Settings",
+            label = stringResource(R.string.nav_settings),
             icon = Icons.Rounded.Settings,
             route = GloveboxRoute.Settings,
             onClick = {
@@ -187,10 +252,14 @@ fun MainContent(viewModel: MainViewModel = viewModel()) {
             ) { key ->
                 when (key) {
                     is GloveboxRoute.Onboarding -> NavEntry(key) {
-                        OnboardingScreen(onComplete = {
-                            viewModel.setOnboardingCompleted()
-                            backStack.removeAt(backStack.size - 1)
-                        })
+                        OnboardingScreen(
+                            onComplete = {
+                                viewModel.setOnboardingCompleted()
+                                backStack.removeAt(backStack.size - 1)
+                            },
+                            currentLanguage = appLanguage,
+                            onLanguageChange = { lang: String? -> viewModel.setAppLanguage(lang) }
+                        )
                     }
 
                     is GloveboxRoute.VehicleList -> NavEntry(key) {
@@ -320,16 +389,22 @@ fun NavigationWrapper(
     if (isExpanded) {
         PermanentNavigationDrawer(
             drawerContent = {
-                PermanentDrawerSheet(modifier = Modifier.width(240.dp)) {
-                    Spacer(Modifier.height(12.dp))
-                    navigationItems.forEach { item ->
-                        NavigationDrawerItem(
-                            label = { Text(item.label) },
-                            selected = item.isRouteSelected(currentRoute),
-                            onClick = item.onClick,
-                            icon = { Icon(item.icon, contentDescription = null) },
-                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                        )
+                PermanentDrawerSheet(
+                    modifier = Modifier
+                        .width(240.dp)
+                        .statusBarsPadding()
+                ) {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        Spacer(Modifier.height(12.dp))
+                        navigationItems.forEach { item ->
+                            NavigationDrawerItem(
+                                label = { Text(item.label) },
+                                selected = item.isRouteSelected(currentRoute),
+                                onClick = item.onClick,
+                                icon = { Icon(item.icon, contentDescription = null) },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                        }
                     }
                 }
             },
@@ -339,16 +414,20 @@ fun NavigationWrapper(
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
-                ModalDrawerSheet {
-                    Spacer(Modifier.height(12.dp))
-                    navigationItems.forEach { item ->
-                        NavigationDrawerItem(
-                            label = { Text(item.label) },
-                            selected = item.isRouteSelected(currentRoute),
-                            onClick = item.onClick,
-                            icon = { Icon(item.icon, contentDescription = null) },
-                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                        )
+                ModalDrawerSheet(
+                    modifier = Modifier.statusBarsPadding()
+                ) {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        Spacer(Modifier.height(12.dp))
+                        navigationItems.forEach { item ->
+                            NavigationDrawerItem(
+                                label = { Text(item.label) },
+                                selected = item.isRouteSelected(currentRoute),
+                                onClick = item.onClick,
+                                icon = { Icon(item.icon, contentDescription = null) },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                        }
                     }
                 }
             },

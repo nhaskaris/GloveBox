@@ -1,6 +1,8 @@
 package com.eliteonetube.glovebox.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -10,11 +12,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.data.entity.Reminder
 import com.eliteonetube.glovebox.ui.viewmodels.RemindersViewModel
 import java.time.Instant
@@ -89,11 +93,11 @@ fun RemindersContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Reminders") },
+                title = { Text(stringResource(R.string.reminders)) },
                 navigationIcon = {
                     if (onOpenDrawer != null) {
                         IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Rounded.Menu, contentDescription = "Open Drawer")
+                            Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.open_drawer))
                         }
                     } else {
                         Icon(
@@ -107,7 +111,7 @@ fun RemindersContent(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add Reminder")
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_reminder))
             }
         }
     ) { innerPadding ->
@@ -119,7 +123,7 @@ fun RemindersContent(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No reminders yet.\nTap + to set a maintenance reminder.",
+                    text = stringResource(R.string.no_reminders),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -198,7 +202,7 @@ fun ReminderItem(
                 ) {
                     Icon(
                         imageVector = if (reminder.isCompleted) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
-                        contentDescription = "Complete",
+                        contentDescription = stringResource(R.string.complete),
                         tint = if (reminder.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(32.dp)
                     )
@@ -246,7 +250,7 @@ fun ReminderItem(
                             shape = MaterialTheme.shapes.extraSmall
                         ) {
                             Text(
-                                text = " DUE NOW ",
+                                text = stringResource(R.string.due_now),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onError,
                                 fontWeight = FontWeight.ExtraBold
@@ -258,7 +262,7 @@ fun ReminderItem(
                 IconButton(
                     onClick = onDelete
                 ) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
                 }
             }
             
@@ -270,7 +274,7 @@ fun ReminderItem(
                 ) {
                     Icon(Icons.Rounded.Build, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Log this Service now")
+                    Text(stringResource(R.string.log_service_now))
                 }
             }
         }
@@ -291,28 +295,31 @@ fun AddReminderDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Maintenance Reminder") },
+        title = { Text(stringResource(R.string.add_maintenance_reminder)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description") },
-                    placeholder = { Text("e.g. Tire Rotation") },
+                    label = { Text(stringResource(R.string.description)) },
+                    placeholder = { Text(stringResource(R.string.reminder_placeholder)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
                     value = mileage,
                     onValueChange = { if (it.all { c -> c.isDigit() }) mileage = it },
-                    label = { Text("Target $odometerUnit (optional)") },
+                    label = { Text(stringResource(R.string.target_odometer, odometerUnit)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = useDate, onCheckedChange = { useDate = it })
-                    Text("Remind by date (next week)")
+                    Text(stringResource(R.string.remind_by_date))
                 }
             }
         },
@@ -327,12 +334,12 @@ fun AddReminderDialog(
                 },
                 enabled = description.isNotBlank()
             ) {
-                Text("Add")
+                Text(stringResource(R.string.add))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

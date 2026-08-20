@@ -20,8 +20,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.eliteonetube.glovebox.R
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -47,11 +49,11 @@ fun VehicleListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Garage") },
+                title = { Text(stringResource(R.string.garage)) },
                 navigationIcon = {
                     if (onOpenDrawer != null) {
                         IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Rounded.Menu, contentDescription = "Open Drawer")
+                            Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.open_drawer))
                         }
                     }
                 }
@@ -59,7 +61,7 @@ fun VehicleListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddVehicle) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add Vehicle")
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.select_car))
             }
         }
     ) { innerPadding ->
@@ -70,7 +72,7 @@ fun VehicleListScreen(
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No vehicles added yet.")
+                Text(stringResource(R.string.no_vehicles_added))
             }
         } else {
             LazyColumn(
@@ -99,8 +101,8 @@ fun VehicleListScreen(
     if (vehiclePendingDelete != null) {
         AlertDialog(
             onDismissRequest = { vehiclePendingDelete = null },
-            title = { Text("Delete Vehicle?") },
-            text = { Text("Are you sure you want to delete this vehicle and all its records? This cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_vehicle_title)) },
+            text = { Text(stringResource(R.string.delete_vehicle_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -109,12 +111,12 @@ fun VehicleListScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { vehiclePendingDelete = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -186,10 +188,10 @@ fun VehicleItem(
                 )
             }
             IconButton(onClick = onEdit) {
-                Icon(Icons.Rounded.Edit, contentDescription = "Edit")
+                Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit))
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Rounded.Delete, contentDescription = "Delete")
+                Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete))
             }
         }
     }

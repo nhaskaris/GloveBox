@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.eliteonetube.glovebox.data.dao.*
 import com.eliteonetube.glovebox.data.entity.*
@@ -26,7 +27,8 @@ class VehicleDatabaseCallback(
     }
 
     private fun populateCatalog(db: SupportSQLiteDatabase) {
-        // Ensure table exists before inserting (Room might not have finished creating it in some cases)
+        // Ensure table exists before inserting. 
+        // During destructive migration, Room calls this callback after dropping tables but before recreating them.
         db.execSQL("CREATE TABLE IF NOT EXISTS `vehicle_catalog` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `make` TEXT NOT NULL, `model` TEXT NOT NULL)")
 
         // Read JSON from assets
@@ -36,7 +38,11 @@ class VehicleDatabaseCallback(
             null
         } ?: return
         
-        val jsonArray = JSONArray(jsonString)
+        val jsonArray = try {
+            JSONArray(jsonString)
+        } catch (e: Exception) {
+            return
+        }
 
         db.beginTransaction()
         try {
@@ -55,6 +61,8 @@ class VehicleDatabaseCallback(
                 }
             }
             db.setTransactionSuccessful()
+        } catch (e: Exception) {
+            // Log or handle error if needed, but don't crash the app initialization
         } finally {
             db.endTransaction()
         }
@@ -71,7 +79,7 @@ class VehicleDatabaseCallback(
         VehicleDocument::class,
         ProspectVehicle::class
     ],
-    version = 8,
+    version = 11,
     exportSchema = false
 )
 abstract class GloveboxDatabase : RoomDatabase() {
@@ -87,6 +95,12 @@ abstract class GloveboxDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: GloveboxDatabase? = null
 
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Currently no schema changes, just establishing formal migration path
+            }
+        }
+
         fun getDatabase(context: Context): GloveboxDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -94,7 +108,7 @@ abstract class GloveboxDatabase : RoomDatabase() {
                     GloveboxDatabase::class.java,
                     "glovebox_database"
                 )
-                    .fallbackToDestructiveMigration(true)
+                    .addMigrations(MIGRATION_10_11)
                     .addCallback(VehicleDatabaseCallback(context))
                     .build()
 

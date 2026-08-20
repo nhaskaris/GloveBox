@@ -1,4 +1,3 @@
 <resources>
-
-    <style name="Theme.Glovebox" parent="Theme.MaterialComponents.Light" />
+    <style name="Theme.Glovebox" parent="Theme.AppCompat.DayNight.NoActionBar" />
 </resources>

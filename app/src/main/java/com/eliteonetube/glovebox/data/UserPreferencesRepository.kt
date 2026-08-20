@@ -19,8 +19,11 @@ class UserPreferencesRepository(private val context: Context) {
     object PreferencesKeys {
         val ACTIVE_VEHICLE_ID = longPreferencesKey("active_vehicle_id")
         val THEME_PREFERENCE = stringPreferencesKey("theme_preference")
+        val APP_LANGUAGE = stringPreferencesKey("app_language")
         val IS_ONBOARDING_COMPLETED = booleanPreferencesKey("is_onboarding_completed")
         val IS_VIN_FEATURE_ENABLED = booleanPreferencesKey("is_vin_feature_enabled")
+        val IS_DRIVE_BACKUP_ENABLED = booleanPreferencesKey("is_drive_backup_enabled")
+        val LAST_BACKUP_TIME = longPreferencesKey("last_backup_time")
     }
 
     val activeVehicleId: Flow<Long?> = dataStore.data
@@ -34,6 +37,11 @@ class UserPreferencesRepository(private val context: Context) {
             ThemePreference.valueOf(themeName)
         }
 
+    val appLanguage: Flow<String?> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.APP_LANGUAGE]
+        }
+
     val isOnboardingCompleted: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.IS_ONBOARDING_COMPLETED] ?: false
@@ -42,6 +50,16 @@ class UserPreferencesRepository(private val context: Context) {
     val isVinFeatureEnabled: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.IS_VIN_FEATURE_ENABLED] ?: true
+        }
+
+    val isDriveBackupEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.IS_DRIVE_BACKUP_ENABLED] ?: false
+        }
+
+    val lastBackupTime: Flow<Long?> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.LAST_BACKUP_TIME]
         }
 
     suspend fun setActiveVehicleId(vehicleId: Long) {
@@ -56,6 +74,16 @@ class UserPreferencesRepository(private val context: Context) {
         }
     }
 
+    suspend fun setAppLanguage(languageCode: String?) {
+        dataStore.edit { preferences ->
+            if (languageCode == null) {
+                preferences.remove(PreferencesKeys.APP_LANGUAGE)
+            } else {
+                preferences[PreferencesKeys.APP_LANGUAGE] = languageCode
+            }
+        }
+    }
+
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_ONBOARDING_COMPLETED] = completed
@@ -65,6 +93,18 @@ class UserPreferencesRepository(private val context: Context) {
     suspend fun setVinFeatureEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_VIN_FEATURE_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setDriveBackupEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_DRIVE_BACKUP_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setLastBackupTime(timestamp: Long) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LAST_BACKUP_TIME] = timestamp
         }
     }
 }

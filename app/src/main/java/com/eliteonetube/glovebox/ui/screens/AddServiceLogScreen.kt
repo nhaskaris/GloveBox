@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -28,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.ui.viewmodels.ServiceLogFormViewModel
 import java.io.File
 import java.time.Instant
@@ -97,11 +99,11 @@ fun AddServiceLogScreen(
     if (showImageSourceDialog) {
         AlertDialog(
             onDismissRequest = { showImageSourceDialog = false },
-            title = { Text("Select Image Source") },
+            title = { Text(stringResource(R.string.select_image_source)) },
             text = {
                 Column {
                     ListItem(
-                        headlineContent = { Text("Camera") },
+                        headlineContent = { Text(stringResource(R.string.camera)) },
                         leadingContent = { Icon(Icons.Rounded.CameraAlt, contentDescription = null) },
                         modifier = Modifier.clickable {
                             showImageSourceDialog = false
@@ -109,7 +111,7 @@ fun AddServiceLogScreen(
                         }
                     )
                     ListItem(
-                        headlineContent = { Text("Gallery") },
+                        headlineContent = { Text(stringResource(R.string.gallery)) },
                         leadingContent = { Icon(Icons.Rounded.PhotoLibrary, contentDescription = null) },
                         modifier = Modifier.clickable {
                             showImageSourceDialog = false
@@ -119,7 +121,7 @@ fun AddServiceLogScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showImageSourceDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showImageSourceDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -143,12 +145,12 @@ fun AddServiceLogScreen(
                     datePickerState.selectedDateMillis?.let { viewModel.onDateChange(it) }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         ) {
@@ -159,10 +161,10 @@ fun AddServiceLogScreen(
     Scaffold(
         topBar = {
             MediumTopAppBar(
-                title = { Text(if (recordId == 0L) "Add Service Log" else "Edit Service Log") },
+                title = { Text(if (recordId == 0L) stringResource(R.string.add_service_log) else stringResource(R.string.edit_service_log)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -176,13 +178,14 @@ fun AddServiceLogScreen(
                     }
                 },
                 icon = { Icon(Icons.Rounded.Save, contentDescription = null) },
-                text = { Text("Save Record") },
+                text = { Text(stringResource(R.string.save_record)) },
                 expanded = isReadyToSave,
                 containerColor = if (isReadyToSave) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = if (isReadyToSave) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
         }
-    ) { innerPadding ->
+    )
+{ innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -219,7 +222,7 @@ fun AddServiceLogScreen(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            "Add Receipt",
+                            stringResource(R.string.add_receipt),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -229,7 +232,7 @@ fun AddServiceLogScreen(
 
             // --- Service Type Selection (Multi-select Searchable Dropdown) ---
             Text(
-                text = "Services Performed",
+                text = stringResource(R.string.services_performed),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -244,13 +247,13 @@ fun AddServiceLogScreen(
                         serviceSearchQuery = it
                         dropdownExpanded = true
                     },
-                    label = { Text("Search Service Type") },
+                    label = { Text(stringResource(R.string.search_service_type)) },
                     leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                    placeholder = { Text("e.g. Oil Change, Brakes...") },
+                    placeholder = { Text(stringResource(R.string.service_type_placeholder)) },
                     shape = MaterialTheme.shapes.large,
                     colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                     singleLine = true
@@ -290,7 +293,7 @@ fun AddServiceLogScreen(
                             trailingIcon = {
                                 Icon(
                                     Icons.Rounded.Close,
-                                    contentDescription = "Remove",
+                                    contentDescription = stringResource(R.string.remove),
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
@@ -307,7 +310,7 @@ fun AddServiceLogScreen(
                 OutlinedTextField(
                     value = uiState.mileage,
                     onValueChange = viewModel::onMileageChange,
-                    label = { Text("Mileage (${uiState.unit})") },
+                    label = { Text(stringResource(R.string.mileage_label, uiState.unit)) },
                     leadingIcon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -317,7 +320,7 @@ fun AddServiceLogScreen(
                 OutlinedTextField(
                     value = uiState.cost,
                     onValueChange = viewModel::onCostChange,
-                    label = { Text("Cost (Optional)") },
+                    label = { Text(stringResource(R.string.cost_label)) },
                     leadingIcon = { Icon(Icons.Rounded.AttachMoney, contentDescription = null) },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -333,7 +336,7 @@ fun AddServiceLogScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                            Text("Schedule next service?", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.schedule_next_service), fontWeight = FontWeight.Bold)
                             Switch(checked = uiState.isSchedulingNext, onCheckedChange = viewModel::onAutoScheduleToggle)
                         }
                         
@@ -342,14 +345,14 @@ fun AddServiceLogScreen(
                                 OutlinedTextField(
                                     value = uiState.nextIntervalMileage,
                                     onValueChange = viewModel::onNextIntervalMileageChange,
-                                    label = { Text("In (${uiState.unit})") },
+                                    label = { Text(stringResource(R.string.next_service_distance, uiState.unit)) },
                                     modifier = Modifier.weight(1f),
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
                                 OutlinedTextField(
                                     value = uiState.nextIntervalMonths,
                                     onValueChange = viewModel::onNextIntervalMonthsChange,
-                                    label = { Text("Or (Months)") },
+                                    label = { Text(stringResource(R.string.next_service_months)) },
                                     modifier = Modifier.weight(1f),
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
@@ -365,7 +368,7 @@ fun AddServiceLogScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Service performed at a shop?", style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.performed_at_shop), style = MaterialTheme.typography.bodyLarge)
                 Switch(
                     checked = !uiState.isDiy,
                     onCheckedChange = { viewModel.onDiyToggle(!it) }
@@ -376,20 +379,20 @@ fun AddServiceLogScreen(
                 OutlinedTextField(
                     value = uiState.serviceLocation,
                     onValueChange = viewModel::onLocationChange,
-                    label = { Text("Shop Name (Optional)") },
+                    label = { Text(stringResource(R.string.shop_name)) },
                     leadingIcon = { Icon(Icons.Rounded.LocationOn, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g. Precision Tune Auto Care") },
+                    placeholder = { Text(stringResource(R.string.shop_name_placeholder)) },
                     shape = MaterialTheme.shapes.large
                 )
 
                 OutlinedTextField(
                     value = uiState.mechanicName,
                     onValueChange = viewModel::onMechanicNameChange,
-                    label = { Text("Mechanic Name (Optional)") },
+                    label = { Text(stringResource(R.string.mechanic_name)) },
                     leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Who performed the work?") },
+                    placeholder = { Text(stringResource(R.string.mechanic_placeholder)) },
                     shape = MaterialTheme.shapes.large
                 )
             } else {
@@ -399,7 +402,7 @@ fun AddServiceLogScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "DIY Service recorded. Location will be saved as 'DIY'.",
+                        text = stringResource(R.string.diy_service_info),
                         modifier = Modifier.padding(16.dp),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -414,7 +417,7 @@ fun AddServiceLogScreen(
                 OutlinedTextField(
                     value = uiState.laborHours,
                     onValueChange = viewModel::onLaborHoursChange,
-                    label = { Text("Labor Hours") },
+                    label = { Text(stringResource(R.string.labor_hours)) },
                     leadingIcon = { Icon(Icons.Rounded.Engineering, contentDescription = null) },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -424,10 +427,10 @@ fun AddServiceLogScreen(
                 OutlinedTextField(
                     value = uiState.partsUsed,
                     onValueChange = viewModel::onPartsUsedChange,
-                    label = { Text("Parts Used") },
+                    label = { Text(stringResource(R.string.parts_used)) },
                     leadingIcon = { Icon(Icons.Rounded.Inventory2, contentDescription = null) },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("Filter, Oil, etc.") },
+                    placeholder = { Text(stringResource(R.string.parts_placeholder)) },
                     shape = MaterialTheme.shapes.large
                 )
             }
@@ -435,7 +438,7 @@ fun AddServiceLogScreen(
             OutlinedTextField(
                 value = dateString,
                 onValueChange = {},
-                label = { Text("Date") },
+                label = { Text(stringResource(R.string.service_date)) },
                 leadingIcon = { Icon(Icons.Rounded.CalendarToday, contentDescription = null) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -455,7 +458,7 @@ fun AddServiceLogScreen(
             OutlinedTextField(
                 value = uiState.notes,
                 onValueChange = viewModel::onNotesChange,
-                label = { Text("Notes") },
+                label = { Text(stringResource(R.string.notes)) },
                 leadingIcon = { Icon(Icons.AutoMirrored.Rounded.Notes, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,

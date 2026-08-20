@@ -19,12 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.ui.viewmodels.DocumentFormViewModel
 import java.io.File
 import java.text.SimpleDateFormat
@@ -83,7 +85,7 @@ fun AddDocumentScreen(
                 TextButton(onClick = {
                     viewModel.onExpiryDateChange(datePickerState.selectedDateMillis)
                     showDatePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.ok)) }
             }
         ) {
             DatePicker(state = datePickerState)
@@ -93,11 +95,11 @@ fun AddDocumentScreen(
     if (showImageSourceDialog) {
         AlertDialog(
             onDismissRequest = { showImageSourceDialog = false },
-            title = { Text("Select Image Source") },
+            title = { Text(stringResource(R.string.select_image_source)) },
             text = {
                 Column {
                     ListItem(
-                        headlineContent = { Text("Camera") },
+                        headlineContent = { Text(stringResource(R.string.camera)) },
                         leadingContent = { Icon(Icons.Rounded.CameraAlt, contentDescription = null) },
                         modifier = Modifier.clickable {
                             showImageSourceDialog = false
@@ -105,7 +107,7 @@ fun AddDocumentScreen(
                         }
                     )
                     ListItem(
-                        headlineContent = { Text("Gallery") },
+                        headlineContent = { Text(stringResource(R.string.gallery)) },
                         leadingContent = { Icon(Icons.Rounded.PhotoLibrary, contentDescription = null) },
                         modifier = Modifier.clickable {
                             showImageSourceDialog = false
@@ -115,7 +117,7 @@ fun AddDocumentScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showImageSourceDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showImageSourceDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -129,10 +131,10 @@ fun AddDocumentScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Document") },
+                title = { Text(stringResource(R.string.add_document)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -145,10 +147,11 @@ fun AddDocumentScreen(
             ) {
                 Icon(Icons.Rounded.Save, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Save Document")
+                Text(stringResource(R.string.save_document))
             }
         }
-    ) { innerPadding ->
+    )
+{ innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -185,16 +188,45 @@ fun AddDocumentScreen(
                             modifier = Modifier.size(48.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Text("Scan or Upload Document", style = MaterialTheme.typography.labelLarge)
+                        Text(stringResource(R.string.scan_or_upload), style = MaterialTheme.typography.labelLarge)
                     }
+                }
+            }
+
+            if (uiState.photoUri != null) {
+                Button(
+                    onClick = viewModel::scanDocument,
+                    enabled = !uiState.isOcrLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(12.dp)
+                ) {
+                    if (uiState.isOcrLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(Icons.Rounded.DocumentScanner, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.auto_extract_expiry))
+                    }
+                }
+                
+                uiState.ocrResult?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (it.contains("Error", ignoreCase = true)) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    )
                 }
             }
 
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = viewModel::onNameChange,
-                label = { Text("Document Name") },
-                placeholder = { Text("e.g. 2024 Insurance") },
+                label = { Text(stringResource(R.string.document_name)) },
+                placeholder = { Text(stringResource(R.string.document_name_placeholder)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -206,7 +238,7 @@ fun AddDocumentScreen(
                     value = uiState.category,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Category") },
+                    label = { Text(stringResource(R.string.category)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
                     colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -234,9 +266,9 @@ fun AddDocumentScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Link to specific car", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.link_to_specific_car), style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        if (uiState.isUniversal) "Universal document (All cars)" else "Linked to selected car",
+                        if (uiState.isUniversal) stringResource(R.string.universal_document) else stringResource(R.string.linked_to_car),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -254,13 +286,13 @@ fun AddDocumentScreen(
                     onExpandedChange = { vehicleExpanded = it }
                 ) {
                     val selectedVehicle = vehicles.find { it.id == uiState.linkedVehicleId }
-                    val vehicleText = selectedVehicle?.let { "${it.year} ${it.make} ${it.model}" } ?: "Select Car"
+                    val vehicleText = selectedVehicle?.let { "${it.year} ${it.make} ${it.model}" } ?: stringResource(R.string.select_car)
                     
                     OutlinedTextField(
                         value = vehicleText,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Select Car") },
+                        label = { Text(stringResource(R.string.select_car)) },
                         leadingIcon = { Icon(Icons.Rounded.DirectionsCar, contentDescription = null) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = vehicleExpanded) },
                         modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
@@ -285,14 +317,14 @@ fun AddDocumentScreen(
 
             val expiryDateStr = uiState.expiryDate?.let {
                 SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(it))
-            } ?: "No expiry date set"
+            } ?: stringResource(R.string.no_expiry_date)
 
             OutlinedTextField(
                 value = expiryDateStr,
                 onValueChange = {},
                 readOnly = true,
                 enabled = false,
-                label = { Text("Expiry Date") },
+                label = { Text(stringResource(R.string.expiry_date)) },
                 leadingIcon = { Icon(Icons.Rounded.CalendarToday, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
                 colors = OutlinedTextFieldDefaults.colors(
@@ -304,7 +336,7 @@ fun AddDocumentScreen(
             )
             
             Text(
-                text = "We will notify you 30 days and 7 days before this date.",
+                text = stringResource(R.string.expiry_notification_info),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center

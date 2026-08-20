@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -27,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.ui.viewmodels.VehicleViewModel
 import com.eliteonetube.glovebox.ui.viewmodels.VinDecodingState
 import java.io.File
@@ -43,10 +45,12 @@ fun VehicleProfileContentPreview() {
             makes = listOf("Toyota", "Honda", "Ford"),
             availableModels = listOf("Camry", "Corolla", "RAV4"),
             vinState = VinDecodingState.Idle,
+            vinValidationErrorResId = null,
             isVinEnabled = true,
             onMakeSelected = {},
             onMakeQueryChange = {},
             onModelQueryChange = {},
+            onVinChange = { null },
             onDecodeVin = {},
             onResetVinState = {},
             onSaveVehicle = { _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
@@ -73,6 +77,7 @@ fun VehicleProfileScreen(
     val filteredMakes by viewModel.filteredMakes.collectAsStateWithLifecycle()
     val filteredModels by viewModel.filteredModels.collectAsStateWithLifecycle()
     val vinState by viewModel.vinDecodingState.collectAsStateWithLifecycle()
+    val vinValidationErrorResId by viewModel.vinValidationErrorResId.collectAsStateWithLifecycle()
     val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(LocalContext.current)
     val isVinEnabled by userPrefs.isVinFeatureEnabled.collectAsState(initial = true)
 
@@ -81,10 +86,12 @@ fun VehicleProfileScreen(
         makes = filteredMakes,
         availableModels = filteredModels,
         vinState = vinState,
+        vinValidationErrorResId = vinValidationErrorResId,
         isVinEnabled = isVinEnabled,
         onMakeSelected = viewModel::onMakeSelected,
         onMakeQueryChange = viewModel::updateMakeQuery,
         onModelQueryChange = viewModel::updateModelQuery,
+        onVinChange = viewModel::validateVin,
         onDecodeVin = viewModel::decodeVin,
         onResetVinState = viewModel::resetVinState,
         onSaveVehicle = { make, model, year, odometer, trim, vin, nickname, licensePlate, color, fuelType, unit, photoUri, onComplete ->
@@ -101,10 +108,12 @@ fun VehicleProfileContent(
     makes: List<String>,
     availableModels: List<String>,
     vinState: VinDecodingState,
+    vinValidationErrorResId: Int?,
     isVinEnabled: Boolean,
     onMakeSelected: (String) -> Unit,
     onMakeQueryChange: (String) -> Unit,
     onModelQueryChange: (String) -> Unit,
+    onVinChange: (String) -> Int?,
     onDecodeVin: (String) -> Unit,
     onResetVinState: () -> Unit,
     onSaveVehicle: (String, String, Int, Int, String?, String?, String?, String?, String?, String?, String, String?, () -> Unit) -> Unit,
@@ -129,6 +138,19 @@ fun VehicleProfileContent(
     var photoUri by remember { mutableStateOf<String?>(null) }
 
     var showImageSourceDialog by remember { mutableStateOf(false) }
+    var showVinScanner by remember { mutableStateOf(false) }
+
+    if (showVinScanner) {
+        VinScannerDialog(
+            onDismiss = { showVinScanner = false },
+            onVinScanned = { scannedVin ->
+                vin = scannedVin
+                onVinChange(scannedVin)
+                onDecodeVin(scannedVin)
+                showVinScanner = false
+            }
+        )
+    }
 
     // Image capture setup
     val tempUri = remember {
@@ -162,11 +184,11 @@ fun VehicleProfileContent(
     if (showImageSourceDialog) {
         AlertDialog(
             onDismissRequest = { showImageSourceDialog = false },
-            title = { Text("Select Image Source") },
+            title = { Text(stringResource(R.string.select_image_source)) },
             text = {
                 Column {
                     ListItem(
-                        headlineContent = { Text("Camera") },
+                        headlineContent = { Text(stringResource(R.string.camera)) },
                         leadingContent = { Icon(Icons.Rounded.CameraAlt, contentDescription = null) },
                         modifier = Modifier.clickable {
                             showImageSourceDialog = false
@@ -174,7 +196,7 @@ fun VehicleProfileContent(
                         }
                     )
                     ListItem(
-                        headlineContent = { Text("Gallery") },
+                        headlineContent = { Text(stringResource(R.string.gallery)) },
                         leadingContent = { Icon(Icons.Rounded.PhotoLibrary, contentDescription = null) },
                         modifier = Modifier.clickable {
                             showImageSourceDialog = false
@@ -184,7 +206,7 @@ fun VehicleProfileContent(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showImageSourceDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showImageSourceDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -227,12 +249,12 @@ fun VehicleProfileContent(
     Scaffold(
         topBar = {
             LargeTopAppBar(
-                title = { Text(if (vehicle?.id == 0L || vehicle == null) "Add to Garage" else "Edit Vehicle") },
+                title = { Text(if (vehicle?.id == 0L || vehicle == null) stringResource(R.string.add_to_garage) else stringResource(R.string.edit_vehicle)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 }
@@ -261,13 +283,14 @@ fun VehicleProfileContent(
                     }
                 },
                 icon = { Icon(Icons.Rounded.Save, contentDescription = null) },
-                text = { Text("Save Vehicle") },
+                text = { Text(stringResource(R.string.save_vehicle)) },
                 expanded = isFormValid,
                 containerColor = if (isFormValid) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = if (isFormValid) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
         }
-    ) { innerPadding ->
+    )
+{ innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -303,7 +326,7 @@ fun VehicleProfileContent(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            "Add Photo",
+                            stringResource(R.string.add_photo),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -312,47 +335,68 @@ fun VehicleProfileContent(
             }
 
             Text(
-                text = "Enter your vehicle details or use the VIN to auto-fill.",
+                text = stringResource(R.string.vin_auto_fill_description),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // --- VIN Input with Auto-Fill ---
             OutlinedTextField(
                 value = vin,
-                onValueChange = { vin = it.uppercase() },
-                label = { Text("VIN") },
+                onValueChange = { 
+                    vin = it.uppercase()
+                    onVinChange(vin)
+                },
+                label = { Text(stringResource(R.string.vin)) },
                 leadingIcon = { Icon(Icons.Rounded.Numbers, contentDescription = null) },
+                isError = vinValidationErrorResId != null || vinState is VinDecodingState.Error,
+                supportingText = {
+                    when {
+                        vinState is VinDecodingState.Error -> Text(stringResource(vinState.messageResId), color = MaterialTheme.colorScheme.error)
+                        vinValidationErrorResId != null -> Text(stringResource(vinValidationErrorResId), color = MaterialTheme.colorScheme.error)
+                    }
+                },
                 trailingIcon = {
-                    if (isVinEnabled) {
-                        if (vinState is VinDecodingState.Loading) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                        } else {
-                            IconButton(
-                                onClick = { onDecodeVin(vin) },
-                                enabled = vin.length >= 11
-                            ) {
-                                Icon(Icons.Rounded.AutoFixHigh, contentDescription = "Auto-fill from VIN")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (vin.length == 17 && vinValidationErrorResId == null && vinState !is VinDecodingState.Error) {
+                            Icon(
+                                Icons.Rounded.CheckCircle,
+                                contentDescription = stringResource(R.string.valid_vin),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        
+                        IconButton(onClick = { showVinScanner = true }) {
+                            Icon(Icons.Rounded.QrCodeScanner, contentDescription = stringResource(R.string.scan_vin))
+                        }
+
+                        if (isVinEnabled) {
+                            if (vinState is VinDecodingState.Loading) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            } else {
+                                IconButton(
+                                    onClick = { onDecodeVin(vin) },
+                                    enabled = vin.length >= 11
+                                ) {
+                                    Icon(Icons.Rounded.AutoFixHigh, contentDescription = stringResource(R.string.auto_fill_vin))
+                                }
                             }
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Vehicle Identification Number") },
+                placeholder = { Text(stringResource(R.string.vin)) },
                 shape = MaterialTheme.shapes.large,
-                supportingText = if (vinState is VinDecodingState.Error) {
-                    { Text(vinState.message, color = MaterialTheme.colorScheme.error) }
-                } else null
+                singleLine = true
             )
 
             // --- Nickname Input ---
             OutlinedTextField(
                 value = nickname,
                 onValueChange = { nickname = it },
-                label = { Text("Nickname (Optional)") },
+                label = { Text(stringResource(R.string.nickname_label)) },
                 leadingIcon = { Icon(Icons.Rounded.Face, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("e.g. My Daily Driver") },
+                placeholder = { Text(stringResource(R.string.nickname_placeholder)) },
                 shape = MaterialTheme.shapes.large
             )
 
@@ -360,7 +404,7 @@ fun VehicleProfileContent(
             OutlinedTextField(
                 value = year,
                 onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) year = it },
-                label = { Text("Year") },
+                label = { Text(stringResource(R.string.year)) },
                 leadingIcon = { Icon(Icons.Rounded.CalendarToday, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -381,13 +425,13 @@ fun VehicleProfileContent(
                         onMakeSelected(it)
                         makeExpanded = true
                     },
-                    label = { Text("Make *") },
+                    label = { Text(stringResource(R.string.make_required)) },
                     leadingIcon = { Icon(Icons.Rounded.DirectionsCar, contentDescription = null) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = makeExpanded) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                    placeholder = { Text("Search or select Make") },
+                    placeholder = { Text(stringResource(R.string.search_select_make)) },
                     shape = MaterialTheme.shapes.large,
                     colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                     singleLine = true,
@@ -428,13 +472,13 @@ fun VehicleProfileContent(
                         modelExpanded = true
                     },
                     enabled = make.isNotEmpty(),
-                    label = { Text("Model *") },
+                    label = { Text(stringResource(R.string.model_required)) },
                     leadingIcon = { Icon(Icons.Rounded.Numbers, contentDescription = null) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                    placeholder = { Text(if (make.isEmpty()) "Select Make first" else "Search or select Model") },
+                    placeholder = { Text(if (make.isEmpty()) stringResource(R.string.select_make_first) else stringResource(R.string.search_select_model)) },
                     shape = MaterialTheme.shapes.large,
                     colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                     singleLine = true,
@@ -460,7 +504,6 @@ fun VehicleProfileContent(
                 }
             }
 
-            // --- Odometer Input ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -468,7 +511,7 @@ fun VehicleProfileContent(
                 OutlinedTextField(
                     value = odometer,
                     onValueChange = { if (it.all { char -> char.isDigit() }) odometer = it },
-                    label = { Text("Current Odometer") },
+                    label = { Text(stringResource(R.string.current_odometer)) },
                     leadingIcon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -484,7 +527,7 @@ fun VehicleProfileContent(
                         value = odometerUnit,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Unit") },
+                        label = { Text(stringResource(R.string.unit)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
                         modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
                         shape = MaterialTheme.shapes.large,
@@ -522,17 +565,17 @@ fun VehicleProfileContent(
             OutlinedTextField(
                 value = trim,
                 onValueChange = { trim = it },
-                label = { Text("Trim / Variant") },
+                label = { Text(stringResource(R.string.trim_variant)) },
                 leadingIcon = { Icon(Icons.Rounded.Tune, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("e.g. Sport, EX-L") },
+                placeholder = { Text(stringResource(R.string.trim_placeholder)) },
                 shape = MaterialTheme.shapes.large
             )
 
             OutlinedTextField(
                 value = licensePlate,
                 onValueChange = { licensePlate = it.uppercase() },
-                label = { Text("License Plate") },
+                label = { Text(stringResource(R.string.license_plate)) },
                 leadingIcon = { Icon(Icons.Rounded.Badge, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large
@@ -541,7 +584,7 @@ fun VehicleProfileContent(
             OutlinedTextField(
                 value = color,
                 onValueChange = { color = it },
-                label = { Text("Color") },
+                label = { Text(stringResource(R.string.color)) },
                 leadingIcon = { Icon(Icons.Rounded.ColorLens, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large
@@ -554,13 +597,13 @@ fun VehicleProfileContent(
                 OutlinedTextField(
                     value = fuelType,
                     onValueChange = { fuelType = it },
-                    label = { Text("Fuel Type") },
+                    label = { Text(stringResource(R.string.fuel_type)) },
                     leadingIcon = { Icon(Icons.Rounded.LocalGasStation, contentDescription = null) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = fuelExpanded) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                    placeholder = { Text("Select or type Fuel Type") },
+                    placeholder = { Text(stringResource(R.string.fuel_type_placeholder)) },
                     shape = MaterialTheme.shapes.large,
                     colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                 )

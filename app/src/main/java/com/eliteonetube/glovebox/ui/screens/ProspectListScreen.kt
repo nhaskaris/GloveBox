@@ -9,10 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.data.entity.ProspectVehicle
 import com.eliteonetube.glovebox.ui.viewmodels.ProspectViewModel
 
@@ -34,17 +37,17 @@ fun ProspectListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Buying Guide") },
+                title = { Text(stringResource(R.string.buying_guide)) },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Rounded.Menu, contentDescription = "Open Drawer")
+                        Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.open_drawer))
                     }
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddProspect) {
-                Icon(Icons.Rounded.Add, contentDescription = "New Inquiry")
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_new_inquiry))
             }
         }
     ) { innerPadding ->
@@ -52,10 +55,10 @@ fun ProspectListScreen(
             Box(modifier = Modifier.padding(innerPadding).fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Icon(Icons.Rounded.Search, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                    Text("Looking for a new car?", style = MaterialTheme.typography.titleLarge)
-                    Text("Add a car you're interested in to start a checklist.", textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    Text(stringResource(R.string.looking_for_car), style = MaterialTheme.typography.titleLarge)
+                    Text(stringResource(R.string.buying_guide_description), textAlign = TextAlign.Center)
                     Button(onClick = onAddProspect) {
-                        Text("Add New Inquiry")
+                        Text(stringResource(R.string.add_new_inquiry))
                     }
                 }
             }

@@ -13,11 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.data.entity.VehicleDocument
 import com.eliteonetube.glovebox.ui.viewmodels.DocumentsViewModel
 
@@ -47,7 +49,14 @@ fun DigitalGloveboxScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (vehicle != null) "Glovebox: ${vehicle?.nickname ?: vehicle?.model}" else "Digital Glovebox") },
+                title = { 
+                    val title = if (vehicle != null) {
+                        stringResource(R.string.glovebox_title, vehicle?.nickname ?: vehicle?.model ?: "")
+                    } else {
+                        stringResource(R.string.digital_glovebox)
+                    }
+                    Text(title)
+                },
                 navigationIcon = {
                     if (onOpenDrawer != null) {
                         IconButton(onClick = onOpenDrawer) {
@@ -70,7 +79,7 @@ fun DigitalGloveboxScreen(
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No documents stored. Tap + to scan your insurance or registration.")
+                Text(stringResource(R.string.no_documents_stored))
             }
         } else {
             LazyVerticalGrid(

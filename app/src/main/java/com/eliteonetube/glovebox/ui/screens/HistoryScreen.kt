@@ -2,6 +2,8 @@ package com.eliteonetube.glovebox.ui.screens
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -13,12 +15,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.data.entity.FuelLog
 import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import com.eliteonetube.glovebox.ui.theme.GloveboxTheme
@@ -139,7 +143,7 @@ fun HistoryScreen(
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
-                        context.startActivity(Intent.createChooser(intent, "Share History"))
+                        context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_history)))
                     }
                 }
             }
@@ -160,45 +164,48 @@ fun ExportOptionsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("PDF Export Options") },
+        title = { Text(stringResource(R.string.pdf_export_options)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Select what to include in the report:", style = MaterialTheme.typography.bodyMedium)
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(stringResource(R.string.select_include_report), style = MaterialTheme.typography.bodyMedium)
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = includeCosts, onCheckedChange = { includeCosts = it })
-                    Text("Include Costs & Financial Summary")
+                    Text(stringResource(R.string.include_costs))
                 }
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = includeShop, onCheckedChange = { includeShop = it })
-                    Text("Include Shop/Station Locations")
+                    Text(stringResource(R.string.include_shop))
                 }
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = includeMechanic, onCheckedChange = { includeMechanic = it })
-                    Text("Include Mechanic Names")
+                    Text(stringResource(R.string.include_mechanic))
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = includeFuel, onCheckedChange = { includeFuel = it })
-                    Text("Include Fuel History")
+                    Text(stringResource(R.string.include_fuel))
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = includeSummary, onCheckedChange = { includeSummary = it })
-                    Text("Include Summary Section")
+                    Text(stringResource(R.string.include_summary))
                 }
             }
         },
         confirmButton = {
             Button(onClick = { onExport(includeCosts, includeShop, includeMechanic, includeFuel, includeSummary) }) {
-                Text("Generate PDF")
+                Text(stringResource(R.string.generate_pdf))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -227,18 +234,18 @@ fun HistoryContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("History") },
+                title = { Text(stringResource(R.string.history)) },
                 navigationIcon = {
                     if (onOpenDrawer != null) {
                         IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Rounded.Menu, contentDescription = "Open Drawer")
+                            Icon(Icons.Rounded.Menu, contentDescription = null)
                         }
                     }
                 },
                 actions = {
                     if (items.isNotEmpty()) {
                         IconButton(onClick = onExportPdf) {
-                            Icon(Icons.Rounded.PictureAsPdf, contentDescription = "Export PDF")
+                            Icon(Icons.Rounded.PictureAsPdf, contentDescription = null)
                         }
                     }
                 }
@@ -258,7 +265,7 @@ fun HistoryContent(
                         Row(modifier = Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Rounded.LocalGasStation, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Fuel")
+                            Text(stringResource(R.string.fuel_refill))
                         }
                     }
                     SmallFloatingActionButton(
@@ -272,7 +279,7 @@ fun HistoryContent(
                         Row(modifier = Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Rounded.Build, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Service")
+                            Text(stringResource(R.string.service_record))
                         }
                     }
                 }
@@ -318,7 +325,7 @@ fun HistoryContent(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No history yet.\nTap + to add service or fuel logs.",
+                        text = stringResource(R.string.no_history_yet),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -360,8 +367,8 @@ fun HistoryContent(
     if (recordPendingDelete != null) {
         AlertDialog(
             onDismissRequest = { recordPendingDelete = null },
-            title = { Text("Delete this entry?") },
-            text = { Text("This will permanently remove this record. This can't be undone.") },
+            title = { Text(stringResource(R.string.delete_entry_title)) },
+            text = { Text(stringResource(R.string.delete_entry_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -371,12 +378,12 @@ fun HistoryContent(
                         recordPendingDelete = null
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { recordPendingDelete = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -461,8 +468,8 @@ fun FuelLogHistoryItem(
             )
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                IconButton(onClick = onEdit) { Icon(Icons.Rounded.Edit, contentDescription = "Edit") }
-                IconButton(onClick = onDelete) { Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error) }
+                IconButton(onClick = onEdit) { Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit)) }
+                IconButton(onClick = onDelete) { Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error) }
             }
         }
     }
@@ -605,7 +612,7 @@ fun ServiceRecordItem(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Rounded.Inventory2, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
-                        text = "Parts: ${record.partsUsed}",
+                        text = stringResource(R.string.parts_label, record.partsUsed),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -635,7 +642,7 @@ fun ServiceRecordItem(
                 TextButton(onClick = onEdit) {
                     Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Edit")
+                    Text(stringResource(R.string.edit))
                 }
                 Spacer(Modifier.width(8.dp))
                 FilledTonalIconButton(
@@ -645,7 +652,7 @@ fun ServiceRecordItem(
                         contentColor = MaterialTheme.colorScheme.onErrorContainer
                     )
                 ) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete")
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete))
                 }
             }
         }

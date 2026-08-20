@@ -14,5 +14,6 @@ data class ProspectVehicle(
     val sellerNotes: String = "",
     val location: String = "",
     val checklistJson: String = "{}", // Stores checked item keys as a JSON map/set
+    val photoUri: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )
