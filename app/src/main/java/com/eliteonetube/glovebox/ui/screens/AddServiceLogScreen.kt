@@ -122,10 +122,8 @@ fun AddServiceLogScreen(
         )
     }
 
-    LaunchedEffect(recordId) {
-        if (recordId != 0L) {
-            viewModel.loadRecord(recordId)
-        }
+    LaunchedEffect(vehicleId, recordId) {
+        viewModel.loadData(vehicleId, recordId)
     }
 
     val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
@@ -307,10 +305,9 @@ fun AddServiceLogScreen(
                 OutlinedTextField(
                     value = uiState.mileage,
                     onValueChange = viewModel::onMileageChange,
-                    label = { Text("Mileage") },
+                    label = { Text("Mileage (${uiState.unit})") },
                     leadingIcon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
                     modifier = Modifier.weight(1f),
-                    suffix = { Text("km") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = MaterialTheme.shapes.large
                 )

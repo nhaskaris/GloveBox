@@ -12,30 +12,38 @@ import kotlinx.coroutines.launch
 import java.util.Date
 
 class ServiceLogFormViewModel(application: Application) : AndroidViewModel(application) {
-    private val serviceRecordDao = GloveboxDatabase.getDatabase(application).serviceRecordDao()
+    private val db = GloveboxDatabase.getDatabase(application)
+    private val serviceRecordDao = db.serviceRecordDao()
+    private val vehicleDao = db.vehicleDao()
 
     private val _uiState = MutableStateFlow<ServiceLogFormState>(ServiceLogFormState())
     val uiState: StateFlow<ServiceLogFormState> = _uiState.asStateFlow()
 
-    fun loadRecord(recordId: Long) {
-        if (recordId == 0L) return
+    fun loadData(vehicleId: Long, recordId: Long) {
         viewModelScope.launch {
-            val record = serviceRecordDao.getServiceRecordById(recordId)
-            record?.let {
-                _uiState.value = ServiceLogFormState(
-                    recordId = it.id,
-                    date = it.date,
-                    mileage = it.mileage.toString(),
-                    serviceTypes = it.serviceType.split(", ").filter { type -> type.isNotBlank() },
-                    cost = it.cost?.toString() ?: "",
-                    notes = it.notes,
-                    receiptPhotoUri = it.receiptPhotoUri,
-                    serviceLocation = it.serviceLocation ?: "",
-                    laborHours = it.laborHours?.toString() ?: "",
-                    partsUsed = it.partsUsed ?: "",
-                    isDiy = it.isDiy,
-                    mechanicName = it.mechanicName ?: ""
-                )
+            val vehicle = vehicleDao.getVehicleById(vehicleId)
+            val unit = vehicle?.odometerUnit ?: "km"
+
+            if (recordId != 0L) {
+                serviceRecordDao.getServiceRecordById(recordId)?.let { record ->
+                    _uiState.value = ServiceLogFormState(
+                        recordId = record.id,
+                        date = record.date,
+                        mileage = record.mileage.toString(),
+                        serviceTypes = record.serviceType.split(", ").filter { it.isNotBlank() },
+                        cost = record.cost?.toString() ?: "",
+                        notes = record.notes,
+                        receiptPhotoUri = record.receiptPhotoUri,
+                        serviceLocation = record.serviceLocation ?: "",
+                        laborHours = record.laborHours?.toString() ?: "",
+                        partsUsed = record.partsUsed ?: "",
+                        isDiy = record.isDiy,
+                        mechanicName = record.mechanicName ?: "",
+                        unit = unit
+                    )
+                }
+            } else {
+                _uiState.value = _uiState.value.copy(unit = unit)
             }
         }
     }
@@ -132,5 +140,6 @@ data class ServiceLogFormState(
     val laborHours: String = "",
     val partsUsed: String = "",
     val isDiy: Boolean = false,
-    val mechanicName: String = ""
+    val mechanicName: String = "",
+    val unit: String = "km"
 )

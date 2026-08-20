@@ -11,24 +11,33 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class FuelLogFormViewModel(application: Application) : AndroidViewModel(application) {
-    private val fuelLogDao = GloveboxDatabase.getDatabase(application).fuelLogDao()
+    private val db = GloveboxDatabase.getDatabase(application)
+    private val fuelLogDao = db.fuelLogDao()
+    private val vehicleDao = db.vehicleDao()
 
     private val _uiState = MutableStateFlow(FuelLogFormState())
     val uiState: StateFlow<FuelLogFormState> = _uiState.asStateFlow()
 
-    fun loadLog(logId: Long) {
-        if (logId == 0L) return
+    fun loadData(vehicleId: Long, logId: Long) {
         viewModelScope.launch {
-            fuelLogDao.getFuelLogById(logId)?.let { log ->
-                _uiState.value = FuelLogFormState(
-                    logId = log.id,
-                    date = log.date,
-                    odometer = log.odometer.toString(),
-                    amount = log.amount.toString(),
-                    totalCost = log.totalCost.toString(),
-                    location = log.location ?: "",
-                    isFullTank = log.isFullTank
-                )
+            val vehicle = vehicleDao.getVehicleById(vehicleId)
+            val unit = vehicle?.odometerUnit ?: "km"
+            
+            if (logId != 0L) {
+                fuelLogDao.getFuelLogById(logId)?.let { log ->
+                    _uiState.value = FuelLogFormState(
+                        logId = log.id,
+                        date = log.date,
+                        odometer = log.odometer.toString(),
+                        amount = log.amount.toString(),
+                        totalCost = log.totalCost.toString(),
+                        location = log.location ?: "",
+                        isFullTank = log.isFullTank,
+                        unit = unit
+                    )
+                }
+            } else {
+                _uiState.value = _uiState.value.copy(unit = unit)
             }
         }
     }
@@ -67,5 +76,6 @@ data class FuelLogFormState(
     val amount: String = "",
     val totalCost: String = "",
     val location: String = "",
-    val isFullTank: Boolean = true
+    val isFullTank: Boolean = true,
+    val unit: String = "km"
 )

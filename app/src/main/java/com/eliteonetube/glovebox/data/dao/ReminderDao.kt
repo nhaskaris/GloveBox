@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ReminderDao {
+    @Query("SELECT * FROM reminders")
+    fun getAllReminders(): Flow<List<Reminder>>
+
     @Query("SELECT * FROM reminders WHERE vehicleId = :vehicleId")
     fun getRemindersForVehicle(vehicleId: Long): Flow<List<Reminder>>
 

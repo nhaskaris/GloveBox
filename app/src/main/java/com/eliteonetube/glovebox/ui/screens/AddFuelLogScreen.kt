@@ -30,8 +30,8 @@ fun AddFuelLogScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(logId) {
-        if (logId != 0L) viewModel.loadLog(logId)
+    LaunchedEffect(vehicleId, logId) {
+        viewModel.loadData(vehicleId, logId)
     }
 
     Scaffold(
@@ -66,17 +66,18 @@ fun AddFuelLogScreen(
             OutlinedTextField(
                 value = uiState.odometer,
                 onValueChange = viewModel::onOdometerChange,
-                label = { Text("Odometer") },
+                label = { Text("Odometer (${uiState.unit})") },
                 leadingIcon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                val volumeLabel = if (uiState.unit == "mi") "Gallons" else "Liters"
                 OutlinedTextField(
                     value = uiState.amount,
                     onValueChange = viewModel::onAmountChange,
-                    label = { Text("Amount (L)") },
+                    label = { Text("Amount ($volumeLabel)") },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
