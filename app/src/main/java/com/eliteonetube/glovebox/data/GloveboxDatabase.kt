@@ -1,14 +1,14 @@
 package com.eliteonetube.glovebox.data
 
+import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.eliteonetube.glovebox.data.dao.*
 import com.eliteonetube.glovebox.data.entity.*
-import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 import org.json.JSONArray
 
 class VehicleDatabaseCallback(
@@ -17,9 +17,22 @@ class VehicleDatabaseCallback(
 
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
+        populateCatalog(db)
+    }
 
+    override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
+        super.onDestructiveMigration(db)
+        populateCatalog(db)
+    }
+
+    private fun populateCatalog(db: SupportSQLiteDatabase) {
         // Read JSON from assets
-        val jsonString = context.assets.open("vehicles.json").bufferedReader().use { it.readText() }
+        val jsonString = try {
+            context.assets.open("vehicles.json").bufferedReader().use { it.readText() }
+        } catch (e: Exception) {
+            null
+        } ?: return
+        
         val jsonArray = JSONArray(jsonString)
 
         db.beginTransaction()
