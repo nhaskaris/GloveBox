@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -39,6 +40,7 @@ import java.util.Locale
 fun AddServiceLogScreen(
     vehicleId: Long,
     recordId: Long = 0L,
+    prefilledType: String? = null,
     onNavigateBack: () -> Unit,
     viewModel: ServiceLogFormViewModel = viewModel()
 ) {
@@ -122,8 +124,8 @@ fun AddServiceLogScreen(
         )
     }
 
-    LaunchedEffect(vehicleId, recordId) {
-        viewModel.loadData(vehicleId, recordId)
+    LaunchedEffect(vehicleId, recordId, prefilledType) {
+        viewModel.loadData(vehicleId, recordId, prefilledType)
     }
 
     val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
@@ -321,6 +323,40 @@ fun AddServiceLogScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = MaterialTheme.shapes.large
                 )
+            }
+
+            // --- Auto-Reschedule Section ---
+            if (recordId == 0L) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                            Text("Schedule next service?", fontWeight = FontWeight.Bold)
+                            Switch(checked = uiState.isSchedulingNext, onCheckedChange = viewModel::onAutoScheduleToggle)
+                        }
+                        
+                        if (uiState.isSchedulingNext) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                OutlinedTextField(
+                                    value = uiState.nextIntervalMileage,
+                                    onValueChange = viewModel::onNextIntervalMileageChange,
+                                    label = { Text("In (${uiState.unit})") },
+                                    modifier = Modifier.weight(1f),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                )
+                                OutlinedTextField(
+                                    value = uiState.nextIntervalMonths,
+                                    onValueChange = viewModel::onNextIntervalMonthsChange,
+                                    label = { Text("Or (Months)") },
+                                    modifier = Modifier.weight(1f),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             // --- DIY vs Shop Toggle ---

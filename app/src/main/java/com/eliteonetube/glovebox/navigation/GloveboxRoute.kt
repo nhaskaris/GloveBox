@@ -1,8 +1,10 @@
 package com.eliteonetube.glovebox.navigation
 
 import kotlinx.serialization.Serializable
+import androidx.navigation3.runtime.NavKey
 
-sealed interface GloveboxRoute {
+@Serializable
+sealed interface GloveboxRoute : NavKey {
     @Serializable
     data object Onboarding : GloveboxRoute
 
@@ -16,7 +18,11 @@ sealed interface GloveboxRoute {
     data class History(val vehicleId: Long) : GloveboxRoute
 
     @Serializable
-    data class AddServiceLog(val vehicleId: Long, val recordId: Long = 0L) : GloveboxRoute
+    data class AddServiceLog(
+        val vehicleId: Long, 
+        val recordId: Long = 0L, 
+        val prefilledType: String? = null
+    ) : GloveboxRoute
 
     @Serializable
     data class Reminders(val vehicleId: Long) : GloveboxRoute
@@ -32,6 +38,9 @@ sealed interface GloveboxRoute {
 
     @Serializable
     data class AddDocument(val vehicleId: Long, val docId: Long = 0L) : GloveboxRoute
+
+    @Serializable
+    data object BuyChecklist : GloveboxRoute
 
     @Serializable
     data object Settings : GloveboxRoute

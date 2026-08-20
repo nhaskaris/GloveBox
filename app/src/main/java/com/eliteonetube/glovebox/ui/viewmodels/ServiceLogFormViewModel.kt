@@ -4,22 +4,25 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eliteonetube.glovebox.data.GloveboxDatabase
+import com.eliteonetube.glovebox.data.entity.Reminder
 import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import java.util.Date
 
 class ServiceLogFormViewModel(application: Application) : AndroidViewModel(application) {
     private val db = GloveboxDatabase.getDatabase(application)
     private val serviceRecordDao = db.serviceRecordDao()
     private val vehicleDao = db.vehicleDao()
+    private val reminderDao = db.reminderDao()
 
     private val _uiState = MutableStateFlow<ServiceLogFormState>(ServiceLogFormState())
     val uiState: StateFlow<ServiceLogFormState> = _uiState.asStateFlow()
 
-    fun loadData(vehicleId: Long, recordId: Long) {
+    fun loadData(vehicleId: Long, recordId: Long, prefilledType: String? = null) {
         viewModelScope.launch {
             val vehicle = vehicleDao.getVehicleById(vehicleId)
             val unit = vehicle?.odometerUnit ?: "km"
@@ -43,7 +46,10 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
                     )
                 }
             } else {
-                _uiState.value = _uiState.value.copy(unit = unit)
+                _uiState.value = _uiState.value.copy(
+                    unit = unit,
+                    serviceTypes = if (prefilledType != null) listOf(prefilledType) else emptyList()
+                )
             }
         }
     }
@@ -98,6 +104,18 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
         _uiState.value = _uiState.value.copy(mechanicName = name)
     }
 
+    fun onAutoScheduleToggle(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(isSchedulingNext = enabled)
+    }
+
+    fun onNextIntervalMileageChange(value: String) {
+        _uiState.value = _uiState.value.copy(nextIntervalMileage = value)
+    }
+
+    fun onNextIntervalMonthsChange(value: String) {
+        _uiState.value = _uiState.value.copy(nextIntervalMonths = value)
+    }
+
     fun saveRecord(vehicleId: Long, onResult: () -> Unit) {
         val state = _uiState.value
         val record = ServiceRecord(
@@ -120,6 +138,31 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch {
             if (record.id == 0L) {
                 serviceRecordDao.insertServiceRecord(record)
+                
+                // Auto-Reschedule logic
+                if (state.isSchedulingNext && state.serviceTypes.isNotEmpty()) {
+                    val currentMileage = record.mileage
+                    val intervalMileage = state.nextIntervalMileage.toIntOrNull()
+                    val intervalMonths = state.nextIntervalMonths.toIntOrNull()
+                    
+                    val targetMileage = intervalMileage?.let { currentMileage + it }
+                    val targetDate = intervalMonths?.let {
+                        val cal = Calendar.getInstance()
+                        cal.timeInMillis = record.date
+                        cal.add(Calendar.MONTH, it)
+                        cal.timeInMillis
+                    }
+                    
+                    if (targetMileage != null || targetDate != null) {
+                        val reminder = Reminder(
+                            vehicleId = vehicleId,
+                            description = "Next ${state.serviceTypes.first()}",
+                            targetMileage = targetMileage,
+                            targetDate = targetDate
+                        )
+                        reminderDao.insertReminder(reminder)
+                    }
+                }
             } else {
                 serviceRecordDao.updateServiceRecord(record)
             }
@@ -141,5 +184,8 @@ data class ServiceLogFormState(
     val partsUsed: String = "",
     val isDiy: Boolean = false,
     val mechanicName: String = "",
-    val unit: String = "km"
+    val unit: String = "km",
+    val isSchedulingNext: Boolean = false,
+    val nextIntervalMileage: String = "10000",
+    val nextIntervalMonths: String = "6"
 )

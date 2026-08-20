@@ -5,14 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.RadioButtonUnchecked
-import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,7 +37,8 @@ fun RemindersScreenPreview() {
             odometerUnit = "km",
             onToggleCompletion = {},
             onDelete = {},
-            onAddReminder = { _, _, _ -> }
+            onAddReminder = { _, _, _ -> },
+            onLogService = {}
         )
     }
 }
@@ -53,6 +47,7 @@ fun RemindersScreenPreview() {
 @Composable
 fun RemindersScreen(
     vehicleId: Long,
+    onLogService: (String) -> Unit,
     onOpenDrawer: (() -> Unit)? = null,
     viewModel: RemindersViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
         override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
@@ -72,6 +67,7 @@ fun RemindersScreen(
         onToggleCompletion = { viewModel.toggleReminderCompletion(it) },
         onDelete = { viewModel.deleteReminder(it) },
         onAddReminder = { desc, mileage, date -> viewModel.addReminder(desc, mileage, date) },
+        onLogService = onLogService,
         onOpenDrawer = onOpenDrawer
     )
 }
@@ -85,6 +81,7 @@ fun RemindersContent(
     onToggleCompletion: (Reminder) -> Unit,
     onDelete: (Reminder) -> Unit,
     onAddReminder: (String, Int?, Long?) -> Unit,
+    onLogService: (String) -> Unit,
     onOpenDrawer: (() -> Unit)? = null
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
@@ -142,7 +139,11 @@ fun RemindersContent(
                         currentOdometer = currentOdometer,
                         odometerUnit = odometerUnit,
                         onToggleCompletion = { onToggleCompletion(reminder) },
-                        onDelete = { onDelete(reminder) }
+                        onDelete = { onDelete(reminder) },
+                        onLogService = { 
+                            onToggleCompletion(reminder)
+                            onLogService(reminder.description)
+                        }
                     )
                 }
             }
@@ -167,7 +168,8 @@ fun ReminderItem(
     currentOdometer: Int,
     odometerUnit: String,
     onToggleCompletion: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onLogService: () -> Unit
 ) {
     val isDue = remember(reminder, currentOdometer) {
         val mileageDue = reminder.targetMileage?.let { it <= currentOdometer } ?: false
@@ -184,84 +186,92 @@ fun ReminderItem(
         ),
         shape = MaterialTheme.shapes.large
     ) {
-        Row(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            IconButton(
-                onClick = onToggleCompletion,
-                modifier = Modifier.size(48.dp)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(
-                    imageVector = if (reminder.isCompleted) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
-                    contentDescription = "Complete",
-                    tint = if (reminder.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
+                IconButton(
+                    onClick = onToggleCompletion,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = if (reminder.isCompleted) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
+                        contentDescription = "Complete",
+                        tint = if (reminder.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
 
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = reminder.description,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    textDecoration = if (reminder.isCompleted) androidx.compose.ui.text.style.TextDecoration.LineThrough else null,
-                    color = if (reminder.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
-                )
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = reminder.description,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textDecoration = if (reminder.isCompleted) androidx.compose.ui.text.style.TextDecoration.LineThrough else null,
+                        color = if (reminder.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
+                    )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (reminder.targetMileage != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Icon(Icons.Rounded.Speed, contentDescription = null, modifier = Modifier.size(14.dp))
-                            Text(
-                                text = "${reminder.targetMileage} $odometerUnit",
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (reminder.targetMileage != null) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.Rounded.Speed, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Text(
+                                    text = "${reminder.targetMileage} $odometerUnit",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+
+                        if (reminder.targetDate != null) {
+                            val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
+                            val dateString = Instant.ofEpochMilli(reminder.targetDate)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                                .format(dateFormatter)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.Rounded.CalendarMonth, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Text(
+                                    text = dateString,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
                         }
                     }
 
-                    if (reminder.targetDate != null) {
-                        val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
-                        val dateString = Instant.ofEpochMilli(reminder.targetDate)
-                            .atZone(ZoneId.systemDefault())
-                            .toLocalDate()
-                            .format(dateFormatter)
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Icon(Icons.Rounded.CalendarMonth, contentDescription = null, modifier = Modifier.size(14.dp))
+                    if (isDue) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.error,
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
                             Text(
-                                text = dateString,
-                                style = MaterialTheme.typography.bodySmall
+                                text = " DUE NOW ",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onError,
+                                fontWeight = FontWeight.ExtraBold
                             )
                         }
                     }
                 }
 
-                if (isDue) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.error,
-                        shape = MaterialTheme.shapes.extraSmall
-                    ) {
-                        Text(
-                            text = " DUE NOW ",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onError,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    }
+                IconButton(
+                    onClick = onDelete
+                ) {
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
                 }
             }
-
-            FilledTonalIconButton(
-                onClick = onDelete,
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Icon(Icons.Rounded.Delete, contentDescription = "Delete")
+            
+            if (isDue) {
+                Button(
+                    onClick = onLogService,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Icon(Icons.Rounded.Build, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Log this Service now")
+                }
             }
         }
     }
