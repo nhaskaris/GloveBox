@@ -55,6 +55,8 @@ import com.eliteonetube.glovebox.ui.theme.GloveboxTheme
 import com.eliteonetube.glovebox.ui.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
 import java.util.Locale
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -165,18 +167,6 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
             }
         ),
         if (hasVehicles) GloveboxNavItem(
-            label = stringResource(R.string.nav_history),
-            icon = Icons.Rounded.History,
-            route = GloveboxRoute.History(effectiveVehicleId),
-            onClick = {
-                if (effectiveVehicleId != 0L) {
-                    scope.launch { drawerState.close() }
-                    backStack.clear()
-                    backStack.add(GloveboxRoute.History(effectiveVehicleId))
-                }
-            }
-        ) else null,
-        if (hasVehicles) GloveboxNavItem(
             label = stringResource(R.string.nav_reminders),
             icon = Icons.Rounded.Notifications,
             route = GloveboxRoute.Reminders(effectiveVehicleId),
@@ -248,7 +238,11 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
             color = MaterialTheme.colorScheme.background
         ) {
             NavDisplay(
-                backStack = backStack
+                backStack = backStack,
+                entryDecorators = listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator()
+                )
             ) { key ->
                 when (key) {
                     is GloveboxRoute.Onboarding -> NavEntry(key) {
