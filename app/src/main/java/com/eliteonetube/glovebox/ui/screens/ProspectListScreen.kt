@@ -1,5 +1,6 @@
 package com.eliteonetube.glovebox.ui.screens
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,6 +25,7 @@ import com.eliteonetube.glovebox.ui.viewmodels.ProspectViewModel
 fun ProspectListScreen(
     onAddProspect: () -> Unit,
     onViewProspect: (Long) -> Unit,
+    onCompareProspects: (List<Long>) -> Unit,
     onOpenDrawer: () -> Unit,
     viewModel: ProspectViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
         override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
@@ -33,21 +35,38 @@ fun ProspectListScreen(
     })
 ) {
     val prospects by viewModel.allProspects.collectAsStateWithLifecycle()
+    var selectedIds by remember { mutableStateOf(setOf<Long>()) }
+    val isSelectionMode = selectedIds.isNotEmpty()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.buying_guide)) },
                 navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.open_drawer))
+                    if (isSelectionMode) {
+                        IconButton(onClick = { selectedIds = emptySet() }) {
+                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.close))
+                        }
+                    } else {
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.open_drawer))
+                        }
+                    }
+                },
+                actions = {
+                    if (selectedIds.size >= 2) {
+                        TextButton(onClick = { onCompareProspects(selectedIds.toList()) }) {
+                            Text(stringResource(R.string.compare))
+                        }
                     }
                 }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddProspect) {
-                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_new_inquiry))
+            if (!isSelectionMode) {
+                FloatingActionButton(onClick = onAddProspect) {
+                    Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_new_inquiry))
+                }
             }
         }
     ) { innerPadding ->
@@ -69,9 +88,22 @@ fun ProspectListScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(prospects) { prospect ->
+                    val isSelected = prospect.id in selectedIds
                     ProspectItem(
                         prospect = prospect,
-                        onClick = { onViewProspect(prospect.id) },
+                        isSelected = isSelected,
+                        onClick = {
+                            if (isSelectionMode) {
+                                selectedIds = if (isSelected) selectedIds - prospect.id else selectedIds + prospect.id
+                            } else {
+                                onViewProspect(prospect.id)
+                            }
+                        },
+                        onLongClick = {
+                            if (!isSelectionMode) {
+                                selectedIds = setOf(prospect.id)
+                            }
+                        },
                         onDelete = { viewModel.deleteProspect(prospect) }
                     )
                 }
@@ -80,15 +112,23 @@ fun ProspectListScreen(
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun ProspectItem(
     prospect: ProspectVehicle,
+    isSelected: Boolean,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        colors = if (isSelected) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer) else CardDefaults.cardColors()
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -98,7 +138,7 @@ fun ProspectItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text("${prospect.year} ${prospect.make} ${prospect.model}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 if (prospect.askedPrice != null) {
-                    Text("$${"%,.0f".format(prospect.askedPrice)}", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text("$${"%,.0f".format(prospect.askedPrice)}", color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
                 if (prospect.location.isNotBlank()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -108,8 +148,12 @@ fun ProspectItem(
                     }
                 }
             }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
+            if (!isSelected) {
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
+                }
+            } else {
+                Icon(Icons.Rounded.CheckCircle, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(8.dp))
             }
         }
     }

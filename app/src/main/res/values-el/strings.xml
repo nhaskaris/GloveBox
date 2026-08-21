@@ -142,6 +142,12 @@
     <string name="looking_for_car">Ψάχνετε για νέο αυτοκίνητο;</string>
     <string name="buying_guide_description">Προσθέστε ένα αυτοκίνητο που σας ενδιαφέρει για να ξεκινήσετε μια λίστα ελέγχου.</string>
     <string name="add_new_inquiry">Προσθήκη Νέας Έρευνας</string>
+    <string name="compare">Σύγκριση</string>
+    <string name="comparison">Σύγκριση</string>
+    <string name="no_prospects_to_compare">Δεν επιλέχθηκαν οχήματα για σύγκριση.</string>
+    <string name="price">Τιμή</string>
+    <string name="location">Τοποθεσία</string>
+    <string name="inspection_readiness">Ετοιμότητα Ελέγχου</string>
 
     <!-- Reminders -->
     <string name="reminders">Υπενθυμίσεις</string>

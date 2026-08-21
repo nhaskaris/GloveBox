@@ -367,7 +367,15 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                         ProspectListScreen(
                             onAddProspect = { backStack.add(GloveboxRoute.ProspectForm()) },
                             onViewProspect = { id -> backStack.add(GloveboxRoute.ProspectForm(id)) },
+                            onCompareProspects = { ids -> backStack.add(GloveboxRoute.ProspectComparison(ids)) },
                             onOpenDrawer = onOpenDrawer
+                        )
+                    }
+
+                    is GloveboxRoute.ProspectComparison -> NavEntry(key) {
+                        ProspectComparisonScreen(
+                            prospectIds = key.prospectIds,
+                            onNavigateBack = onNavigateBack
                         )
                     }
 
@@ -469,7 +477,7 @@ data class GloveboxNavItem(
             is GloveboxRoute.Reminders -> currentRoute is GloveboxRoute.Reminders
             is GloveboxRoute.Insights -> currentRoute is GloveboxRoute.Insights
             is GloveboxRoute.DigitalGlovebox -> currentRoute is GloveboxRoute.DigitalGlovebox || currentRoute is GloveboxRoute.AddDocument
-            is GloveboxRoute.BuyChecklist -> currentRoute is GloveboxRoute.BuyChecklist || currentRoute is GloveboxRoute.ProspectForm
+            is GloveboxRoute.BuyChecklist -> currentRoute is GloveboxRoute.BuyChecklist || currentRoute is GloveboxRoute.ProspectForm || currentRoute is GloveboxRoute.ProspectComparison
             is GloveboxRoute.Settings -> currentRoute is GloveboxRoute.Settings
             else -> false
         }

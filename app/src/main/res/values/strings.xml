@@ -142,6 +142,12 @@
     <string name="looking_for_car">Looking for a new car?</string>
     <string name="buying_guide_description">Add a car you\'re interested in to start a checklist.</string>
     <string name="add_new_inquiry">Add New Inquiry</string>
+    <string name="compare">Compare</string>
+    <string name="comparison">Comparison</string>
+    <string name="no_prospects_to_compare">No prospects selected to compare.</string>
+    <string name="price">Price</string>
+    <string name="location">Location</string>
+    <string name="inspection_readiness">Inspection Readiness</string>
 
     <!-- Reminders -->
     <string name="reminders">Reminders</string>

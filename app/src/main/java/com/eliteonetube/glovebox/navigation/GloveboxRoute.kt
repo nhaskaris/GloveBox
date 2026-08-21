@@ -46,5 +46,8 @@ sealed interface GloveboxRoute : NavKey {
     data class ProspectForm(val prospectId: Long = 0L) : GloveboxRoute
 
     @Serializable
+    data class ProspectComparison(val prospectIds: List<Long>) : GloveboxRoute
+
+    @Serializable
     data object Settings : GloveboxRoute
 }
