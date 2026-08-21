@@ -134,11 +134,6 @@ fun VehicleItem(
     Card(
         onClick = onSelect,
         modifier = Modifier.fillMaxWidth(),
-        colors = if (isActive) {
-            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-        } else {
-            CardDefaults.cardColors()
-        }
     ) {
         Row(
             modifier = Modifier
@@ -163,7 +158,7 @@ fun VehicleItem(
                     imageVector = Icons.Rounded.DirectionsCar,
                     contentDescription = null,
                     modifier = Modifier.size(40.dp),
-                    tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Column(
