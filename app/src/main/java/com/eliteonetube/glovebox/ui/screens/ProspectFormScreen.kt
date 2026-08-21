@@ -31,6 +31,9 @@ import com.eliteonetube.glovebox.data.entity.ProspectVehicle
 import com.eliteonetube.glovebox.ui.viewmodels.ProspectViewModel
 import org.json.JSONObject
 import java.io.File
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 
 data class ChecklistCategory(val title: String, val items: List<String>)
 
@@ -149,6 +152,14 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
         if (success) viewModel.onPhotoChange(tempUri.toString())
     }
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraLauncher.launch(tempUri)
+        }
+    }
+
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -177,7 +188,11 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
                         leadingContent = { Icon(Icons.Rounded.CameraAlt, contentDescription = null) },
                         modifier = Modifier.clickable {
                             showImageSourceDialog = false
-                            cameraLauncher.launch(tempUri)
+                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                                cameraLauncher.launch(tempUri)
+                            } else {
+                                permissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
                         }
                     )
                     ListItem(
@@ -464,8 +479,8 @@ fun PrePurchaseChecklistContent(
             items(category.items) { itemText ->
                 val isChecked = checkedItems.contains(itemText)
                 ListItem(
-                    headlineContent = { 
-                        Text(itemText, textDecoration = if (isChecked) androidx.compose.ui.text.style.TextDecoration.LineThrough else null) 
+                    headlineContent = {
+                        Text(itemText, textDecoration = if (isChecked) androidx.compose.ui.text.style.TextDecoration.LineThrough else null)
                     },
                     leadingContent = {
                         Checkbox(
