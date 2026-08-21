@@ -22,7 +22,6 @@ data class FuelLog(
     val odometer: Int,
     val amount: Double,
     val totalCost: Double,
-    val isFullTank: Boolean = true,
     val location: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )

@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.ui.viewmodels.FuelLogFormViewModel
+import com.eliteonetube.glovebox.navigation.LocalBackButtonVisibility
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,8 +42,10 @@ fun AddFuelLogScreen(
             TopAppBar(
                 title = { Text(if (logId == 0L) stringResource(R.string.add_fuel_log) else stringResource(R.string.edit_fuel_log)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
+                    if (LocalBackButtonVisibility.current) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
+                        }
                     }
                 }
             )
@@ -99,11 +102,6 @@ fun AddFuelLogScreen(
                 leadingIcon = { Icon(Icons.Rounded.LocationOn, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth()
             )
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = uiState.isFullTank, onCheckedChange = viewModel::onFullTankToggle)
-                Text(stringResource(R.string.full_tank))
-            }
         }
     }
 }

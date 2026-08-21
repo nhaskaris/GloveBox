@@ -23,14 +23,16 @@ import kotlinx.coroutines.launch
 fun OnboardingScreen(
     currentLanguage: String?,
     onLanguageChange: (String?) -> Unit,
-    onComplete: () -> Unit
+    onComplete: () -> Unit,
+    unitSystem: String,
+    onUnitChange: (String) -> Unit
 ) {
     val pages = listOf(
         OnboardingPage(
             title = stringResource(R.string.welcome_title),
             description = stringResource(R.string.welcome_desc),
             icon = Icons.Rounded.DirectionsCar,
-            showLanguageSelector = true
+            showSettings = true
         ),
         OnboardingPage(
             title = stringResource(R.string.history_title),
@@ -136,13 +138,66 @@ fun OnboardingScreen(
                     textAlign = TextAlign.Center
                 )
 
-                if (page.showLanguageSelector) {
+                if (page.showSettings) {
                     Spacer(Modifier.height(32.dp))
                     LanguageSelector(
                         currentLanguage = currentLanguage,
                         onLanguageChange = onLanguageChange
                     )
+                    Spacer(Modifier.height(16.dp))
+                    UnitSelector(
+                        unitSystem = unitSystem,
+                        onUnitChange = onUnitChange
+                    )
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UnitSelector(
+    unitSystem: String,
+    onUnitChange: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val units = listOf(
+        "km" to "Kilometers (km, L/100km)",
+        "mi" to "Miles (mi, MPG)"
+    )
+
+    val currentLabel = units.find { it.first == unitSystem }?.second ?: units[0].second
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = currentLabel,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Measurement System") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .width(240.dp)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            units.forEach { (code, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        onUnitChange(code)
+                        expanded = false
+                    }
+                )
             }
         }
     }
@@ -174,7 +229,7 @@ fun LanguageSelector(
             label = { Text(stringResource(R.string.select_language)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
-                .width(200.dp)
+                .width(240.dp)
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             shape = MaterialTheme.shapes.medium
@@ -201,5 +256,5 @@ data class OnboardingPage(
     val title: String,
     val description: String,
     val icon: ImageVector,
-    val showLanguageSelector: Boolean = false
+    val showSettings: Boolean = false
 )

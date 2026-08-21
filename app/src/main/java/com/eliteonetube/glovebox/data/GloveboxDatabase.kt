@@ -79,7 +79,7 @@ class VehicleDatabaseCallback(
         VehicleDocument::class,
         ProspectVehicle::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class GloveboxDatabase : RoomDatabase() {
@@ -110,6 +110,7 @@ abstract class GloveboxDatabase : RoomDatabase() {
                 )
                     .addMigrations(MIGRATION_10_11)
                     .addCallback(VehicleDatabaseCallback(context))
+                    .fallbackToDestructiveMigration()
                     .build()
 
                 INSTANCE = instance

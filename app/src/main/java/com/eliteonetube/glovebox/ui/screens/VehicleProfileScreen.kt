@@ -53,6 +53,7 @@ fun VehicleProfileContentPreview() {
             onVinChange = { null },
             onDecodeVin = {},
             onResetVinState = {},
+            unitSystem = "km",
             onSaveVehicle = { _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
             onNavigateBack = {}
         )
@@ -78,6 +79,7 @@ fun VehicleProfileScreen(
     val filteredModels by viewModel.filteredModels.collectAsStateWithLifecycle()
     val vinState by viewModel.vinDecodingState.collectAsStateWithLifecycle()
     val vinValidationErrorResId by viewModel.vinValidationErrorResId.collectAsStateWithLifecycle()
+    val unitSystem by viewModel.unitSystem.collectAsStateWithLifecycle()
     val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(LocalContext.current)
     val isVinEnabled by userPrefs.isVinFeatureEnabled.collectAsState(initial = true)
 
@@ -88,6 +90,7 @@ fun VehicleProfileScreen(
         vinState = vinState,
         vinValidationErrorResId = vinValidationErrorResId,
         isVinEnabled = isVinEnabled,
+        unitSystem = unitSystem,
         onMakeSelected = viewModel::onMakeSelected,
         onMakeQueryChange = viewModel::updateMakeQuery,
         onModelQueryChange = viewModel::updateModelQuery,
@@ -110,6 +113,7 @@ fun VehicleProfileContent(
     vinState: VinDecodingState,
     vinValidationErrorResId: Int?,
     isVinEnabled: Boolean,
+    unitSystem: String,
     onMakeSelected: (String) -> Unit,
     onMakeQueryChange: (String) -> Unit,
     onModelQueryChange: (String) -> Unit,
@@ -134,7 +138,6 @@ fun VehicleProfileContent(
     var licensePlate by remember { mutableStateOf("") }
     var color by remember { mutableStateOf("") }
     var fuelType by remember { mutableStateOf("") }
-    var odometerUnit by remember { mutableStateOf("km") }
     var photoUri by remember { mutableStateOf<String?>(null) }
 
     var showImageSourceDialog by remember { mutableStateOf(false) }
@@ -178,7 +181,6 @@ fun VehicleProfileContent(
 
     var modelExpanded by remember { mutableStateOf(false) }
     var makeExpanded by remember { mutableStateOf(false) }
-    var unitExpanded by remember { mutableStateOf(false) }
     var fuelExpanded by remember { mutableStateOf(false) }
 
     if (showImageSourceDialog) {
@@ -238,7 +240,6 @@ fun VehicleProfileContent(
             licensePlate = it.licensePlate ?: ""
             color = it.color ?: ""
             fuelType = it.fuelType ?: ""
-            odometerUnit = it.odometerUnit
             photoUri = it.photoUri
             onMakeSelected(it.make)
             onMakeQueryChange(it.make)
@@ -276,7 +277,7 @@ fun VehicleProfileContent(
                             licensePlate.takeIf { it.isNotBlank() },
                             color.takeIf { it.isNotBlank() },
                             fuelType.takeIf { it.isNotBlank() },
-                            odometerUnit,
+                            unitSystem,
                             photoUri,
                             onNavigateBack
                         )
@@ -504,56 +505,15 @@ fun VehicleProfileContent(
                 }
             }
 
-            Row(
+            OutlinedTextField(
+                value = odometer,
+                onValueChange = { if (it.all { char -> char.isDigit() }) odometer = it },
+                label = { Text(stringResource(R.string.current_odometer) + " ($unitSystem)") },
+                leadingIcon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                OutlinedTextField(
-                    value = odometer,
-                    onValueChange = { if (it.all { char -> char.isDigit() }) odometer = it },
-                    label = { Text(stringResource(R.string.current_odometer)) },
-                    leadingIcon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    shape = MaterialTheme.shapes.large
-                )
-
-                ExposedDropdownMenuBox(
-                    expanded = unitExpanded,
-                    onExpandedChange = { unitExpanded = it },
-                    modifier = Modifier.width(100.dp)
-                ) {
-                    OutlinedTextField(
-                        value = odometerUnit,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.unit)) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
-                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                        shape = MaterialTheme.shapes.large,
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = unitExpanded,
-                        onDismissRequest = { unitExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("km") },
-                            onClick = {
-                                odometerUnit = "km"
-                                unitExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("mi") },
-                            onClick = {
-                                odometerUnit = "mi"
-                                unitExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = MaterialTheme.shapes.large
+            )
 
             // --- Additional Info Section ---
             Text(

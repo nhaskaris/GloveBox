@@ -138,6 +138,31 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             ListItem(
+                headlineContent = { Text("Measurement System") },
+                supportingContent = { Text("Choose between Metric and Imperial") },
+                leadingContent = { Icon(Icons.Rounded.Speed, contentDescription = null) }
+            )
+
+            val units = viewModel.unitSystem.collectAsStateWithLifecycle()
+            Column(
+                modifier = Modifier.padding(start = 56.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ThemeOption(
+                    text = "Kilometers (km, L/100km)",
+                    selected = units.value == "km",
+                    onClick = { viewModel.setUnitSystem("km") }
+                )
+                ThemeOption(
+                    text = "Miles (mi, MPG)",
+                    selected = units.value == "mi",
+                    onClick = { viewModel.setUnitSystem("mi") }
+                )
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            ListItem(
                 headlineContent = { Text(stringResource(R.string.vehicle_tools)) },
                 supportingContent = { Text(stringResource(R.string.manage_special_features)) },
                 leadingContent = { Icon(Icons.Rounded.Settings, contentDescription = null) }

@@ -31,6 +31,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.ui.viewmodels.ServiceLogFormViewModel
+import com.eliteonetube.glovebox.navigation.LocalBackButtonVisibility
 import java.io.File
 import java.time.Instant
 import java.time.ZoneId
@@ -163,8 +164,10 @@ fun AddServiceLogScreen(
             MediumTopAppBar(
                 title = { Text(if (recordId == 0L) stringResource(R.string.add_service_log) else stringResource(R.string.edit_service_log)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
+                    if (LocalBackButtonVisibility.current) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
+                        }
                     }
                 }
             )

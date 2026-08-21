@@ -28,6 +28,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.ui.viewmodels.DocumentFormViewModel
+import com.eliteonetube.glovebox.navigation.LocalBackButtonVisibility
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -133,8 +134,10 @@ fun AddDocumentScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.add_document)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
+                    if (LocalBackButtonVisibility.current) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
+                        }
                     }
                 }
             )

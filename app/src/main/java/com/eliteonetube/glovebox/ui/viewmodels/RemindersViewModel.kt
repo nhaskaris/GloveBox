@@ -15,12 +15,13 @@ import kotlinx.coroutines.launch
 class RemindersViewModel(application: Application, private val vehicleId: Long) : AndroidViewModel(application) {
     private val reminderDao = GloveboxDatabase.getDatabase(application).reminderDao()
     private val vehicleDao = GloveboxDatabase.getDatabase(application).vehicleDao()
+    private val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
 
     private val _currentOdometer = MutableStateFlow(0)
     val currentOdometer: StateFlow<Int> = _currentOdometer.asStateFlow()
 
-    private val _odometerUnit = MutableStateFlow("km")
-    val odometerUnit: StateFlow<String> = _odometerUnit.asStateFlow()
+    val odometerUnit: StateFlow<String> = userPrefs.unitSystem
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "km")
 
     init {
         loadVehicleData()
@@ -30,7 +31,6 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
         viewModelScope.launch {
             vehicleDao.getVehicleById(vehicleId)?.let { vehicle ->
                 _currentOdometer.value = vehicle.odometer
-                _odometerUnit.value = vehicle.odometerUnit
             }
         }
     }

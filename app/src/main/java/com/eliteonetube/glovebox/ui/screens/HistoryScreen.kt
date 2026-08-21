@@ -29,6 +29,7 @@ import com.eliteonetube.glovebox.ui.theme.GloveboxTheme
 import com.eliteonetube.glovebox.ui.viewmodels.HistoryFilter
 import com.eliteonetube.glovebox.ui.viewmodels.HistoryItem
 import com.eliteonetube.glovebox.ui.viewmodels.HistoryViewModel
+import com.eliteonetube.glovebox.navigation.LocalBackButtonVisibility
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -230,13 +231,14 @@ fun HistoryContent(
     val mileageUnit = vehicle?.odometerUnit ?: "km"
     var recordPendingDelete by rememberSaveable { mutableStateOf<HistoryItem?>(null) }
     var showAddMenu by remember { mutableStateOf(false) }
+    val showNavIcon = LocalBackButtonVisibility.current
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.history)) },
                 navigationIcon = {
-                    if (onOpenDrawer != null) {
+                    if (onOpenDrawer != null && showNavIcon) {
                         IconButton(onClick = onOpenDrawer) {
                             Icon(Icons.Rounded.Menu, contentDescription = null)
                         }

@@ -20,6 +20,7 @@ class UserPreferencesRepository(private val context: Context) {
         val ACTIVE_VEHICLE_ID = longPreferencesKey("active_vehicle_id")
         val THEME_PREFERENCE = stringPreferencesKey("theme_preference")
         val APP_LANGUAGE = stringPreferencesKey("app_language")
+        val UNIT_SYSTEM = stringPreferencesKey("unit_system")
         val IS_ONBOARDING_COMPLETED = booleanPreferencesKey("is_onboarding_completed")
         val IS_VIN_FEATURE_ENABLED = booleanPreferencesKey("is_vin_feature_enabled")
         val IS_DRIVE_BACKUP_ENABLED = booleanPreferencesKey("is_drive_backup_enabled")
@@ -40,6 +41,11 @@ class UserPreferencesRepository(private val context: Context) {
     val appLanguage: Flow<String?> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.APP_LANGUAGE]
+        }
+
+    val unitSystem: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.UNIT_SYSTEM] ?: "km"
         }
 
     val isOnboardingCompleted: Flow<Boolean> = dataStore.data
@@ -81,6 +87,12 @@ class UserPreferencesRepository(private val context: Context) {
             } else {
                 preferences[PreferencesKeys.APP_LANGUAGE] = languageCode
             }
+        }
+    }
+
+    suspend fun setUnitSystem(unit: String) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.UNIT_SYSTEM] = unit
         }
     }
 

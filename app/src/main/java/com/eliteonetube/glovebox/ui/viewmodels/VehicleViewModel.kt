@@ -19,6 +19,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 class VehicleViewModel(application: Application, private val vehicleId: Long) : AndroidViewModel(application) {
     private val vehicleDao = GloveboxDatabase.getDatabase(application).vehicleDao()
     private val vehicleCatalogDao = GloveboxDatabase.getDatabase(application).vehicleCatalogDao()
+    private val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
 
     private val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
@@ -32,6 +33,9 @@ class VehicleViewModel(application: Application, private val vehicleId: Long) : 
 
     private val _vehicle = MutableStateFlow<Vehicle?>(null)
     val vehicle: StateFlow<Vehicle?> = _vehicle.asStateFlow()
+
+    val unitSystem: StateFlow<String> = userPrefs.unitSystem
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "km")
 
     // Stream list of unique makes
     val makes: StateFlow<List<String>> = vehicleCatalogDao.getMakes()

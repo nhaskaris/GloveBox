@@ -89,7 +89,7 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
         fuelsByVehicle.forEach { (vId, vehicleFuels) ->
             val vUnit = if (vId == vehicle?.id) vehicle.odometerUnit else "km"
             
-            val sortedFuels = vehicleFuels.filter { it.isFullTank }.sortedBy { it.date }
+            val sortedFuels = vehicleFuels.sortedBy { it.date }
             for (i in 0 until sortedFuels.size - 1) {
                 val current = sortedFuels[i]
                 val next = sortedFuels[i + 1]

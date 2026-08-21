@@ -29,6 +29,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val appLanguage: StateFlow<String?> = userPreferencesRepository.appLanguage
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    val unitSystem: StateFlow<String> = userPreferencesRepository.unitSystem
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "km")
+
     val activeVehicleId: StateFlow<Long?> = userPreferencesRepository.activeVehicleId
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -56,6 +59,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setAppLanguage(languageCode: String?) {
         viewModelScope.launch {
             userPreferencesRepository.setAppLanguage(languageCode)
+        }
+    }
+
+    fun setUnitSystem(unit: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setUnitSystem(unit)
         }
     }
 

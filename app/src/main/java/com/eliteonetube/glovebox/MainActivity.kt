@@ -57,6 +57,8 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import com.eliteonetube.glovebox.navigation.ListDetailScene
+import com.eliteonetube.glovebox.navigation.rememberListDetailSceneStrategy
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -230,6 +232,7 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
 
     val onOpenDrawer: () -> Unit = { scope.launch { drawerState.open() } }
     val onNavigateBack: () -> Unit = { if (backStack.size > 1) backStack.removeAt(backStack.size - 1) }
+    val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
 
     NavigationWrapper(
         isExpanded = isExpanded,
@@ -243,6 +246,8 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
         ) {
             NavDisplay(
                 backStack = backStack,
+                onBack = onNavigateBack,
+                sceneStrategy = listDetailStrategy,
                 entryDecorators = listOf(
                     rememberSaveableStateHolderNavEntryDecorator(),
                     rememberViewModelStoreNavEntryDecorator()
@@ -256,15 +261,23 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                                 backStack.removeAt(backStack.size - 1)
                             },
                             currentLanguage = appLanguage,
-                            onLanguageChange = { lang: String? -> viewModel.setAppLanguage(lang) }
+                            onLanguageChange = { lang: String? -> viewModel.setAppLanguage(lang) },
+                            unitSystem = viewModel.unitSystem.collectAsStateWithLifecycle().value,
+                            onUnitChange = viewModel::setUnitSystem
                         )
                     }
 
-                    is GloveboxRoute.VehicleList -> NavEntry(key) {
+                    is GloveboxRoute.VehicleList -> NavEntry(
+                        key = key,
+                        metadata = ListDetailScene.listPane()
+                    ) {
                         VehicleListScreen(
                             onSelectVehicle = { id ->
                                 viewModel.setActiveVehicleId(id)
-                                backStack.add(GloveboxRoute.History(id))
+                                // If already at history for this vehicle, don't add again
+                                if (backStack.lastOrNull() !is GloveboxRoute.History || (backStack.lastOrNull() as? GloveboxRoute.History)?.vehicleId != id) {
+                                    backStack.add(GloveboxRoute.History(id))
+                                }
                             },
                             onAddVehicle = { backStack.add(GloveboxRoute.VehicleProfile()) },
                             onEditVehicle = { id -> backStack.add(GloveboxRoute.VehicleProfile(id)) },
@@ -279,7 +292,10 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                         )
                     }
 
-                    is GloveboxRoute.History -> NavEntry(key) {
+                    is GloveboxRoute.History -> NavEntry(
+                        key = key,
+                        metadata = ListDetailScene.listPane() + ListDetailScene.detailPane()
+                    ) {
                         HistoryScreen(
                             vehicleId = key.vehicleId,
                             onAddRecord = { backStack.add(GloveboxRoute.AddServiceLog(key.vehicleId)) },
@@ -290,7 +306,10 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                         )
                     }
 
-                    is GloveboxRoute.AddServiceLog -> NavEntry(key) {
+                    is GloveboxRoute.AddServiceLog -> NavEntry(
+                        key = key,
+                        metadata = ListDetailScene.detailPane()
+                    ) {
                         AddServiceLogScreen(
                             vehicleId = key.vehicleId,
                             recordId = key.recordId,
@@ -316,7 +335,10 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                         )
                     }
 
-                    is GloveboxRoute.AddFuelLog -> NavEntry(key) {
+                    is GloveboxRoute.AddFuelLog -> NavEntry(
+                        key = key,
+                        metadata = ListDetailScene.detailPane()
+                    ) {
                         AddFuelLogScreen(
                             vehicleId = key.vehicleId,
                             logId = key.logId,
