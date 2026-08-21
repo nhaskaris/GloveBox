@@ -65,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val viewModel: MainViewModel = viewModel()
             val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+            val themePreference by viewModel.themePreference.collectAsStateWithLifecycle()
             val context = LocalContext.current
             
             // Apply language change using AppCompatDelegate
@@ -106,7 +107,10 @@ class MainActivity : AppCompatActivity() {
                 LocalOnBackPressedDispatcherOwner provides (context as androidx.activity.OnBackPressedDispatcherOwner),
                 LocalNavigationEventDispatcherOwner provides (context as NavigationEventDispatcherOwner)
             ) {
-                GloveboxTheme(dynamicColor = false) {
+                GloveboxTheme(
+                    themePreference = themePreference,
+                    dynamicColor = false
+                ) {
                     MainContent(viewModel, appLanguage, backStack)
                 }
             }
