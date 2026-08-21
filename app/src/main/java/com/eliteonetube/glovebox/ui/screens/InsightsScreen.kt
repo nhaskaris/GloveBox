@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,6 +29,7 @@ import com.eliteonetube.glovebox.ui.viewmodels.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.graphics.StrokeCap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -290,67 +290,205 @@ fun ChartCard(title: String, content: @Composable () -> Unit) {
 @Composable
 fun EfficiencyLineChart(points: List<EfficiencyPoint>) {
     val primaryColor = MaterialTheme.colorScheme.primary
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+
+    if (points.isEmpty()) return
+
+    if (points.size == 1) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "%.1f".format(points.first().value),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = primaryColor,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Log another fill-up to see your trend",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = onSurfaceVariant
+                )
+            }
+        }
+        return
+    }
 
     Canvas(modifier = Modifier.fillMaxSize()) {
-        if (points.size < 2) return@Canvas
-        
         val maxVal = points.maxOf { it.value }.toFloat().coerceAtLeast(1f)
         val minVal = points.minOf { it.value }.toFloat().coerceAtMost(maxVal - 1)
         val range = (maxVal - minVal).coerceAtLeast(1f)
-
+        val padding = 8.dp.toPx()
         val width = size.width
         val height = size.height
         val stepX = width / (points.size - 1)
 
+        fun yFor(value: Double) =
+            padding + (height - 2 * padding) - ((value.toFloat() - minVal) / range * (height - 2 * padding))
+
         val path = Path()
         points.forEachIndexed { index, point ->
             val x = index * stepX
-            val y = height - ((point.value.toFloat() - minVal) / range * height)
+            val y = yFor(point.value)
             if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
-
         drawPath(path, primaryColor, style = Stroke(width = 3.dp.toPx()))
+
+        // dots on each point so a 2-point line doesn't look like a bare diagonal
+        points.forEachIndexed { index, point ->
+            drawCircle(primaryColor, radius = 4.dp.toPx(), center = Offset(index * stepX, yFor(point.value)))
+        }
     }
 }
 
 @Composable
 fun DonutChart(items: List<CategorySpending>) {
-    val colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.tertiary)
-    val total = items.sumOf { it.amount }
+    if (items.isEmpty()) return
 
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        var startAngle = -90f
-        items.forEachIndexed { index, item ->
-            val sweepAngle = (item.amount / total * 360).toFloat()
-            drawArc(
-                color = colors[index % colors.size],
-                startAngle = startAngle,
-                sweepAngle = sweepAngle,
-                useCenter = false,
-                style = Stroke(width = 40.dp.toPx())
+    if (items.size == 1) {
+        // Nothing to compare yet — a full ring of one color says nothing.
+        val item = items.first()
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape,
+                    modifier = Modifier.size(12.dp)
+                ) {}
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = item.category,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "$${"%.2f".format(item.amount)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "All spending so far",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        return
+    }
+
+    val colors = listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.secondary,
+        MaterialTheme.colorScheme.tertiary
+    )
+    val total = items.sumOf { it.amount }
+    val gapDegrees = 3f // small breathing room between slices instead of a hard seam
+
+    Column {
+        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                var startAngle = -90f
+                items.forEachIndexed { index, item ->
+                    val rawSweep = (item.amount / total * 360).toFloat()
+                    val sweepAngle = (rawSweep - gapDegrees).coerceAtLeast(1f)
+                    drawArc(
+                        color = colors[index % colors.size],
+                        startAngle = startAngle + gapDegrees / 2,
+                        sweepAngle = sweepAngle,
+                        useCenter = false,
+                        style = Stroke(width = 28.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                    startAngle += rawSweep
+                }
+            }
+            Text(
+                text = "$${"%.0f".format(total)}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Center)
             )
-            startAngle += sweepAngle
+        }
+        Spacer(Modifier.height(12.dp))
+        // Legend
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            items.forEachIndexed { index, item ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        color = colors[index % colors.size],
+                        shape = CircleShape,
+                        modifier = Modifier.size(8.dp)
+                    ) {}
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = item.category,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "$${"%.2f".format(item.amount)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
 fun SimpleBarChart(data: List<MonthlySpending>) {
+    if (data.isEmpty()) return
+
+    if (data.size == 1) {
+        val item = data.first()
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "$${"%.2f".format(item.amount)}",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = item.month, // adjust to whatever field holds the label
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Log another month to see a trend",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        return
+    }
+
     val barColor = MaterialTheme.colorScheme.primary
+    val baselineColor = MaterialTheme.colorScheme.onSurfaceVariant
     val maxVal = data.maxOf { it.amount }.toFloat().coerceAtLeast(1f)
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
-        val barWidth = (width / data.size) * 0.7f
-        val gap = (width / data.size) * 0.3f
+        val slot = width / data.size
+        val maxBarWidth = 40.dp.toPx()
+        val barWidth = (slot * 0.5f).coerceAtMost(maxBarWidth)
+
+        drawLine(
+            color = baselineColor.copy(alpha = 0.3f),
+            start = Offset(0f, height),
+            end = Offset(width, height),
+            strokeWidth = 1.dp.toPx()
+        )
 
         data.forEachIndexed { index, item ->
-            val barHeight = (item.amount.toFloat() / maxVal) * height
-            drawRect(
+            val barHeight = (item.amount.toFloat() / maxVal) * (height - 4.dp.toPx())
+            val x = index * slot + (slot - barWidth) / 2
+            drawRoundRect(
                 color = barColor,
-                topLeft = Offset(index * (barWidth + gap), height - barHeight),
-                size = androidx.compose.ui.geometry.Size(barWidth, barHeight)
+                topLeft = Offset(x, height - barHeight),
+                size = androidx.compose.ui.geometry.Size(barWidth, barHeight),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
             )
         }
     }
