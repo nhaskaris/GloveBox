@@ -10,5 +10,10 @@ data class Reminder(
     val description: String,
     val targetMileage: Int?,
     val targetDate: Long?, // Epoch millis
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val isRecurring: Boolean = false,
+    val intervalMileage: Int? = null,
+    val intervalMonths: Int? = null,
+    val lastCompletedMileage: Int? = null,
+    val lastCompletedDate: Long? = null
 )

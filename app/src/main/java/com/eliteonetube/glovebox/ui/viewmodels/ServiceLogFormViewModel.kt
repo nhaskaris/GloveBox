@@ -9,6 +9,7 @@ import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
@@ -69,7 +70,49 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
         } else {
             currentTypes.add(type)
         }
-        _uiState.value = _uiState.value.copy(serviceTypes = currentTypes)
+        
+        // Auto-suggest logic for standard intervals
+        var autoSchedule = _uiState.value.isSchedulingNext
+        var intervalMileage = _uiState.value.nextIntervalMileage
+        var intervalMonths = _uiState.value.nextIntervalMonths
+        val unit = _uiState.value.unit
+
+        if (currentTypes.isNotEmpty()) {
+            val latest = currentTypes.last().lowercase()
+            when {
+                latest.contains("oil") -> {
+                    autoSchedule = true
+                    intervalMileage = if (unit == "mi") "5000" else "8000"
+                    intervalMonths = "6"
+                }
+                latest.contains("tire") -> {
+                    autoSchedule = true
+                    intervalMileage = if (unit == "mi") "6000" else "10000"
+                    intervalMonths = "6"
+                }
+                latest.contains("brake") -> {
+                    autoSchedule = true
+                    intervalMileage = if (unit == "mi") "20000" else "30000"
+                    intervalMonths = "12"
+                }
+                latest.contains("filter") -> {
+                    autoSchedule = true
+                    intervalMileage = if (unit == "mi") "10000" else "15000"
+                    intervalMonths = "12"
+                }
+                latest.contains("inspection") -> {
+                    autoSchedule = true
+                    intervalMonths = "12"
+                }
+            }
+        }
+
+        _uiState.value = _uiState.value.copy(
+            serviceTypes = currentTypes,
+            isSchedulingNext = autoSchedule,
+            nextIntervalMileage = intervalMileage,
+            nextIntervalMonths = intervalMonths
+        )
     }
 
     fun onCostChange(cost: String) {
@@ -139,12 +182,19 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
             if (record.id == 0L) {
                 serviceRecordDao.insertServiceRecord(record)
                 
-                // Auto-Reschedule logic
+                // Smart Auto-Reschedule logic
                 if (state.isSchedulingNext && state.serviceTypes.isNotEmpty()) {
+                    val serviceName = state.serviceTypes.first()
                     val currentMileage = record.mileage
                     val intervalMileage = state.nextIntervalMileage.toIntOrNull()
                     val intervalMonths = state.nextIntervalMonths.toIntOrNull()
                     
+                    // Look for an existing recurring reminder for this service
+                    val existingReminders = reminderDao.getRemindersForVehicle(vehicleId).first()
+                    val existingRecurring = existingReminders.find { 
+                        it.description.contains(serviceName, ignoreCase = true) && it.isRecurring 
+                    }
+
                     val targetMileage = intervalMileage?.let { currentMileage + it }
                     val targetDate = intervalMonths?.let {
                         val cal = Calendar.getInstance()
@@ -153,12 +203,29 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
                         cal.timeInMillis
                     }
                     
-                    if (targetMileage != null || targetDate != null) {
+                    if (existingRecurring != null) {
+                        // Update existing recurring reminder
+                        reminderDao.updateReminder(existingRecurring.copy(
+                            targetMileage = targetMileage ?: existingRecurring.targetMileage,
+                            targetDate = targetDate ?: existingRecurring.targetDate,
+                            intervalMileage = intervalMileage ?: existingRecurring.intervalMileage,
+                            intervalMonths = intervalMonths ?: existingRecurring.intervalMonths,
+                            lastCompletedMileage = currentMileage,
+                            lastCompletedDate = record.date,
+                            isCompleted = false
+                        ))
+                    } else if (targetMileage != null || targetDate != null) {
+                        // Create new recurring reminder
                         val reminder = Reminder(
                             vehicleId = vehicleId,
-                            description = "Next ${state.serviceTypes.first()}",
+                            description = serviceName,
                             targetMileage = targetMileage,
-                            targetDate = targetDate
+                            targetDate = targetDate,
+                            isRecurring = true,
+                            intervalMileage = intervalMileage,
+                            intervalMonths = intervalMonths,
+                            lastCompletedMileage = currentMileage,
+                            lastCompletedDate = record.date
                         )
                         reminderDao.insertReminder(reminder)
                     }

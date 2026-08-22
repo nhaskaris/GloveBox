@@ -339,7 +339,26 @@ fun AddServiceLogScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.schedule_next_service), fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(stringResource(R.string.schedule_next_service), fontWeight = FontWeight.Bold)
+                                if (uiState.isSchedulingNext && uiState.serviceTypes.any { type -> 
+                                    listOf("oil", "tire", "brake", "filter", "inspection").any { keyword -> 
+                                        type.lowercase().contains(keyword) 
+                                    } 
+                                }) {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        shape = MaterialTheme.shapes.extraSmall
+                                    ) {
+                                        Text(
+                                            text = "SMART SUGGESTION",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
+                                }
+                            }
                             Switch(checked = uiState.isSchedulingNext, onCheckedChange = viewModel::onAutoScheduleToggle)
                         }
                         

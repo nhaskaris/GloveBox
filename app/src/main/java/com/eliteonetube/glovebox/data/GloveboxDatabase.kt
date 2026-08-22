@@ -80,7 +80,7 @@ class VehicleDatabaseCallback(
         ProspectVehicle::class,
         VehiclePart::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 abstract class GloveboxDatabase : RoomDatabase() {
@@ -133,6 +133,16 @@ abstract class GloveboxDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `reminders` ADD COLUMN `isRecurring` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `reminders` ADD COLUMN `intervalMileage` INTEGER")
+                db.execSQL("ALTER TABLE `reminders` ADD COLUMN `intervalMonths` INTEGER")
+                db.execSQL("ALTER TABLE `reminders` ADD COLUMN `lastCompletedMileage` INTEGER")
+                db.execSQL("ALTER TABLE `reminders` ADD COLUMN `lastCompletedDate` INTEGER")
+            }
+        }
+
         fun getDatabase(context: Context): GloveboxDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -140,7 +150,7 @@ abstract class GloveboxDatabase : RoomDatabase() {
                     GloveboxDatabase::class.java,
                     "glovebox_database"
                 )
-                    .addMigrations(MIGRATION_10_11, MIGRATION_12_13, MIGRATION_13_14)
+                    .addMigrations(MIGRATION_10_11, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
                     .addCallback(VehicleDatabaseCallback(context))
                     .fallbackToDestructiveMigration()
                     .build()

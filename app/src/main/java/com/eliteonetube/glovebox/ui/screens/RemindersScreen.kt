@@ -34,14 +34,15 @@ fun RemindersScreenPreview() {
     GloveboxTheme {
         RemindersContent(
             reminders = listOf(
-                Reminder(1, 1, "Oil Change", 10000, null, false),
+                Reminder(1, 1, "Oil Change", 10000, null, false, isRecurring = true, intervalMileage = 5000),
                 Reminder(2, 1, "Tire Rotation", null, System.currentTimeMillis() + 86400000, false)
             ),
             currentOdometer = 5000,
+            estimatedOdometer = 5200,
             odometerUnit = "km",
             onToggleCompletion = {},
             onDelete = {},
-            onAddReminder = { _, _, _ -> },
+            onAddReminder = { _, _, _, _, _, _ -> },
             onLogService = {}
         )
     }
@@ -62,15 +63,19 @@ fun RemindersScreen(
 ) {
     val reminders by viewModel.reminders.collectAsStateWithLifecycle()
     val currentOdometer by viewModel.currentOdometer.collectAsStateWithLifecycle()
+    val estimatedOdometer by viewModel.estimatedOdometer.collectAsStateWithLifecycle()
     val odometerUnit by viewModel.odometerUnit.collectAsStateWithLifecycle()
 
     RemindersContent(
         reminders = reminders,
         currentOdometer = currentOdometer,
+        estimatedOdometer = estimatedOdometer,
         odometerUnit = odometerUnit,
         onToggleCompletion = { viewModel.toggleReminderCompletion(it) },
         onDelete = { viewModel.deleteReminder(it) },
-        onAddReminder = { desc, mileage, date -> viewModel.addReminder(desc, mileage, date) },
+        onAddReminder = { desc, mileage, date, recurring, intMil, intMon -> 
+            viewModel.addReminder(desc, mileage, date, recurring, intMil, intMon) 
+        },
         onLogService = onLogService,
         onOpenDrawer = onOpenDrawer
     )
@@ -81,10 +86,11 @@ fun RemindersScreen(
 fun RemindersContent(
     reminders: List<Reminder>,
     currentOdometer: Int,
+    estimatedOdometer: Int,
     odometerUnit: String,
     onToggleCompletion: (Reminder) -> Unit,
     onDelete: (Reminder) -> Unit,
-    onAddReminder: (String, Int?, Long?) -> Unit,
+    onAddReminder: (String, Int?, Long?, Boolean, Int?, Int?) -> Unit,
     onLogService: (String) -> Unit,
     onOpenDrawer: (() -> Unit)? = null
 ) {
@@ -93,7 +99,18 @@ fun RemindersContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.reminders)) },
+                title = { 
+                    Column {
+                        Text(stringResource(R.string.reminders))
+                        if (estimatedOdometer > currentOdometer) {
+                            Text(
+                                text = "Estimated: $estimatedOdometer $odometerUnit",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     if (onOpenDrawer != null) {
                         IconButton(onClick = onOpenDrawer) {
@@ -140,7 +157,7 @@ fun RemindersContent(
                 items(reminders) { reminder ->
                     ReminderItem(
                         reminder = reminder,
-                        currentOdometer = currentOdometer,
+                        currentOdometer = estimatedOdometer.coerceAtLeast(currentOdometer),
                         odometerUnit = odometerUnit,
                         onToggleCompletion = { onToggleCompletion(reminder) },
                         onDelete = { onDelete(reminder) },
@@ -157,8 +174,8 @@ fun RemindersContent(
             AddReminderDialog(
                 odometerUnit = odometerUnit,
                 onDismiss = { showAddDialog = false },
-                onConfirm = { desc, mileage, date ->
-                    onAddReminder(desc, mileage, date)
+                onConfirm = { desc, mileage, date, recurring, intMil, intMon ->
+                    onAddReminder(desc, mileage, date, recurring, intMil, intMon)
                     showAddDialog = false
                 }
             )
@@ -194,67 +211,81 @@ fun ReminderItem(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(
-                    onClick = onToggleCompletion,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = if (reminder.isCompleted) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
-                        contentDescription = stringResource(R.string.complete),
-                        tint = if (reminder.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = reminder.description,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        textDecoration = if (reminder.isCompleted) androidx.compose.ui.text.style.TextDecoration.LineThrough else null,
-                        color = if (reminder.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        if (reminder.targetMileage != null) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Icon(Icons.Rounded.Speed, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Text(
-                                    text = "${reminder.targetMileage} $odometerUnit",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-
-                        if (reminder.targetDate != null) {
-                            val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
-                            val dateString = Instant.ofEpochMilli(reminder.targetDate)
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate()
-                                .format(dateFormatter)
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Icon(Icons.Rounded.CalendarMonth, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Text(
-                                    text = dateString,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    IconButton(
+                        onClick = onToggleCompletion,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (reminder.isCompleted) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
+                            contentDescription = stringResource(R.string.complete),
+                            tint = if (reminder.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
 
-                    if (isDue) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.error,
-                            shape = MaterialTheme.shapes.extraSmall
-                        ) {
+                    Column(modifier = Modifier.padding(start = 8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                text = stringResource(R.string.due_now),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onError,
-                                fontWeight = FontWeight.ExtraBold
+                                text = reminder.description,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                textDecoration = if (reminder.isCompleted) androidx.compose.ui.text.style.TextDecoration.LineThrough else null,
+                                color = if (reminder.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
                             )
+                            if (reminder.isRecurring) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                                    shape = MaterialTheme.shapes.extraSmall
+                                ) {
+                                    Icon(Icons.Rounded.Repeat, contentDescription = null, modifier = Modifier.size(12.dp).padding(2.dp))
+                                }
+                            }
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            if (reminder.targetMileage != null) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Icon(Icons.Rounded.Speed, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Text(
+                                        text = "${reminder.targetMileage} $odometerUnit",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+
+                            if (reminder.targetDate != null) {
+                                val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
+                                val dateString = Instant.ofEpochMilli(reminder.targetDate)
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDate()
+                                    .format(dateFormatter)
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Icon(Icons.Rounded.CalendarMonth, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Text(
+                                        text = dateString,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+
+                        if (isDue) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.error,
+                                shape = MaterialTheme.shapes.extraSmall,
+                                modifier = Modifier.padding(top = 4.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.due_now),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onError,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -270,7 +301,8 @@ fun ReminderItem(
                 Button(
                     onClick = onLogService,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    shape = MaterialTheme.shapes.medium
                 ) {
                     Icon(Icons.Rounded.Build, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
@@ -285,13 +317,16 @@ fun ReminderItem(
 fun AddReminderDialog(
     odometerUnit: String,
     onDismiss: () -> Unit,
-    onConfirm: (String, Int?, Long?) -> Unit
+    onConfirm: (String, Int?, Long?, Boolean, Int?, Int?) -> Unit
 ) {
     var description by remember { mutableStateOf("") }
     var mileage by remember { mutableStateOf("") }
     var useDate by remember { mutableStateOf(false) }
-    // Date would normally use a DatePicker, but for brevity we'll mock it or use current + some time
-    val mockDate = System.currentTimeMillis() + (7 * 24 * 60 * 60 * 1000) // +1 week
+    var isRecurring by remember { mutableStateOf(false) }
+    var intervalMileage by remember { mutableStateOf("") }
+    var intervalMonths by remember { mutableStateOf("") }
+
+    val mockDate = System.currentTimeMillis() + (7 * 24 * 60 * 60 * 1000)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -306,33 +341,63 @@ fun AddReminderDialog(
                     onValueChange = { description = it },
                     label = { Text(stringResource(R.string.description)) },
                     placeholder = { Text(stringResource(R.string.reminder_placeholder)) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium
                 )
 
-                OutlinedTextField(
-                    value = mileage,
-                    onValueChange = { if (it.all { c -> c.isDigit() }) mileage = it },
-                    label = { Text(stringResource(R.string.target_odometer, odometerUnit)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                    Text("Recurring cycle?")
+                    Switch(checked = isRecurring, onCheckedChange = { isRecurring = it })
+                }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = useDate, onCheckedChange = { useDate = it })
-                    Text(stringResource(R.string.remind_by_date))
+                if (!isRecurring) {
+                    OutlinedTextField(
+                        value = mileage,
+                        onValueChange = { if (it.all { c -> c.isDigit() }) mileage = it },
+                        label = { Text(stringResource(R.string.target_odometer, odometerUnit)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium
+                    )
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = useDate, onCheckedChange = { useDate = it })
+                        Text(stringResource(R.string.remind_by_date))
+                    }
+                } else {
+                    Text("Repeat Every:", style = MaterialTheme.typography.labelLarge)
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = intervalMileage,
+                            onValueChange = { if (it.all { c -> c.isDigit() }) intervalMileage = it },
+                            label = { Text(odometerUnit) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        OutlinedTextField(
+                            value = intervalMonths,
+                            onValueChange = { if (it.all { c -> c.isDigit() }) intervalMonths = it },
+                            label = { Text("Months") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                    }
+                    Text("The next target will be calculated automatically based on your current mileage.", style = MaterialTheme.typography.labelSmall)
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    onConfirm(
-                        description,
-                        mileage.toIntOrNull(),
-                        if (useDate) mockDate else null
-                    )
+                    if (isRecurring) {
+                        onConfirm(description, null, null, true, intervalMileage.toIntOrNull(), intervalMonths.toIntOrNull())
+                    } else {
+                        onConfirm(description, mileage.toIntOrNull(), if (useDate) mockDate else null, false, null, null)
+                    }
                 },
-                enabled = description.isNotBlank()
+                enabled = description.isNotBlank() && (!isRecurring || (intervalMileage.isNotBlank() || intervalMonths.isNotBlank()))
             ) {
                 Text(stringResource(R.string.add))
             }
