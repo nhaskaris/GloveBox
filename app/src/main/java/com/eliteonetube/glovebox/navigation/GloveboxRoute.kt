@@ -34,6 +34,9 @@ sealed interface GloveboxRoute : NavKey {
     data class DigitalGlovebox(val vehicleId: Long) : GloveboxRoute
 
     @Serializable
+    data class MyParts(val vehicleId: Long) : GloveboxRoute
+
+    @Serializable
     data class Insights(val vehicleId: Long) : GloveboxRoute
 
     @Serializable

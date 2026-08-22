@@ -67,6 +67,21 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import com.eliteonetube.glovebox.navigation.ListDetailScene
 import com.eliteonetube.glovebox.navigation.rememberListDetailSceneStrategy
 
+fun GloveboxRoute.getVehicleId(): Long? {
+    return when (this) {
+        is GloveboxRoute.History -> vehicleId
+        is GloveboxRoute.MyParts -> vehicleId
+        is GloveboxRoute.Reminders -> vehicleId
+        is GloveboxRoute.Insights -> vehicleId
+        is GloveboxRoute.DigitalGlovebox -> vehicleId
+        is GloveboxRoute.VehicleProfile -> vehicleId.takeIf { it != 0L }
+        is GloveboxRoute.AddServiceLog -> vehicleId
+        is GloveboxRoute.AddFuelLog -> vehicleId
+        is GloveboxRoute.AddDocument -> vehicleId
+        else -> null
+    }
+}
+
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -129,7 +144,6 @@ class MainActivity : AppCompatActivity() {
 
 @Composable
 fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBackStack<NavKey>) {
-    val activeVehicleId by viewModel.activeVehicleId.collectAsStateWithLifecycle()
     val vehicles by viewModel.vehicles.collectAsStateWithLifecycle()
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
@@ -165,7 +179,10 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
     }
 
     val currentRoute = backStack.lastOrNull() as? GloveboxRoute ?: GloveboxRoute.VehicleList
-    val effectiveVehicleId = activeVehicleId ?: 0L
+    val contextVehicleId = currentRoute.getVehicleId() ?: 0L
+    val activeVehicle = remember(contextVehicleId, vehicles) {
+        vehicles.find { it.id == contextVehicleId }
+    }
     val hasVehicles = vehicles.isNotEmpty()
 
     val navigationItems = listOfNotNull(
@@ -179,40 +196,67 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                 backStack.add(GloveboxRoute.VehicleList)
             }
         ),
-        if (hasVehicles) GloveboxNavItem(
+        if (hasVehicles && contextVehicleId != 0L && activeVehicle != null) GloveboxNavItem(
+            label = activeVehicle.nickname ?: "${activeVehicle.make} ${activeVehicle.model}",
+            icon = Icons.Rounded.DirectionsCar,
+            route = GloveboxRoute.History(contextVehicleId), // Context parent
+            isSubItem = true,
+            onClick = {
+                scope.launch { drawerState.close() }
+                backStack.clear()
+                backStack.add(GloveboxRoute.History(contextVehicleId))
+            }
+        ) else null,
+        if (hasVehicles && contextVehicleId != 0L) GloveboxNavItem(
+            label = stringResource(R.string.history),
+            icon = Icons.Rounded.History,
+            route = GloveboxRoute.History(contextVehicleId),
+            isDeepSubItem = true,
+            onClick = {
+                scope.launch { drawerState.close() }
+                backStack.clear()
+                backStack.add(GloveboxRoute.History(contextVehicleId))
+            }
+        ) else null,
+        if (hasVehicles && contextVehicleId != 0L) GloveboxNavItem(
+            label = stringResource(R.string.nav_parts),
+            icon = Icons.Rounded.Build,
+            route = GloveboxRoute.MyParts(contextVehicleId),
+            isDeepSubItem = true,
+            onClick = {
+                scope.launch { drawerState.close() }
+                backStack.clear()
+                backStack.add(GloveboxRoute.MyParts(contextVehicleId))
+            }
+        ) else null,
+        if (hasVehicles && contextVehicleId != 0L) GloveboxNavItem(
             label = stringResource(R.string.nav_reminders),
             icon = Icons.Rounded.Notifications,
-            route = GloveboxRoute.Reminders(effectiveVehicleId),
+            route = GloveboxRoute.Reminders(contextVehicleId),
             onClick = {
-                if (effectiveVehicleId != 0L) {
-                    scope.launch { drawerState.close() }
-                    backStack.clear()
-                    backStack.add(GloveboxRoute.Reminders(effectiveVehicleId))
-                }
+                scope.launch { drawerState.close() }
+                backStack.clear()
+                backStack.add(GloveboxRoute.Reminders(contextVehicleId))
             }
         ) else null,
-        if (hasVehicles) GloveboxNavItem(
+        GloveboxNavItem(
             label = stringResource(R.string.nav_insights),
             icon = Icons.Rounded.BarChart,
-            route = GloveboxRoute.Insights(effectiveVehicleId),
+            route = GloveboxRoute.Insights(contextVehicleId),
             onClick = {
-                if (effectiveVehicleId != 0L) {
-                    scope.launch { drawerState.close() }
-                    backStack.clear()
-                    backStack.add(GloveboxRoute.Insights(effectiveVehicleId))
-                }
+                scope.launch { drawerState.close() }
+                backStack.clear()
+                backStack.add(GloveboxRoute.Insights(contextVehicleId))
             }
-        ) else null,
-        if (hasVehicles) GloveboxNavItem(
+        ),
+        if (hasVehicles && contextVehicleId != 0L) GloveboxNavItem(
             label = stringResource(R.string.nav_glovebox),
             icon = Icons.Rounded.Folder,
-            route = GloveboxRoute.DigitalGlovebox(effectiveVehicleId),
+            route = GloveboxRoute.DigitalGlovebox(contextVehicleId),
             onClick = {
-                if (effectiveVehicleId != 0L) {
-                    scope.launch { drawerState.close() }
-                    backStack.clear()
-                    backStack.add(GloveboxRoute.DigitalGlovebox(effectiveVehicleId))
-                }
+                scope.launch { drawerState.close() }
+                backStack.clear()
+                backStack.add(GloveboxRoute.DigitalGlovebox(contextVehicleId))
             }
         ) else null,
         GloveboxNavItem(
@@ -370,6 +414,13 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                         )
                     }
 
+                    is GloveboxRoute.MyParts -> NavEntry(key) {
+                        MyPartsScreen(
+                            vehicleId = key.vehicleId,
+                            onOpenDrawer = onOpenDrawer
+                        )
+                    }
+
                     is GloveboxRoute.BuyChecklist -> NavEntry(key) {
                         ProspectListScreen(
                             onAddProspect = { backStack.add(GloveboxRoute.ProspectForm()) },
@@ -446,25 +497,68 @@ fun NavigationWrapper(
                     .verticalScroll(rememberScrollState())
             ) {
                 primaryItems.forEach { item ->
+                    val isSelected = item.isRouteSelected(currentRoute)
+                    val indentation = when {
+                        item.isDeepSubItem -> 44.dp
+                        item.isSubItem -> 24.dp
+                        else -> 8.dp
+                    }
+                    val iconIndentation = when {
+                        item.isDeepSubItem -> 32.dp
+                        item.isSubItem -> 16.dp
+                        else -> 0.dp
+                    }
+
                     NavigationDrawerItem(
                         label = { 
                             Text(
                                 item.label, 
-                                modifier = Modifier.padding(start = 8.dp),
-                                style = MaterialTheme.typography.labelLarge
+                                modifier = Modifier.padding(start = indentation),
+                                style = when {
+                                    item.isDeepSubItem -> MaterialTheme.typography.bodySmall
+                                    item.isSubItem -> MaterialTheme.typography.bodyMedium
+                                    else -> MaterialTheme.typography.labelLarge
+                                }
                             ) 
                         },
-                        selected = item.isRouteSelected(currentRoute),
+                        selected = isSelected,
                         onClick = item.onClick,
-                        icon = { Icon(item.icon, contentDescription = null, modifier = Modifier.size(22.dp)) },
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+                        icon = { 
+                            Icon(
+                                item.icon, 
+                                contentDescription = null, 
+                                modifier = Modifier
+                                    .padding(start = iconIndentation)
+                                    .size(if (item.isSubItem || item.isDeepSubItem) 18.dp else 22.dp)
+                            ) 
+                        },
+                        modifier = Modifier.padding(
+                            horizontal = 12.dp, 
+                            vertical = if (item.isSubItem || item.isDeepSubItem) 1.dp else 2.dp
+                        ),
                         colors = NavigationDrawerItemDefaults.colors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedContainerColor = when {
+                                item.isDeepSubItem -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
+                                item.isSubItem -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                                else -> MaterialTheme.colorScheme.primaryContainer
+                            },
+                            selectedIconColor = when {
+                                item.isDeepSubItem -> MaterialTheme.colorScheme.onTertiaryContainer
+                                item.isSubItem -> MaterialTheme.colorScheme.onSecondaryContainer
+                                else -> MaterialTheme.colorScheme.onPrimaryContainer
+                            },
+                            selectedTextColor = when {
+                                item.isDeepSubItem -> MaterialTheme.colorScheme.onTertiaryContainer
+                                item.isSubItem -> MaterialTheme.colorScheme.onSecondaryContainer
+                                else -> MaterialTheme.colorScheme.onPrimaryContainer
+                            },
                             unselectedContainerColor = Color.Transparent,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                alpha = if (item.isSubItem || item.isDeepSubItem) 0.6f else 1f
+                            ),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                alpha = if (item.isSubItem || item.isDeepSubItem) 0.6f else 1f
+                            )
                         ),
                         shape = MaterialTheme.shapes.medium
                     )
@@ -636,6 +730,8 @@ data class GloveboxNavItem(
     val label: String,
     val icon: ImageVector,
     val route: GloveboxRoute,
+    val isSubItem: Boolean = false,
+    val isDeepSubItem: Boolean = false,
     val onClick: () -> Unit
 ) {
     fun isRouteSelected(currentRoute: GloveboxRoute): Boolean {
@@ -645,6 +741,7 @@ data class GloveboxNavItem(
             is GloveboxRoute.Reminders -> currentRoute is GloveboxRoute.Reminders
             is GloveboxRoute.Insights -> currentRoute is GloveboxRoute.Insights
             is GloveboxRoute.DigitalGlovebox -> currentRoute is GloveboxRoute.DigitalGlovebox || currentRoute is GloveboxRoute.AddDocument
+            is GloveboxRoute.MyParts -> currentRoute is GloveboxRoute.MyParts
             is GloveboxRoute.BuyChecklist -> currentRoute is GloveboxRoute.BuyChecklist || currentRoute is GloveboxRoute.ProspectForm || currentRoute is GloveboxRoute.ProspectComparison
             is GloveboxRoute.Settings -> currentRoute is GloveboxRoute.Settings
             else -> false

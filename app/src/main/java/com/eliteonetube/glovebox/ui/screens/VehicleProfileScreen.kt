@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -143,7 +142,7 @@ fun VehicleProfileContent(
 
     var showImageSourceDialog by remember { mutableStateOf(false) }
     var showVinScanner by remember { mutableStateOf(false) }
-
+    
     if (showVinScanner) {
         VinScannerDialog(
             onDismiss = { showVinScanner = false },
@@ -156,7 +155,7 @@ fun VehicleProfileContent(
         )
     }
 
-    // Image capture setup
+    // Image capture setup for Vehicle
     val tempUri = remember {
         val file = File(context.cacheDir, "temp_car_${System.currentTimeMillis()}.jpg")
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
@@ -284,14 +283,14 @@ fun VehicleProfileContent(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp) // Reduced from 24.dp
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // --- Photo Section ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp) // Reduced from 180.dp
-                    .clip(MaterialTheme.shapes.large) // Reduced from extraLarge
+                    .height(160.dp)
+                    .clip(MaterialTheme.shapes.large)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable { showImageSourceDialog = true },
                 contentAlignment = Alignment.Center
@@ -378,7 +377,7 @@ fun VehicleProfileContent(
                                         CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                                     } else {
                                         IconButton(onClick = { onDecodeVin(vin) }, enabled = vin.length >= 11) {
-                                            Icon(Icons.Rounded.AutoFixHigh, contentDescription = null)
+                                            Icon(Icons.Rounded.AutoFixHigh, contentDescription = stringResource(R.string.auto_fill_vin))
                                         }
                                     }
                                 }
@@ -492,19 +491,19 @@ fun ProfileSection(title: String, icon: androidx.compose.ui.graphics.vector.Imag
     Column {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 8.dp, start = 4.dp) // Reduced from 12.dp
+            modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
         ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) // Reduced from 20.dp
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
         }
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium, // Reduced from large
+            shape = MaterialTheme.shapes.large,
             colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp) // Reduced from 2.dp
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
         ) {
-            Box(modifier = Modifier.padding(12.dp)) { // Reduced from 16.dp
+            Box(modifier = Modifier.padding(12.dp)) {
                 content()
             }
         }

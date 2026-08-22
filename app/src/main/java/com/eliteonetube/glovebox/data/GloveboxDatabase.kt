@@ -77,9 +77,10 @@ class VehicleDatabaseCallback(
         VehicleCatalog::class, 
         FuelLog::class, 
         VehicleDocument::class,
-        ProspectVehicle::class
+        ProspectVehicle::class,
+        VehiclePart::class
     ],
-    version = 12,
+    version = 14,
     exportSchema = false
 )
 abstract class GloveboxDatabase : RoomDatabase() {
@@ -90,6 +91,7 @@ abstract class GloveboxDatabase : RoomDatabase() {
     abstract fun fuelLogDao(): FuelLogDao
     abstract fun vehicleDocumentDao(): VehicleDocumentDao
     abstract fun prospectVehicleDao(): ProspectVehicleDao
+    abstract fun vehiclePartDao(): VehiclePartDao
 
     companion object {
         @Volatile
@@ -101,6 +103,36 @@ abstract class GloveboxDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Fix: Ensure table is created with correct foreign key reference to 'vehicles' (plural)
+                db.execSQL("DROP TABLE IF EXISTS `vehicle_parts`")
+                db.execSQL("CREATE TABLE `vehicle_parts` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vehicleId` INTEGER NOT NULL, `name` TEXT NOT NULL, `partNumber` TEXT NOT NULL, `brand` TEXT, `notes` TEXT, `lastUpdated` INTEGER NOT NULL, FOREIGN KEY(`vehicleId`) REFERENCES `vehicles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_vehicle_parts_vehicleId` ON `vehicle_parts` (`vehicleId`)")
+            }
+        }
+
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Check if column already exists before adding to prevent crash if migration is retried
+                val cursor = db.query("PRAGMA table_info(`vehicle_parts`)", emptyArray())
+                var exists = false
+                val nameIndex = cursor.getColumnIndex("name")
+                if (nameIndex != -1) {
+                    while (cursor.moveToNext()) {
+                        if (cursor.getString(nameIndex) == "photoUri") {
+                            exists = true
+                            break
+                        }
+                    }
+                }
+                cursor.close()
+                if (!exists) {
+                    db.execSQL("ALTER TABLE `vehicle_parts` ADD COLUMN `photoUri` TEXT")
+                }
+            }
+        }
+
         fun getDatabase(context: Context): GloveboxDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -108,7 +140,7 @@ abstract class GloveboxDatabase : RoomDatabase() {
                     GloveboxDatabase::class.java,
                     "glovebox_database"
                 )
-                    .addMigrations(MIGRATION_10_11)
+                    .addMigrations(MIGRATION_10_11, MIGRATION_12_13, MIGRATION_13_14)
                     .addCallback(VehicleDatabaseCallback(context))
                     .fallbackToDestructiveMigration()
                     .build()

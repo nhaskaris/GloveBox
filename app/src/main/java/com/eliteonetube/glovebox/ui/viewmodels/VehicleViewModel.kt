@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.eliteonetube.glovebox.data.GloveboxDatabase
 import com.eliteonetube.glovebox.data.api.VinDecoderApi
 import com.eliteonetube.glovebox.data.entity.Vehicle
+import com.eliteonetube.glovebox.data.entity.VehiclePart
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,6 +20,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 class VehicleViewModel(application: Application, private val vehicleId: Long) : AndroidViewModel(application) {
     private val vehicleDao = GloveboxDatabase.getDatabase(application).vehicleDao()
     private val vehicleCatalogDao = GloveboxDatabase.getDatabase(application).vehicleCatalogDao()
+    private val vehiclePartDao = GloveboxDatabase.getDatabase(application).vehiclePartDao()
     private val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
 
     private val moshi = Moshi.Builder()
