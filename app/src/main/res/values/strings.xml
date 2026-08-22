@@ -137,6 +137,8 @@
     <string name="details_tab">Details</string>
     <string name="checklist_tab">Checklist</string>
     <string name="valid_vin">Valid VIN</string>
+    <string name="vehicle_info">Vehicle Information</string>
+    <string name="seller_details">Seller Details</string>
 
     <!-- Buying Guide List -->
     <string name="looking_for_car">Looking for a new car?</string>

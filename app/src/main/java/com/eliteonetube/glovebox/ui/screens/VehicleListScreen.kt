@@ -1,20 +1,17 @@
 package com.eliteonetube.glovebox.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.DirectionsCar
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
@@ -72,7 +69,47 @@ fun VehicleListScreen(
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(stringResource(R.string.no_vehicles_added))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(32.dp)
+                ) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                        shape = CircleShape,
+                        modifier = Modifier.size(120.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Rounded.DirectionsCar, 
+                                contentDescription = null, 
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    Text(
+                        stringResource(R.string.no_vehicles_added),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Text(
+                        "Your garage is empty. Add your first vehicle to start tracking maintenance and fuel.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        onClick = onAddVehicle,
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.add_to_garage))
+                    }
+                }
             }
         } else {
             LazyColumn(
@@ -131,62 +168,108 @@ fun VehicleItem(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Card(
+    ElevatedCard(
         onClick = onSelect,
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large, // Reduced from extraLarge
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f) 
+                            else MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp) // Reduced from 2.dp
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(10.dp) // Reduced from 12.dp
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (vehicle.photoUri != null) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(vehicle.photoUri)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Rounded.DirectionsCar,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Box(
+                modifier = Modifier
+                    .size(64.dp) // Reduced from 80.dp
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                if (vehicle.photoUri != null) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(vehicle.photoUri)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Rounded.DirectionsCar,
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
+
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
-                    .weight(1f)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = vehicle.nickname ?: "${vehicle.year} ${vehicle.make} ${vehicle.model}",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                 )
+                
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = "${vehicle.odometer} ${vehicle.odometerUnit}",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    
+                    if (vehicle.licensePlate != null) {
+                        Text(
+                            text = vehicle.licensePlate!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
                 if (vehicle.nickname != null) {
                     Text(
                         text = "${vehicle.year} ${vehicle.make} ${vehicle.model}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
                 }
-                Text(
-                    text = "${vehicle.odometer} ${vehicle.odometerUnit}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
             }
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit))
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete))
+
+            Column(horizontalAlignment = Alignment.End) {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        Icons.Rounded.Edit, 
+                        contentDescription = stringResource(R.string.edit),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Rounded.Delete, 
+                        contentDescription = stringResource(R.string.delete),
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                    )
+                }
             }
         }
     }

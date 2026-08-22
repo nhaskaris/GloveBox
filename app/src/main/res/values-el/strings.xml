@@ -137,6 +137,8 @@
     <string name="details_tab">Λεπτομέρειες</string>
     <string name="checklist_tab">Λίστα Ελέγχου</string>
     <string name="valid_vin">Έγκυρο VIN</string>
+    <string name="vehicle_info">Πληροφορίες Οχήματος</string>
+    <string name="seller_details">Λεπτομέρειες Πωλητή</string>
 
     <!-- Buying Guide List -->
     <string name="looking_for_car">Ψάχνετε για νέο αυτοκίνητο;</string>

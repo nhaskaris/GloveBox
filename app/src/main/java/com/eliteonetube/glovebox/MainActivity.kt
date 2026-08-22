@@ -16,6 +16,8 @@ import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,11 +29,16 @@ import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.LifecycleOwner
@@ -414,26 +421,106 @@ fun NavigationWrapper(
     currentRoute: GloveboxRoute,
     content: @Composable () -> Unit
 ) {
+    val primaryItems = navigationItems.filter { it.route !is GloveboxRoute.Settings }
+    val secondaryItems = navigationItems.filter { it.route is GloveboxRoute.Settings }
+
+    val drawerContent: @Composable () -> Unit = {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .statusBarsPadding()
+        ) {
+            DrawerHeader()
+            
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 24.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+            )
+            
+            Spacer(Modifier.height(16.dp))
+            
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                primaryItems.forEach { item ->
+                    NavigationDrawerItem(
+                        label = { 
+                            Text(
+                                item.label, 
+                                modifier = Modifier.padding(start = 8.dp),
+                                style = MaterialTheme.typography.labelLarge
+                            ) 
+                        },
+                        selected = item.isRouteSelected(currentRoute),
+                        onClick = item.onClick,
+                        icon = { Icon(item.icon, contentDescription = null, modifier = Modifier.size(22.dp)) },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            unselectedContainerColor = Color.Transparent,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        shape = MaterialTheme.shapes.medium
+                    )
+                }
+                
+                if (secondaryItems.isNotEmpty()) {
+                    Spacer(Modifier.height(16.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        thickness = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    
+                    secondaryItems.forEach { item ->
+                        NavigationDrawerItem(
+                            label = { 
+                                Text(
+                                    item.label, 
+                                    modifier = Modifier.padding(start = 8.dp),
+                                    style = MaterialTheme.typography.labelLarge
+                                ) 
+                            },
+                            selected = item.isRouteSelected(currentRoute),
+                            onClick = item.onClick,
+                            icon = { Icon(item.icon, contentDescription = null, modifier = Modifier.size(22.dp)) },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+                            colors = NavigationDrawerItemDefaults.colors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                unselectedContainerColor = Color.Transparent,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                    }
+                }
+            }
+            
+            DrawerFooter()
+        }
+    }
+
     if (isExpanded) {
         PermanentNavigationDrawer(
             drawerContent = {
                 PermanentDrawerSheet(
                     modifier = Modifier
-                        .width(240.dp)
-                        .statusBarsPadding()
+                        .width(260.dp)
+                        .padding(end = 1.dp)
+                        .background(MaterialTheme.colorScheme.surface),
+                    drawerContainerColor = MaterialTheme.colorScheme.surface
                 ) {
-                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                        Spacer(Modifier.height(12.dp))
-                        navigationItems.forEach { item ->
-                            NavigationDrawerItem(
-                                label = { Text(item.label) },
-                                selected = item.isRouteSelected(currentRoute),
-                                onClick = item.onClick,
-                                icon = { Icon(item.icon, contentDescription = null) },
-                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                            )
-                        }
-                    }
+                    drawerContent()
                 }
             },
             content = content
@@ -443,24 +530,105 @@ fun NavigationWrapper(
             drawerState = drawerState,
             drawerContent = {
                 ModalDrawerSheet(
-                    modifier = Modifier.statusBarsPadding()
+                    drawerContainerColor = MaterialTheme.colorScheme.surface,
+                    drawerShape = MaterialTheme.shapes.large
                 ) {
-                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                        Spacer(Modifier.height(12.dp))
-                        navigationItems.forEach { item ->
-                            NavigationDrawerItem(
-                                label = { Text(item.label) },
-                                selected = item.isRouteSelected(currentRoute),
-                                onClick = item.onClick,
-                                icon = { Icon(item.icon, contentDescription = null) },
-                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                            )
-                        }
-                    }
+                    drawerContent()
                 }
             },
             content = content
         )
+    }
+}
+
+@Composable
+fun DrawerHeader() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                        Color.Transparent
+                    )
+                )
+            )
+            .padding(top = 40.dp, bottom = 24.dp, start = 24.dp, end = 24.dp)
+    ) {
+        Column {
+            Text(
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.titleLarge.copy(
+                    letterSpacing = (-0.5).sp,
+                    fontWeight = FontWeight.ExtraBold
+                ),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(Modifier.height(4.dp))
+            Surface(
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
+                shape = MaterialTheme.shapes.extraSmall
+            ) {
+                Text(
+                    text = "AUTOMOTIVE HUB",
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DrawerFooter() {
+    val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
+    val versionName = remember {
+        try {
+            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            }
+            packageInfo.versionName ?: "1.0.0"
+        } catch (e: Exception) {
+            "1.0.0"
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp)
+    ) {
+        HorizontalDivider(
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        )
+        Spacer(Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Version $versionName",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            )
+            Text(
+                text = "Help & Feedback",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable { 
+                    uriHandler.openUri("https://github.com/nhaskaris/GloveBox/issues")
+                }
+            )
+        }
     }
 }
 

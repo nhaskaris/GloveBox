@@ -321,26 +321,53 @@ fun HistoryContent(
 
             if (items.isEmpty()) {
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxSize(),
+                    modifier = Modifier.weight(1f).fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = stringResource(R.string.no_history_yet),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(32.dp)
+                    ) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            shape = CircleShape,
+                            modifier = Modifier.size(100.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Rounded.History, 
+                                    contentDescription = null, 
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Text(
+                            stringResource(R.string.no_history_yet),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Button(
+                            onClick = { showAddMenu = true },
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Icon(Icons.Rounded.Add, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Log First Entry")
+                        }
+                    }
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxSize(),
+                    modifier = Modifier.weight(1f).fillMaxSize(),
                     contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 80.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    item {
+                        HistorySummaryCard(items)
+                    }
                     items(items, key = { "${it.javaClass.simpleName}_${it.sortId}" }) { item ->
                         when (item) {
                             is HistoryItem.Service -> {
@@ -393,6 +420,91 @@ fun HistoryContent(
 }
 
 @Composable
+fun HistorySummaryCard(items: List<HistoryItem>) {
+    val totalCost = items.sumOf { 
+        when (it) {
+            is HistoryItem.Service -> it.record.cost ?: 0.0
+            is HistoryItem.Fuel -> it.log.totalCost
+        }
+    }
+    
+    val serviceCount = items.count { it is HistoryItem.Service }
+    val fuelCount = items.count { it is HistoryItem.Fuel }
+
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        shape = MaterialTheme.shapes.large, // Reduced from extraLarge
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { // Reduced from 20.dp/16.dp
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Total Spending",
+                        style = MaterialTheme.typography.labelMedium, // Reduced from labelLarge
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = formatCost(totalCost),
+                        style = MaterialTheme.typography.headlineSmall, // Reduced from headlineMedium
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        Icons.Rounded.BarChart,
+                        contentDescription = null,
+                        modifier = Modifier.padding(10.dp), // Reduced from 12.dp
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+            
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                SummaryStat(
+                    label = "Services",
+                    value = serviceCount.toString(),
+                    icon = Icons.Rounded.Build,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                SummaryStat(
+                    label = "Refills",
+                    value = fuelCount.toString(),
+                    icon = Icons.Rounded.LocalGasStation,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SummaryStat(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: androidx.compose.ui.graphics.Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = color)
+        Column {
+            Text(text = value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
 fun FuelLogHistoryItem(
     log: FuelLog,
     mileageUnit: String,
@@ -411,9 +523,9 @@ fun FuelLogHistoryItem(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = MaterialTheme.shapes.large
+        shape = MaterialTheme.shapes.medium // Reduced from large
     ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { // Reduced from 20.dp/12.dp
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -496,11 +608,11 @@ fun ServiceRecordItem(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = MaterialTheme.shapes.large
+        shape = MaterialTheme.shapes.medium // Reduced from large
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(16.dp), // Reduced from 20.dp
+            verticalArrangement = Arrangement.spacedBy(8.dp) // Reduced from 12.dp
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

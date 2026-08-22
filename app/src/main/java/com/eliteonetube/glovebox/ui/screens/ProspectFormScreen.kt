@@ -1,12 +1,14 @@
 package com.eliteonetube.glovebox.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -16,24 +18,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.eliteonetube.glovebox.R
-import com.eliteonetube.glovebox.data.entity.ProspectVehicle
 import com.eliteonetube.glovebox.ui.viewmodels.ProspectViewModel
 import org.json.JSONObject
 import java.io.File
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
 
 data class ChecklistCategory(val title: String, val items: List<String>)
 
@@ -64,7 +64,13 @@ fun ProspectFormScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (prospectId == 0L) stringResource(R.string.new_car_inquiry) else "${formState.make} ${formState.model}") },
+                title = { 
+                    Text(
+                        if (prospectId == 0L) stringResource(R.string.new_car_inquiry) 
+                        else "${formState.make} ${formState.model}",
+                        style = MaterialTheme.typography.titleLarge
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
@@ -78,14 +84,22 @@ fun ProspectFormScreen(
                                     viewModel.promoteToGarage(it, onPromoted) 
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            shape = MaterialTheme.shapes.medium
                         ) {
                             Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(stringResource(R.string.i_bought_it))
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                )
             )
         },
         floatingActionButton = {
@@ -93,20 +107,32 @@ fun ProspectFormScreen(
                 ExtendedFloatingActionButton(
                     onClick = { viewModel.saveProspect(onNavigateBack) },
                     icon = { Icon(Icons.Rounded.Save, contentDescription = null) },
-                    text = { Text(stringResource(R.string.save_details)) }
+                    text = { Text(stringResource(R.string.save_details)) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
-    )
-{ innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             if (prospectId != 0L) {
-                TabRow(selectedTabIndex = tabIndex) {
+                SecondaryTabRow(
+                    selectedTabIndex = tabIndex,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    divider = {}
+                ) {
                     tabs.forEachIndexed { index, title ->
                         Tab(
                             selected = tabIndex == index,
                             onClick = { tabIndex = index },
-                            text = { Text(title) }
+                            text = { 
+                                Text(
+                                    title, 
+                                    style = if (tabIndex == index) MaterialTheme.typography.titleSmall 
+                                            else MaterialTheme.typography.bodyMedium
+                                ) 
+                            }
                         )
                     }
                 }
@@ -140,7 +166,6 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
     var showVinScanner by remember { mutableStateOf(false) }
     var showImageSourceDialog by remember { mutableStateOf(false) }
 
-    // Image capture setup
     val tempUri = remember {
         val file = File(context.cacheDir, "temp_prospect_${System.currentTimeMillis()}.jpg")
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
@@ -213,15 +238,16 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp) // Reduced from 24.dp
     ) {
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(MaterialTheme.shapes.extraLarge)
+                    .height(200.dp) // Reduced from 220.dp
+                    .clip(MaterialTheme.shapes.large) // Reduced from extraLarge
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable { showImageSourceDialog = true },
                 contentAlignment = Alignment.Center
             ) {
@@ -232,173 +258,158 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
-                    Surface(
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
-                        shape = MaterialTheme.shapes.medium
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp)
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), MaterialTheme.shapes.medium)
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
                             stringResource(R.string.change_photo),
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.labelMedium
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 } else {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = MaterialTheme.shapes.extraLarge
-                    ) {
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(Icons.Rounded.AddAPhoto, contentDescription = null, modifier = Modifier.size(48.dp))
-                            Spacer(Modifier.height(12.dp))
-                            Text(stringResource(R.string.add_photo), style = MaterialTheme.typography.titleMedium)
-                        }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Rounded.AddAPhoto, 
+                            contentDescription = null, 
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            stringResource(R.string.add_photo), 
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
         }
 
         item {
-            Column {
-                OutlinedTextField(
-                    value = state.vin,
-                    onValueChange = { 
-                        viewModel.onVinChange(it)
-                    },
-                    label = { Text(stringResource(R.string.vin_label)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = state.vinValidationErrorResId != null,
-                    supportingText = {
-                        state.vinValidationErrorResId?.let { Text(stringResource(it)) }
-                    },
-                    trailingIcon = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (state.isLoading) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                            } else if (state.vin.length == 17 && state.vinValidationErrorResId == null) {
-                                Icon(
-                                    Icons.Rounded.CheckCircle,
-                                    contentDescription = stringResource(R.string.valid_vin),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
+            FormSection(title = stringResource(R.string.vehicle_info)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = state.vin,
+                        onValueChange = { viewModel.onVinChange(it) },
+                        label = { Text(stringResource(R.string.vin_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = state.vinValidationErrorResId != null,
+                        supportingText = {
+                            state.vinValidationErrorResId?.let { Text(stringResource(it)) }
+                        },
+                        trailingIcon = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (state.isLoading) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                                } else if (state.vin.length == 17 && state.vinValidationErrorResId == null) {
+                                    Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50))
+                                }
+                                IconButton(onClick = { showVinScanner = true }) {
+                                    Icon(Icons.Rounded.QrCodeScanner, contentDescription = null)
+                                }
+                                IconButton(onClick = { viewModel.decodeVin() }) {
+                                    Icon(Icons.Rounded.AutoFixHigh, contentDescription = null)
+                                }
                             }
-                            
-                            IconButton(onClick = { showVinScanner = true }) {
-                                Icon(Icons.Rounded.QrCodeScanner, contentDescription = stringResource(R.string.scan_vin))
-                            }
-                            
-                            IconButton(onClick = { viewModel.decodeVin() }) {
-                                Icon(Icons.Rounded.AutoFixHigh, contentDescription = stringResource(R.string.decode_vin))
-                            }
-                        }
+                        },
+                        shape = MaterialTheme.shapes.medium
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = state.year,
+                            onValueChange = viewModel::onYearChange,
+                            label = { Text(stringResource(R.string.year)) },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        OutlinedTextField(
+                            value = state.askedPrice,
+                            onValueChange = viewModel::onPriceChange,
+                            label = { Text(stringResource(R.string.asked_price)) },
+                            modifier = Modifier.weight(1.5f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            prefix = { Text(stringResource(R.string.currency_symbol)) },
+                            shape = MaterialTheme.shapes.medium
+                        )
                     }
-                )
-            }
-        }
 
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedTextField(
-                    value = state.year,
-                    onValueChange = viewModel::onYearChange,
-                    label = { Text(stringResource(R.string.year)) },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                OutlinedTextField(
-                    value = state.askedPrice,
-                    onValueChange = viewModel::onPriceChange,
-                    label = { Text(stringResource(R.string.asked_price)) },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    prefix = { Text(stringResource(R.string.currency_symbol)) }
-                )
-            }
-        }
-
-        item {
-            // --- Searchable Make Dropdown ---
-            ExposedDropdownMenuBox(
-                expanded = makeExpanded,
-                onExpandedChange = { makeExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = state.make,
-                    onValueChange = {
-                        viewModel.onMakeChange(it)
-                        viewModel.onModelChange("") // Reset model when make changes
-                        makeExpanded = true
-                    },
-                    label = { Text(stringResource(R.string.make)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = makeExpanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                    placeholder = { Text(stringResource(R.string.search_select_make)) },
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                    singleLine = true
-                )
-
-                if (filteredMakes.isNotEmpty()) {
-                    ExposedDropdownMenu(
+                    ExposedDropdownMenuBox(
                         expanded = makeExpanded,
-                        onDismissRequest = { makeExpanded = false }
+                        onExpandedChange = { makeExpanded = it }
                     ) {
-                        filteredMakes.forEach { item ->
-                            DropdownMenuItem(
-                                text = { Text(item) },
-                                onClick = {
-                                    viewModel.onMakeSelected(item)
-                                    viewModel.onModelChange("")
-                                    makeExpanded = false
+                        OutlinedTextField(
+                            value = state.make,
+                            onValueChange = {
+                                viewModel.onMakeChange(it)
+                                viewModel.onModelChange("")
+                                makeExpanded = true
+                            },
+                            label = { Text(stringResource(R.string.make)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = makeExpanded) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+                            placeholder = { Text(stringResource(R.string.search_select_make)) },
+                            shape = MaterialTheme.shapes.medium
+                        )
+
+                        if (filteredMakes.isNotEmpty()) {
+                            ExposedDropdownMenu(
+                                expanded = makeExpanded,
+                                onDismissRequest = { makeExpanded = false }
+                            ) {
+                                filteredMakes.forEach { item ->
+                                    DropdownMenuItem(
+                                        text = { Text(item) },
+                                        onClick = {
+                                            viewModel.onMakeSelected(item)
+                                            viewModel.onModelChange("")
+                                            makeExpanded = false
+                                        }
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
-                }
-            }
-        }
 
-        item {
-            // --- Searchable Model Dropdown ---
-            ExposedDropdownMenuBox(
-                expanded = modelExpanded && state.make.isNotEmpty(),
-                onExpandedChange = { if (state.make.isNotEmpty()) modelExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = state.model,
-                    onValueChange = {
-                        viewModel.onModelChange(it)
-                        modelExpanded = true
-                    },
-                    enabled = state.make.isNotEmpty(),
-                    label = { Text(stringResource(R.string.model)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                    placeholder = { Text(if (state.make.isEmpty()) stringResource(R.string.select_make_first) else stringResource(R.string.search_select_model)) },
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                    singleLine = true
-                )
-
-                if (availableModels.isNotEmpty()) {
-                    ExposedDropdownMenu(
+                    ExposedDropdownMenuBox(
                         expanded = modelExpanded && state.make.isNotEmpty(),
-                        onDismissRequest = { modelExpanded = false }
+                        onExpandedChange = { if (state.make.isNotEmpty()) modelExpanded = it }
                     ) {
-                        availableModels.forEach { item ->
-                            DropdownMenuItem(
-                                text = { Text(item) },
-                                onClick = {
-                                    viewModel.onModelChange(item)
-                                    modelExpanded = false
+                        OutlinedTextField(
+                            value = state.model,
+                            onValueChange = {
+                                viewModel.onModelChange(it)
+                                modelExpanded = true
+                            },
+                            enabled = state.make.isNotEmpty(),
+                            label = { Text(stringResource(R.string.model)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+                            placeholder = { Text(if (state.make.isEmpty()) stringResource(R.string.select_make_first) else stringResource(R.string.search_select_model)) },
+                            shape = MaterialTheme.shapes.medium
+                        )
+
+                        if (availableModels.isNotEmpty()) {
+                            ExposedDropdownMenu(
+                                expanded = modelExpanded && state.make.isNotEmpty(),
+                                onDismissRequest = { modelExpanded = false }
+                            ) {
+                                availableModels.forEach { item ->
+                                    DropdownMenuItem(
+                                        text = { Text(item) },
+                                        onClick = {
+                                            viewModel.onModelChange(item)
+                                            modelExpanded = false
+                                        }
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
                 }
@@ -406,22 +417,48 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
         }
 
         item {
-            OutlinedTextField(
-                value = state.location,
-                onValueChange = viewModel::onLocationChange,
-                label = { Text(stringResource(R.string.seller_location)) },
-                modifier = Modifier.fillMaxWidth()
-            )
+            FormSection(title = stringResource(R.string.seller_details)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = state.location,
+                        onValueChange = viewModel::onLocationChange,
+                        label = { Text(stringResource(R.string.seller_location)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Rounded.LocationOn, contentDescription = null) },
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    OutlinedTextField(
+                        value = state.sellerNotes,
+                        onValueChange = viewModel::onNotesChange,
+                        label = { Text(stringResource(R.string.seller_notes)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        shape = MaterialTheme.shapes.medium
+                    )
+                }
+            }
         }
+    }
+}
 
-        item {
-            OutlinedTextField(
-                value = state.sellerNotes,
-                onValueChange = viewModel::onNotesChange,
-                label = { Text(stringResource(R.string.seller_notes)) },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3
-            )
+@Composable
+fun FormSection(title: String, content: @Composable () -> Unit) {
+    Column {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 8.dp, start = 4.dp) // Reduced from 12.dp
+        )
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp), // Reduced from 2.dp
+            shape = MaterialTheme.shapes.medium // Reduced from large
+        ) {
+            Box(modifier = Modifier.padding(12.dp)) { // Reduced from 16.dp
+                content()
+            }
         }
     }
 }
@@ -468,36 +505,56 @@ fun PrePurchaseChecklistContent(
     }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         categories.forEach { category ->
             item {
-                Text(category.title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                Text(
+                    category.title, 
+                    style = MaterialTheme.typography.titleMedium, 
+                    color = MaterialTheme.colorScheme.primary, 
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 4.dp)
+                )
             }
             items(category.items) { itemText ->
                 val isChecked = checkedItems.contains(itemText)
-                ListItem(
-                    headlineContent = {
-                        Text(itemText, textDecoration = if (isChecked) androidx.compose.ui.text.style.TextDecoration.LineThrough else null)
-                    },
-                    leadingContent = {
-                        Checkbox(
-                            checked = isChecked,
-                            onCheckedChange = { checked ->
-                                val newSet = if (checked) checkedItems + itemText else checkedItems - itemText
-                                checkedItems = newSet
-                                onCheckedChange(newSet)
-                            }
-                        )
-                    },
-                    modifier = Modifier.clickable {
-                        val newSet = if (isChecked) checkedItems - itemText else checkedItems + itemText
-                        checkedItems = newSet
-                        onCheckedChange(newSet)
-                    }
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isChecked) MaterialTheme.colorScheme.surface.copy(alpha = 0.5f) 
+                                        else MaterialTheme.colorScheme.surface
+                    ),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                itemText, 
+                                style = MaterialTheme.typography.bodyLarge,
+                                textDecoration = if (isChecked) androidx.compose.ui.text.style.TextDecoration.LineThrough else null,
+                                color = if (isChecked) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) 
+                                        else MaterialTheme.colorScheme.onSurface
+                            )
+                        },
+                        leadingContent = {
+                            Checkbox(
+                                checked = isChecked,
+                                onCheckedChange = { checked ->
+                                    val newSet = if (checked) checkedItems + itemText else checkedItems - itemText
+                                    checkedItems = newSet
+                                    onCheckedChange(newSet)
+                                }
+                            )
+                        },
+                        modifier = Modifier.clickable {
+                            val newSet = if (isChecked) checkedItems - itemText else checkedItems + itemText
+                            checkedItems = newSet
+                            onCheckedChange(newSet)
+                        }
+                    )
+                }
             }
         }
     }

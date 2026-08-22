@@ -18,9 +18,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -32,7 +34,6 @@ import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.ui.viewmodels.VehicleViewModel
 import com.eliteonetube.glovebox.ui.viewmodels.VinDecodingState
 import java.io.File
-
 import androidx.compose.ui.tooling.preview.Preview
 import com.eliteonetube.glovebox.ui.theme.GloveboxTheme
 
@@ -213,7 +214,6 @@ fun VehicleProfileContent(
         )
     }
 
-    // Handle VIN decoding success
     LaunchedEffect(vinState) {
         if (vinState is VinDecodingState.Success) {
             make = vinState.make
@@ -249,14 +249,17 @@ fun VehicleProfileContent(
 
     Scaffold(
         topBar = {
-            LargeTopAppBar(
-                title = { Text(if (vehicle?.id == 0L || vehicle == null) stringResource(R.string.add_to_garage) else stringResource(R.string.edit_vehicle)) },
+            TopAppBar(
+                title = { 
+                    Text(
+                        if (vehicle?.id == 0L || vehicle == null) stringResource(R.string.add_to_garage) 
+                        else stringResource(R.string.edit_vehicle),
+                        fontWeight = FontWeight.Bold
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
                     }
                 }
             )
@@ -266,45 +269,29 @@ fun VehicleProfileContent(
             ExtendedFloatingActionButton(
                 onClick = {
                     if (isFormValid) {
-                        onSaveVehicle(
-                            make,
-                            model,
-                            year.toIntOrNull() ?: 0,
-                            odometer.toIntOrNull() ?: 0,
-                            trim.takeIf { it.isNotBlank() },
-                            vin.takeIf { it.isNotBlank() },
-                            nickname.takeIf { it.isNotBlank() },
-                            licensePlate.takeIf { it.isNotBlank() },
-                            color.takeIf { it.isNotBlank() },
-                            fuelType.takeIf { it.isNotBlank() },
-                            unitSystem,
-                            photoUri,
-                            onNavigateBack
-                        )
+                        onSaveVehicle(make, model, year.toIntOrNull() ?: 0, odometer.toIntOrNull() ?: 0, trim.takeIf { it.isNotBlank() }, vin.takeIf { it.isNotBlank() }, nickname.takeIf { it.isNotBlank() }, licensePlate.takeIf { it.isNotBlank() }, color.takeIf { it.isNotBlank() }, fuelType.takeIf { it.isNotBlank() }, unitSystem, photoUri, onNavigateBack)
                     }
                 },
                 icon = { Icon(Icons.Rounded.Save, contentDescription = null) },
                 text = { Text(stringResource(R.string.save_vehicle)) },
-                expanded = isFormValid,
-                containerColor = if (isFormValid) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = if (isFormValid) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                containerColor = if (isFormValid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
             )
         }
-    )
-{ innerPadding ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp) // Reduced from 24.dp
         ) {
+            // --- Photo Section ---
             Box(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
+                    .fillMaxWidth()
+                    .height(160.dp) // Reduced from 180.dp
+                    .clip(MaterialTheme.shapes.large) // Reduced from extraLarge
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable { showImageSourceDialog = true },
                 contentAlignment = Alignment.Center
@@ -315,275 +302,211 @@ fun VehicleProfileContent(
                             .data(photoUri)
                             .crossfade(true)
                             .build(),
-                        contentDescription = "Vehicle photo",
+                        contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+                    Surface(
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text(
+                            stringResource(R.string.change_photo),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
                 } else {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Rounded.AddPhotoAlternate,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            stringResource(R.string.add_photo),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Icon(Icons.Rounded.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(8.dp))
+                        Text(stringResource(R.string.add_photo), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
 
-            Text(
-                text = stringResource(R.string.vin_auto_fill_description),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            // --- Section: Identification ---
+            ProfileSection(title = "Identification", icon = Icons.Rounded.Badge) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = nickname,
+                        onValueChange = { nickname = it },
+                        label = { Text(stringResource(R.string.nickname_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text(stringResource(R.string.nickname_placeholder)) },
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    OutlinedTextField(
+                        value = licensePlate,
+                        onValueChange = { licensePlate = it.uppercase() },
+                        label = { Text(stringResource(R.string.license_plate)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium
+                    )
+                }
+            }
 
-            OutlinedTextField(
-                value = vin,
-                onValueChange = { 
-                    vin = it.uppercase()
-                    onVinChange(vin)
-                },
-                label = { Text(stringResource(R.string.vin)) },
-                leadingIcon = { Icon(Icons.Rounded.Numbers, contentDescription = null) },
-                isError = vinValidationErrorResId != null || vinState is VinDecodingState.Error,
-                supportingText = {
-                    when {
-                        vinState is VinDecodingState.Error -> Text(stringResource(vinState.messageResId), color = MaterialTheme.colorScheme.error)
-                        vinValidationErrorResId != null -> Text(stringResource(vinValidationErrorResId), color = MaterialTheme.colorScheme.error)
+            // --- Section: Smart VIN & Basic Info ---
+            ProfileSection(title = "Vehicle Details", icon = Icons.Rounded.DirectionsCar) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = vin,
+                        onValueChange = { 
+                            vin = it.uppercase()
+                            onVinChange(vin)
+                        },
+                        label = { Text(stringResource(R.string.vin)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = vinValidationErrorResId != null || vinState is VinDecodingState.Error,
+                        supportingText = {
+                            when {
+                                vinState is VinDecodingState.Error -> Text(stringResource(vinState.messageResId), color = MaterialTheme.colorScheme.error)
+                                vinValidationErrorResId != null -> Text(stringResource(vinValidationErrorResId), color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        trailingIcon = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (vin.length == 17 && vinValidationErrorResId == null && vinState !is VinDecodingState.Error) {
+                                    Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50))
+                                }
+                                IconButton(onClick = { showVinScanner = true }) {
+                                    Icon(Icons.Rounded.QrCodeScanner, contentDescription = null)
+                                }
+                                if (isVinEnabled) {
+                                    if (vinState is VinDecodingState.Loading) {
+                                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                                    } else {
+                                        IconButton(onClick = { onDecodeVin(vin) }, enabled = vin.length >= 11) {
+                                            Icon(Icons.Rounded.AutoFixHigh, contentDescription = null)
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        shape = MaterialTheme.shapes.medium
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = year,
+                            onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) year = it },
+                            label = { Text(stringResource(R.string.year)) },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        OutlinedTextField(
+                            value = odometer,
+                            onValueChange = { if (it.all { char -> char.isDigit() }) odometer = it },
+                            label = { Text(stringResource(R.string.current_odometer)) },
+                            modifier = Modifier.weight(1.5f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            suffix = { Text(unitSystem) },
+                            shape = MaterialTheme.shapes.medium
+                        )
                     }
-                },
-                trailingIcon = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (vin.length == 17 && vinValidationErrorResId == null && vinState !is VinDecodingState.Error) {
-                            Icon(
-                                Icons.Rounded.CheckCircle,
-                                contentDescription = stringResource(R.string.valid_vin),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        
-                        IconButton(onClick = { showVinScanner = true }) {
-                            Icon(Icons.Rounded.QrCodeScanner, contentDescription = stringResource(R.string.scan_vin))
-                        }
 
-                        if (isVinEnabled) {
-                            if (vinState is VinDecodingState.Loading) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                            } else {
-                                IconButton(
-                                    onClick = { onDecodeVin(vin) },
-                                    enabled = vin.length >= 11
-                                ) {
-                                    Icon(Icons.Rounded.AutoFixHigh, contentDescription = stringResource(R.string.auto_fill_vin))
+                    ExposedDropdownMenuBox(expanded = makeExpanded, onExpandedChange = { makeExpanded = it }) {
+                        OutlinedTextField(
+                            value = make,
+                            onValueChange = { make = it; model = ""; onMakeQueryChange(it); onMakeSelected(it); makeExpanded = true },
+                            label = { Text(stringResource(R.string.make_required)) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = makeExpanded) },
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        if (makes.isNotEmpty()) {
+                            ExposedDropdownMenu(expanded = makeExpanded, onDismissRequest = { makeExpanded = false }) {
+                                makes.forEach { item ->
+                                    DropdownMenuItem(text = { Text(item) }, onClick = { make = item; model = ""; onMakeQueryChange(item); onMakeSelected(item); makeExpanded = false })
                                 }
                             }
                         }
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.vin)) },
-                shape = MaterialTheme.shapes.large,
-                singleLine = true
-            )
 
-            // --- Nickname Input ---
-            OutlinedTextField(
-                value = nickname,
-                onValueChange = { nickname = it },
-                label = { Text(stringResource(R.string.nickname_label)) },
-                leadingIcon = { Icon(Icons.Rounded.Face, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.nickname_placeholder)) },
-                shape = MaterialTheme.shapes.large
-            )
-
-            // --- Year Input ---
-            OutlinedTextField(
-                value = year,
-                onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) year = it },
-                label = { Text(stringResource(R.string.year)) },
-                leadingIcon = { Icon(Icons.Rounded.CalendarToday, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                shape = MaterialTheme.shapes.large
-            )
-
-            // --- Searchable Make Dropdown ---
-            ExposedDropdownMenuBox(
-                expanded = makeExpanded,
-                onExpandedChange = { makeExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = make,
-                    onValueChange = {
-                        make = it
-                        model = "" // Reset model when make query changes
-                        onMakeQueryChange(it)
-                        onMakeSelected(it)
-                        makeExpanded = true
-                    },
-                    label = { Text(stringResource(R.string.make_required)) },
-                    leadingIcon = { Icon(Icons.Rounded.DirectionsCar, contentDescription = null) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = makeExpanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                    placeholder = { Text(stringResource(R.string.search_select_make)) },
-                    shape = MaterialTheme.shapes.large,
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                    singleLine = true,
-                    isError = make.isBlank() && vehicle != null // Show error if empty during edit
-                )
-
-                if (makes.isNotEmpty()) {
-                    ExposedDropdownMenu(
-                        expanded = makeExpanded,
-                        onDismissRequest = { makeExpanded = false }
-                    ) {
-                        makes.forEach { item ->
-                            DropdownMenuItem(
-                                text = { Text(item) },
-                                onClick = {
-                                    make = item
-                                    model = ""
-                                    onMakeQueryChange(item)
-                                    onMakeSelected(item)
-                                    makeExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // --- Searchable Model Dropdown ---
-            ExposedDropdownMenuBox(
-                expanded = modelExpanded && make.isNotEmpty(),
-                onExpandedChange = { if (make.isNotEmpty()) modelExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = model,
-                    onValueChange = {
-                        model = it
-                        onModelQueryChange(it)
-                        modelExpanded = true
-                    },
-                    enabled = make.isNotEmpty(),
-                    label = { Text(stringResource(R.string.model_required)) },
-                    leadingIcon = { Icon(Icons.Rounded.Numbers, contentDescription = null) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                    placeholder = { Text(if (make.isEmpty()) stringResource(R.string.select_make_first) else stringResource(R.string.search_select_model)) },
-                    shape = MaterialTheme.shapes.large,
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                    singleLine = true,
-                    isError = model.isBlank() && make.isNotBlank() && vehicle != null
-                )
-
-                if (availableModels.isNotEmpty()) {
-                    ExposedDropdownMenu(
-                        expanded = modelExpanded && make.isNotEmpty(),
-                        onDismissRequest = { modelExpanded = false }
-                    ) {
-                        availableModels.forEach { item ->
-                            DropdownMenuItem(
-                                text = { Text(item) },
-                                onClick = {
-                                    model = item
-                                    onModelQueryChange(item)
-                                    modelExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
-            OutlinedTextField(
-                value = odometer,
-                onValueChange = { if (it.all { char -> char.isDigit() }) odometer = it },
-                label = { Text(stringResource(R.string.current_odometer) + " ($unitSystem)") },
-                leadingIcon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                shape = MaterialTheme.shapes.large
-            )
-
-            // --- Additional Info Section ---
-            Text(
-                text = "Additional Details",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-
-            OutlinedTextField(
-                value = trim,
-                onValueChange = { trim = it },
-                label = { Text(stringResource(R.string.trim_variant)) },
-                leadingIcon = { Icon(Icons.Rounded.Tune, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.trim_placeholder)) },
-                shape = MaterialTheme.shapes.large
-            )
-
-            OutlinedTextField(
-                value = licensePlate,
-                onValueChange = { licensePlate = it.uppercase() },
-                label = { Text(stringResource(R.string.license_plate)) },
-                leadingIcon = { Icon(Icons.Rounded.Badge, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large
-            )
-
-            OutlinedTextField(
-                value = color,
-                onValueChange = { color = it },
-                label = { Text(stringResource(R.string.color)) },
-                leadingIcon = { Icon(Icons.Rounded.ColorLens, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large
-            )
-
-            ExposedDropdownMenuBox(
-                expanded = fuelExpanded,
-                onExpandedChange = { fuelExpanded = it }
-            ) {
-                OutlinedTextField(
-                    value = fuelType,
-                    onValueChange = { fuelType = it },
-                    label = { Text(stringResource(R.string.fuel_type)) },
-                    leadingIcon = { Icon(Icons.Rounded.LocalGasStation, contentDescription = null) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = fuelExpanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                    placeholder = { Text(stringResource(R.string.fuel_type_placeholder)) },
-                    shape = MaterialTheme.shapes.large,
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-                )
-                ExposedDropdownMenu(
-                    expanded = fuelExpanded,
-                    onDismissRequest = { fuelExpanded = false }
-                ) {
-                    fuelTypes.forEach { type ->
-                        DropdownMenuItem(
-                            text = { Text(type) },
-                            onClick = {
-                                fuelType = type
-                                fuelExpanded = false
-                            }
+                    ExposedDropdownMenuBox(expanded = modelExpanded && make.isNotEmpty(), onExpandedChange = { if (make.isNotEmpty()) modelExpanded = it }) {
+                        OutlinedTextField(
+                            value = model,
+                            onValueChange = { model = it; onModelQueryChange(it); modelExpanded = true },
+                            enabled = make.isNotEmpty(),
+                            label = { Text(stringResource(R.string.model_required)) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) },
+                            shape = MaterialTheme.shapes.medium
                         )
+                        if (availableModels.isNotEmpty()) {
+                            ExposedDropdownMenu(expanded = modelExpanded && make.isNotEmpty(), onDismissRequest = { modelExpanded = false }) {
+                                availableModels.forEach { item ->
+                                    DropdownMenuItem(text = { Text(item) }, onClick = { model = item; onModelQueryChange(item); modelExpanded = false })
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // --- Section: Technical Specs ---
+            ProfileSection(title = "Specifications", icon = Icons.Rounded.Tune) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = trim,
+                        onValueChange = { trim = it },
+                        label = { Text(stringResource(R.string.trim_variant)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text(stringResource(R.string.trim_placeholder)) },
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    OutlinedTextField(
+                        value = color,
+                        onValueChange = { color = it },
+                        label = { Text(stringResource(R.string.color)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    ExposedDropdownMenuBox(expanded = fuelExpanded, onExpandedChange = { fuelExpanded = it }) {
+                        OutlinedTextField(
+                            value = fuelType,
+                            onValueChange = { fuelType = it },
+                            label = { Text(stringResource(R.string.fuel_type)) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = fuelExpanded) },
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        ExposedDropdownMenu(expanded = fuelExpanded, onDismissRequest = { fuelExpanded = false }) {
+                            fuelTypes.forEach { type ->
+                                DropdownMenuItem(text = { Text(type) }, onClick = { fuelType = type; fuelExpanded = false })
+                            }
+                        }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(80.dp))
+        }
+    }
+}
+
+@Composable
+fun ProfileSection(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, content: @Composable () -> Unit) {
+    Column {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 8.dp, start = 4.dp) // Reduced from 12.dp
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) // Reduced from 20.dp
+            Spacer(Modifier.width(8.dp))
+            Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        }
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium, // Reduced from large
+            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp) // Reduced from 2.dp
+        ) {
+            Box(modifier = Modifier.padding(12.dp)) { // Reduced from 16.dp
+                content()
+            }
         }
     }
 }
