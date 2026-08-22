@@ -342,7 +342,7 @@ fun AddServiceLogScreen(
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(stringResource(R.string.schedule_next_service), fontWeight = FontWeight.Bold)
                                 if (uiState.isSchedulingNext && uiState.serviceTypes.any { type -> 
-                                    listOf("oil", "tire", "brake", "filter", "inspection").any { keyword -> 
+                                    listOf("oil", "tire", "brake", "filter", "inspection", "spark", "transmission", "belt", "coolant", "alignment", "wiper", "battery").any { keyword -> 
                                         type.lowercase().contains(keyword) 
                                     } 
                                 }) {

@@ -100,6 +100,39 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
                     intervalMileage = if (unit == "mi") "10000" else "15000"
                     intervalMonths = "12"
                 }
+                latest.contains("spark") -> {
+                    autoSchedule = true
+                    intervalMileage = if (unit == "mi") "60000" else "100000"
+                    intervalMonths = "48"
+                }
+                latest.contains("transmission") -> {
+                    autoSchedule = true
+                    intervalMileage = if (unit == "mi") "50000" else "80000"
+                    intervalMonths = "36"
+                }
+                latest.contains("belt") -> {
+                    autoSchedule = true
+                    intervalMileage = if (unit == "mi") "80000" else "120000"
+                    intervalMonths = "60"
+                }
+                latest.contains("coolant") -> {
+                    autoSchedule = true
+                    intervalMileage = if (unit == "mi") "30000" else "50000"
+                    intervalMonths = "24"
+                }
+                latest.contains("alignment") -> {
+                    autoSchedule = true
+                    intervalMileage = if (unit == "mi") "10000" else "15000"
+                    intervalMonths = "12"
+                }
+                latest.contains("wiper") -> {
+                    autoSchedule = true
+                    intervalMonths = "6"
+                }
+                latest.contains("battery") -> {
+                    autoSchedule = true
+                    intervalMonths = "24"
+                }
                 latest.contains("inspection") -> {
                     autoSchedule = true
                     intervalMonths = "12"
