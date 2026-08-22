@@ -115,12 +115,12 @@ fun MyPartsScreen(
                             Icon(Icons.Rounded.Build, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    Text("No parts logged yet", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Save exact part numbers for easy reference later.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.parts_empty_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.parts_empty_desc), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Button(onClick = { showPartDialog = true }) {
                         Icon(Icons.Rounded.Add, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Add First Part")
+                        Text(stringResource(R.string.add_first_part))
                     }
                 }
             }
@@ -244,11 +244,11 @@ fun AddEditPartDialog(
     if (showSourceDialog) {
         AlertDialog(
             onDismissRequest = { showSourceDialog = false },
-            title = { Text("Select Part Photo") },
+            title = { Text(stringResource(R.string.select_part_photo)) },
             text = {
                 Column {
                     ListItem(
-                        headlineContent = { Text("Camera") },
+                        headlineContent = { Text(stringResource(R.string.camera)) },
                         leadingContent = { Icon(Icons.Rounded.CameraAlt, contentDescription = null) },
                         modifier = Modifier.clickable {
                             showSourceDialog = false
@@ -260,7 +260,7 @@ fun AddEditPartDialog(
                         }
                     )
                     ListItem(
-                        headlineContent = { Text("Gallery") },
+                        headlineContent = { Text(stringResource(R.string.gallery)) },
                         leadingContent = { Icon(Icons.Rounded.PhotoLibrary, contentDescription = null) },
                         modifier = Modifier.clickable {
                             showSourceDialog = false
@@ -270,14 +270,14 @@ fun AddEditPartDialog(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showSourceDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showSourceDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (part == null) "Add Part Info" else "Edit Part Info") },
+        title = { Text(if (part == null) stringResource(R.string.add_part_info) else stringResource(R.string.edit_part_info)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
@@ -304,28 +304,28 @@ fun AddEditPartDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Part Name (e.g. Oil Filter)") },
+                    label = { Text(stringResource(R.string.part_name_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium
                 )
                 OutlinedTextField(
                     value = number,
                     onValueChange = { number = it },
-                    label = { Text("Part Number") },
+                    label = { Text(stringResource(R.string.part_number_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium
                 )
                 OutlinedTextField(
                     value = brand,
                     onValueChange = { brand = it },
-                    label = { Text("Brand (Optional)") },
+                    label = { Text(stringResource(R.string.brand_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium
                 )
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text("Notes (Optional)") },
+                    label = { Text(stringResource(R.string.notes_optional_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium
                 )
@@ -336,11 +336,11 @@ fun AddEditPartDialog(
                 onClick = { onConfirm(name, number, brand.takeIf { it.isNotBlank() }, notes.takeIf { it.isNotBlank() }, photoUri) },
                 enabled = name.isNotBlank() && number.isNotBlank()
             ) {
-                Text("Save")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }

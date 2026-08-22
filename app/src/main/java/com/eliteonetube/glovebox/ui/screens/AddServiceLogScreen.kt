@@ -351,7 +351,7 @@ fun AddServiceLogScreen(
                                         shape = MaterialTheme.shapes.extraSmall
                                     ) {
                                         Text(
-                                            text = "SMART SUGGESTION",
+                                            text = stringResource(R.string.smart_suggestion_badge),
                                             style = MaterialTheme.typography.labelSmall,
                                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                                             fontWeight = FontWeight.Black

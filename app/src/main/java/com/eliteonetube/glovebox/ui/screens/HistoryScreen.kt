@@ -355,7 +355,7 @@ fun HistoryContent(
                         ) {
                             Icon(Icons.Rounded.Add, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Log First Entry")
+                            Text(stringResource(R.string.log_first_entry))
                         }
                     }
                 }
@@ -449,7 +449,7 @@ fun HistorySummaryCard(items: List<HistoryItem>) {
             ) {
                 Column {
                     Text(
-                        text = "Total Spending",
+                        text = stringResource(R.string.history_total_spending),
                         style = MaterialTheme.typography.labelMedium, // Reduced from labelLarge
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -477,13 +477,13 @@ fun HistorySummaryCard(items: List<HistoryItem>) {
             
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 SummaryStat(
-                    label = "Services",
+                    label = stringResource(R.string.history_services_count),
                     value = serviceCount.toString(),
                     icon = Icons.Rounded.Build,
                     color = MaterialTheme.colorScheme.primary
                 )
                 SummaryStat(
-                    label = "Refills",
+                    label = stringResource(R.string.history_refills_count),
                     value = fuelCount.toString(),
                     icon = Icons.Rounded.LocalGasStation,
                     color = MaterialTheme.colorScheme.secondary

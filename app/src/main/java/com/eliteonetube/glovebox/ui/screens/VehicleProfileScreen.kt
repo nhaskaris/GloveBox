@@ -326,7 +326,7 @@ fun VehicleProfileContent(
             }
 
             // --- Section: Identification ---
-            ProfileSection(title = "Identification", icon = Icons.Rounded.Badge) {
+            ProfileSection(title = stringResource(R.string.section_identification), icon = Icons.Rounded.Badge) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     OutlinedTextField(
                         value = nickname,
@@ -347,7 +347,7 @@ fun VehicleProfileContent(
             }
 
             // --- Section: Smart VIN & Basic Info ---
-            ProfileSection(title = "Vehicle Details", icon = Icons.Rounded.DirectionsCar) {
+            ProfileSection(title = stringResource(R.string.section_vehicle_details), icon = Icons.Rounded.DirectionsCar) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     OutlinedTextField(
                         value = vin,
@@ -446,7 +446,7 @@ fun VehicleProfileContent(
             }
 
             // --- Section: Technical Specs ---
-            ProfileSection(title = "Specifications", icon = Icons.Rounded.Tune) {
+            ProfileSection(title = stringResource(R.string.section_specifications), icon = Icons.Rounded.Tune) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     OutlinedTextField(
                         value = trim,

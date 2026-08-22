@@ -95,7 +95,7 @@ fun VehicleListScreen(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                     Text(
-                        "Your garage is empty. Add your first vehicle to start tracking maintenance and fuel.",
+                        stringResource(R.string.garage_empty_desc),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center

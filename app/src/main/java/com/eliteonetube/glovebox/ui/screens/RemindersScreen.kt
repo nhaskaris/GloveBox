@@ -104,7 +104,7 @@ fun RemindersContent(
                         Text(stringResource(R.string.reminders))
                         if (estimatedOdometer > currentOdometer) {
                             Text(
-                                text = "Estimated: $estimatedOdometer $odometerUnit",
+                                text = stringResource(R.string.estimated_odometer_label, estimatedOdometer.toString(), odometerUnit),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -346,7 +346,7 @@ fun AddReminderDialog(
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    Text("Recurring cycle?")
+                    Text(stringResource(R.string.recurring_cycle_label))
                     Switch(checked = isRecurring, onCheckedChange = { isRecurring = it })
                 }
 
@@ -365,7 +365,7 @@ fun AddReminderDialog(
                         Text(stringResource(R.string.remind_by_date))
                     }
                 } else {
-                    Text("Repeat Every:", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.repeat_every_label), style = MaterialTheme.typography.labelLarge)
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedTextField(
                             value = intervalMileage,
@@ -378,13 +378,13 @@ fun AddReminderDialog(
                         OutlinedTextField(
                             value = intervalMonths,
                             onValueChange = { if (it.all { c -> c.isDigit() }) intervalMonths = it },
-                            label = { Text("Months") },
+                            label = { Text(stringResource(R.string.months_label)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f),
                             shape = MaterialTheme.shapes.medium
                         )
                     }
-                    Text("The next target will be calculated automatically based on your current mileage.", style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.recurring_desc), style = MaterialTheme.typography.labelSmall)
                 }
             }
         },

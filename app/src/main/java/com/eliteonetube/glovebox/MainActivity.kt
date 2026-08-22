@@ -665,7 +665,7 @@ fun DrawerHeader() {
                 shape = MaterialTheme.shapes.extraSmall
             ) {
                 Text(
-                    text = "AUTOMOTIVE HUB",
+                    text = stringResource(R.string.automotive_hub_tag),
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                     fontWeight = FontWeight.Bold,
@@ -709,12 +709,12 @@ fun DrawerFooter() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Version $versionName",
+                text = stringResource(R.string.version_label, versionName),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
             Text(
-                text = "Help & Feedback",
+                text = stringResource(R.string.help_feedback_label),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Medium,

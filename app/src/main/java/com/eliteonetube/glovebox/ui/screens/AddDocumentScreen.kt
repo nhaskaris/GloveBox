@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -46,7 +47,19 @@ fun AddDocumentScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    val categories = listOf("Insurance", "Registration", "Warranty", "Invoice", "Other")
+    val isGreek = LocalConfiguration.current.locales[0].language == "el"
+
+    val categories = remember(isGreek) {
+        val base = listOf(
+            R.string.cat_insurance,
+            R.string.cat_registration,
+            R.string.cat_warranty,
+            R.string.cat_invoice
+        )
+        val greekSpecific = if (isGreek) listOf(R.string.cat_kteo, R.string.cat_emissions) else emptyList()
+        (base + greekSpecific + listOf(R.string.cat_other))
+    }
+    
     var categoryExpanded by remember { mutableStateOf(false) }
     var vehicleExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -250,11 +263,12 @@ fun AddDocumentScreen(
                     expanded = categoryExpanded,
                     onDismissRequest = { categoryExpanded = false }
                 ) {
-                    categories.forEach { cat ->
+                    categories.forEach { catResId ->
+                        val catName = stringResource(catResId)
                         DropdownMenuItem(
-                            text = { Text(cat) },
+                            text = { Text(catName) },
                             onClick = {
-                                viewModel.onCategoryChange(cat)
+                                viewModel.onCategoryChange(catName)
                                 categoryExpanded = false
                             }
                         )

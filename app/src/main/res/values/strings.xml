@@ -31,6 +31,44 @@
     <string name="no_expiry_date">No expiry date set</string>
     <string name="expiry_notification_info">We will notify you 30 days and 7 days before this date.</string>
 
+    <!-- Document Categories -->
+    <string name="cat_insurance">Insurance</string>
+    <string name="cat_registration">Registration</string>
+    <string name="cat_warranty">Warranty</string>
+    <string name="cat_invoice">Invoice</string>
+    <string name="cat_kteo">KTEO</string>
+    <string name="cat_emissions">Emissions Card</string>
+    <string name="cat_other">Other</string>
+
+    <string name="parts_empty_title">No parts logged yet</string>
+    <string name="parts_empty_desc">Save exact part numbers for easy reference later.</string>
+    <string name="add_first_part">Add First Part</string>
+    <string name="add_part_info">Add Part Info</string>
+    <string name="edit_part_info">Edit Part Info</string>
+    <string name="select_part_photo">Select Part Photo</string>
+    <string name="part_name_label">Part Name (e.g. Oil Filter)</string>
+    <string name="part_number_label">Part Number</string>
+    <string name="brand_label">Brand (Optional)</string>
+    <string name="notes_optional_label">Notes (Optional)</string>
+    <string name="history_total_spending">Total Spending</string>
+    <string name="history_services_count">Services</string>
+    <string name="history_refills_count">Refills</string>
+    <string name="log_first_entry">Log First Entry</string>
+    <string name="estimated_odometer_label">Estimated: %s %s</string>
+    <string name="recurring_cycle_label">Recurring cycle?</string>
+    <string name="repeat_every_label">Repeat Every:</string>
+    <string name="recurring_desc">The next target will be calculated automatically based on your current mileage.</string>
+    <string name="months_label">Months</string>
+    <string name="smart_suggestion_badge">SMART SUGGESTION</string>
+    <string name="automotive_hub_tag">AUTOMOTIVE HUB</string>
+    <string name="version_label">Version %s</string>
+    <string name="help_feedback_label">Help &amp; Feedback</string>
+
+    <string name="garage_empty_desc">Your garage is empty. Add your first vehicle to start tracking maintenance and fuel.</string>
+    <string name="section_identification">Identification</string>
+    <string name="section_vehicle_details">Vehicle Details</string>
+    <string name="section_specifications">Specifications</string>
+
     <!-- Add Fuel Log -->
     <string name="add_fuel_log">Add Fuel Log</string>
     <string name="edit_fuel_log">Edit Fuel Log</string>

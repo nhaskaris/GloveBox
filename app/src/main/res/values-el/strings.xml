@@ -31,6 +31,44 @@
     <string name="no_expiry_date">Δεν έχει οριστεί ημερομηνία λήξης</string>
     <string name="expiry_notification_info">Θα σας ειδοποιήσουμε 30 ημέρες και 7 ημέρες πριν από αυτήν την ημερομηνία.</string>
 
+    <!-- Document Categories -->
+    <string name="cat_insurance">Ασφάλεια</string>
+    <string name="cat_registration">Άδεια Κυκλοφορίας</string>
+    <string name="cat_warranty">Εγγύηση</string>
+    <string name="cat_invoice">Τιμολόγιο</string>
+    <string name="cat_kteo">ΚΤΕΟ</string>
+    <string name="cat_emissions">Κάρτα Καυσαερίων</string>
+    <string name="cat_other">Άλλο</string>
+
+    <string name="parts_empty_title">Δεν έχουν καταχωρηθεί ανταλλακτικά</string>
+    <string name="parts_empty_desc">Αποθηκεύστε τους ακριβείς κωδικούς ανταλλακτικών για εύκολη αναφορά.</string>
+    <string name="add_first_part">Προσθήκη Πρώτου Ανταλλακτικού</string>
+    <string name="add_part_info">Προσθήκη Ανταλλακτικού</string>
+    <string name="edit_part_info">Επεξεργασία Ανταλλακτικού</string>
+    <string name="select_part_photo">Επιλογή Φωτογραφίας Ανταλλακτικού</string>
+    <string name="part_name_label">Όνομα Ανταλλακτικού (π.χ. Φίλτρο Λαδιού)</string>
+    <string name="part_number_label">Κωδικός Ανταλλακτικού</string>
+    <string name="brand_label">Μάρκα (Προαιρετικό)</string>
+    <string name="notes_optional_label">Σημειώσεις (Προαιρετικό)</string>
+    <string name="history_total_spending">Συνολικά Έξοδα</string>
+    <string name="history_services_count">Συντηρήσεις</string>
+    <string name="history_refills_count">Ανεφοδιασμοί</string>
+    <string name="log_first_entry">Καταγραφή Πρώτης Εγγραφής</string>
+    <string name="estimated_odometer_label">Εκτιμώμενα: %s %s</string>
+    <string name="recurring_cycle_label">Επαναλαμβανόμενος κύκλος;</string>
+    <string name="repeat_every_label">Επανάληψη κάθε:</string>
+    <string name="recurring_desc">Ο επόμενος στόχος θα υπολογιστεί αυτόματα βάσει των χιλιομέτρων σας.</string>
+    <string name="months_label">Μήνες</string>
+    <string name="smart_suggestion_badge">ΕΞΥΠΝΗ ΠΡΟΤΑΣΗ</string>
+    <string name="automotive_hub_tag">ΚΕΝΤΡΟ ΑΥΤΟΚΙΝΗΤΟΥ</string>
+    <string name="version_label">Έκδοση %s</string>
+    <string name="help_feedback_label">Βοήθεια &amp; Σχόλια</string>
+
+    <string name="garage_empty_desc">Το γκαράζ σας είναι άδειο. Προσθέστε το πρώτο σας όχημα για να ξεκινήσετε την παρακολούθηση.</string>
+    <string name="section_identification">Ταυτοποίηση</string>
+    <string name="section_vehicle_details">Λεπτομέρειες Οχήματος</string>
+    <string name="section_specifications">Προδιαγραφές</string>
+
     <!-- Add Fuel Log -->
     <string name="add_fuel_log">Προσθήκη Αρχείου Καυσίμων</string>
     <string name="edit_fuel_log">Επεξεργασία Αρχείου Καυσίμων</string>
