@@ -39,12 +39,7 @@ private val dateFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
 
 private fun formatCost(cost: Double?, currency: String = "USD"): String {
-    val symbol = when (currency) {
-        "USD" -> "$"
-        "EUR" -> "€"
-        "GBP" -> "£"
-        else -> "$currency "
-    }
+    val symbol = com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(currency)
     return "$symbol%.2f".format(cost ?: 0.0)
 }
 
@@ -112,6 +107,7 @@ fun HistoryScreen(
     val items by viewModel.historyItems.collectAsStateWithLifecycle()
     val vehicle by viewModel.vehicle.collectAsStateWithLifecycle()
     val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
+    val preferredCurrency by viewModel.preferredCurrency.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     var showExportDialog by remember { mutableStateOf(false) }
@@ -128,7 +124,8 @@ fun HistoryScreen(
         onExportPdf = { showExportDialog = true },
         onDeleteService = { viewModel.deleteServiceRecord(it) },
         onDeleteFuel = { viewModel.deleteFuelLog(it) },
-        onOpenDrawer = onOpenDrawer
+        onOpenDrawer = onOpenDrawer,
+        preferredCurrency = preferredCurrency
     )
 
     if (showExportDialog) {
@@ -226,7 +223,8 @@ fun HistoryContent(
     onDeleteService: (ServiceRecord) -> Unit,
     onDeleteFuel: (FuelLog) -> Unit,
     onExportPdf: () -> Unit,
-    onOpenDrawer: (() -> Unit)? = null
+    onOpenDrawer: (() -> Unit)? = null,
+    preferredCurrency: String = "USD"
 ) {
     val mileageUnit = vehicle?.odometerUnit ?: "km"
     var recordPendingDelete by rememberSaveable { mutableStateOf<HistoryItem?>(null) }
@@ -366,7 +364,7 @@ fun HistoryContent(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
-                        HistorySummaryCard(items)
+                        HistorySummaryCard(items, preferredCurrency)
                     }
                     items(items, key = { "${it.javaClass.simpleName}_${it.sortId}" }) { item ->
                         when (item) {
@@ -420,11 +418,11 @@ fun HistoryContent(
 }
 
 @Composable
-fun HistorySummaryCard(items: List<HistoryItem>) {
+fun HistorySummaryCard(items: List<HistoryItem>, preferredCurrency: String) {
     val totalCost = items.sumOf { 
         when (it) {
-            is HistoryItem.Service -> it.record.cost ?: 0.0
-            is HistoryItem.Fuel -> it.log.totalCost
+            is HistoryItem.Service -> com.eliteonetube.glovebox.util.CurrencyUtility.convert(it.record.cost ?: 0.0, it.record.currency, preferredCurrency)
+            is HistoryItem.Fuel -> com.eliteonetube.glovebox.util.CurrencyUtility.convert(it.log.totalCost, it.log.currency, preferredCurrency)
         }
     }
     
@@ -454,7 +452,7 @@ fun HistorySummaryCard(items: List<HistoryItem>) {
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = formatCost(totalCost),
+                        text = formatCost(totalCost, preferredCurrency),
                         style = MaterialTheme.typography.headlineSmall, // Reduced from headlineMedium
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onSurface
@@ -544,7 +542,7 @@ fun FuelLogHistoryItem(
                         )
                     }
                     Text(
-                        text = "Fuel Refill",
+                        text = stringResource(R.string.fuel_refill),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -555,7 +553,7 @@ fun FuelLogHistoryItem(
                     shape = CircleShape
                 ) {
                     Text(
-                        text = formatCost(log.totalCost),
+                        text = formatCost(log.totalCost, log.currency),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
@@ -651,7 +649,7 @@ fun ServiceRecordItem(
                     ) {
                         SuggestionChip(
                             onClick = { },
-                            label = { Text(if (record.isDiy) "DIY" else "Shop") },
+                            label = { Text(if (record.isDiy) stringResource(R.string.diy) else stringResource(R.string.shop)) },
                             icon = {
                                 Icon(
                                     imageVector = if (record.isDiy) Icons.Rounded.Build else Icons.Rounded.LocationOn,
@@ -691,7 +689,7 @@ fun ServiceRecordItem(
                             tint = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                         Text(
-                            text = formatCost(cost = record.cost),
+                            text = formatCost(cost = record.cost, currency = record.currency),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onTertiaryContainer

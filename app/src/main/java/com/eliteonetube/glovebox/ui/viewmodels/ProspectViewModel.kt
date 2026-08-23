@@ -23,6 +23,7 @@ data class ProspectFormState(
     val year: String = "",
     val vin: String = "",
     val askedPrice: String = "",
+    val currency: String = "USD",
     val sellerNotes: String = "",
     val location: String = "",
     val photoUri: String? = null,
@@ -37,6 +38,7 @@ class ProspectViewModel(application: Application) : AndroidViewModel(application
     private val prospectDao = db.prospectVehicleDao()
     private val vehicleDao = db.vehicleDao()
     private val vehicleCatalogDao = db.vehicleCatalogDao()
+    private val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
     
     private val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
@@ -103,16 +105,18 @@ class ProspectViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun onPriceChange(v: String) { _formState.value = _formState.value.copy(askedPrice = v) }
+    fun onCurrencyChange(v: String) { _formState.value = _formState.value.copy(currency = v) }
     fun onNotesChange(v: String) { _formState.value = _formState.value.copy(sellerNotes = v) }
     fun onLocationChange(v: String) { _formState.value = _formState.value.copy(location = v) }
     fun onPhotoChange(v: String?) { _formState.value = _formState.value.copy(photoUri = v) }
 
     fun loadProspect(id: Long) {
-        if (id == 0L) {
-            _formState.value = ProspectFormState()
-            return
-        }
         viewModelScope.launch {
+            val preferredCurrency = userPrefs.preferredCurrency.first()
+            if (id == 0L) {
+                _formState.value = ProspectFormState(currency = preferredCurrency)
+                return@launch
+            }
             prospectDao.getProspectById(id)?.let { p ->
                 _formState.value = ProspectFormState(
                     id = p.id,
@@ -121,6 +125,7 @@ class ProspectViewModel(application: Application) : AndroidViewModel(application
                     year = p.year.toString(),
                     vin = p.vin ?: "",
                     askedPrice = p.askedPrice?.toString() ?: "",
+                    currency = p.currency,
                     sellerNotes = p.sellerNotes,
                     location = p.location,
                     photoUri = p.photoUri
@@ -167,6 +172,7 @@ class ProspectViewModel(application: Application) : AndroidViewModel(application
             year = s.year.toIntOrNull() ?: 0,
             vin = s.vin.takeIf { it.isNotBlank() },
             askedPrice = s.askedPrice.toDoubleOrNull(),
+            currency = s.currency,
             sellerNotes = s.sellerNotes,
             location = s.location,
             photoUri = s.photoUri
@@ -215,6 +221,7 @@ class ProspectViewModel(application: Application) : AndroidViewModel(application
                 serviceType = "Purchase Inspection",
                 serviceLocation = prospect.location,
                 cost = prospect.askedPrice,
+                currency = prospect.currency,
                 notes = "Promoted from Buying Guide.\n\nSeller Notes: ${prospect.sellerNotes}\n\nInspection Checklist: ${formatChecklist(prospect.checklistJson)}",
                 createdAt = System.currentTimeMillis()
             )

@@ -24,6 +24,7 @@ class UserPreferencesRepository(private val context: Context) {
         val IS_ONBOARDING_COMPLETED = booleanPreferencesKey("is_onboarding_completed")
         val IS_VIN_FEATURE_ENABLED = booleanPreferencesKey("is_vin_feature_enabled")
         val USER_COUNTRY = stringPreferencesKey("user_country")
+        val PREFERRED_CURRENCY = stringPreferencesKey("preferred_currency")
         val LAST_BACKUP_TIME = longPreferencesKey("last_backup_time")
     }
 
@@ -61,6 +62,11 @@ class UserPreferencesRepository(private val context: Context) {
     val userCountry: Flow<String> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.USER_COUNTRY] ?: "Global"
+        }
+
+    val preferredCurrency: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.PREFERRED_CURRENCY] ?: "USD"
         }
 
 
@@ -112,6 +118,12 @@ class UserPreferencesRepository(private val context: Context) {
     suspend fun setUserCountry(countryCode: String) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.USER_COUNTRY] = countryCode
+        }
+    }
+
+    suspend fun setPreferredCurrency(currencyCode: String) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.PREFERRED_CURRENCY] = currencyCode
         }
     }
 

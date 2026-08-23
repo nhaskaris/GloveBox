@@ -86,14 +86,49 @@ fun AddFuelLogScreen(
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
-                OutlinedTextField(
-                    value = uiState.totalCost,
-                    onValueChange = viewModel::onTotalCostChange,
-                    label = { Text(stringResource(R.string.total_cost_label)) },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
+
+                var currencyExpanded by remember { mutableStateOf(false) }
+                val currencies = com.eliteonetube.glovebox.util.CurrencyUtility.supportedCurrencies
+
+                ExposedDropdownMenuBox(
+                    expanded = currencyExpanded,
+                    onExpandedChange = { currencyExpanded = it },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = uiState.currency,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Currency") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = currencyExpanded) },
+                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = currencyExpanded,
+                        onDismissRequest = { currencyExpanded = false }
+                    ) {
+                        currencies.forEach { code ->
+                            DropdownMenuItem(
+                                text = { Text("$code (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(code)})") },
+                                onClick = {
+                                    viewModel.onCurrencyChange(code)
+                                    currencyExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
+
+            OutlinedTextField(
+                value = uiState.totalCost,
+                onValueChange = viewModel::onTotalCostChange,
+                label = { Text(stringResource(R.string.total_cost_label)) },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                prefix = { Text(com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(uiState.currency)) }
+            )
 
             OutlinedTextField(
                 value = uiState.location,

@@ -173,6 +173,53 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             ListItem(
+                headlineContent = { Text("Preferred Currency") },
+                supportingContent = { Text("Used for fleet-wide cost summaries") },
+                leadingContent = { Icon(Icons.Rounded.AttachMoney, contentDescription = null) }
+            )
+
+            val prefCurrency by viewModel.preferredCurrency.collectAsStateWithLifecycle()
+            var showCurrencySheet by remember { mutableStateOf(false) }
+            val currencies = com.eliteonetube.glovebox.util.CurrencyUtility.supportedCurrencies
+
+            Box(modifier = Modifier.padding(start = 56.dp)) {
+                Box {
+                    OutlinedTextField(
+                        value = "$prefCurrency (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(prefCurrency)})",
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { showCurrencySheet = true }
+                    )
+                }
+            }
+
+            if (showCurrencySheet) {
+                ModalBottomSheet(onDismissRequest = { showCurrencySheet = false }) {
+                    LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
+                        items(currencies) { code ->
+                            DropdownMenuItem(
+                                text = { Text("$code (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(code)})") },
+                                onClick = {
+                                    viewModel.setPreferredCurrency(code)
+                                    showCurrencySheet = false
+                                }
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            ListItem(
                 headlineContent = { Text(stringResource(R.string.settings_region)) },
                 leadingContent = { Icon(Icons.Rounded.Public, contentDescription = null) }
             )
@@ -204,8 +251,6 @@ fun SettingsScreen(
                         colors = OutlinedTextFieldDefaults.colors(),
                         shape = MaterialTheme.shapes.medium
                     )
-                    // Transparent overlay to intercept taps, since OutlinedTextField
-                    // has no native onClick and is readOnly (no keyboard should show).
                     Box(
                         modifier = Modifier
                             .matchParentSize()

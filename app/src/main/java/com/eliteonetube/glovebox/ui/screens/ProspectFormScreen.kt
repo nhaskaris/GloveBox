@@ -331,9 +331,45 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
                             label = { Text(stringResource(R.string.asked_price)) },
                             modifier = Modifier.weight(1.5f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            prefix = { Text(stringResource(R.string.currency_symbol)) },
+                            prefix = { Text(com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(state.currency)) },
                             shape = MaterialTheme.shapes.medium
                         )
+                    }
+
+                    var currencyExpanded by remember { mutableStateOf(false) }
+                    val currencies = com.eliteonetube.glovebox.util.CurrencyUtility.supportedCurrencies
+
+                    ExposedDropdownMenuBox(
+                        expanded = currencyExpanded,
+                        onExpandedChange = { currencyExpanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = "${state.currency} (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(state.currency)})",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Currency") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = currencyExpanded) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                            shape = MaterialTheme.shapes.medium
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = currencyExpanded,
+                            onDismissRequest = { currencyExpanded = false }
+                        ) {
+                            currencies.forEach { code ->
+                                DropdownMenuItem(
+                                    text = { Text("$code (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(code)})") },
+                                    onClick = {
+                                        viewModel.onCurrencyChange(code)
+                                        currencyExpanded = false
+                                    }
+                                )
+                            }
+                        }
                     }
 
                     ExposedDropdownMenuBox(

@@ -28,7 +28,9 @@ fun OnboardingScreen(
     onCountryChange: (String) -> Unit,
     onComplete: () -> Unit,
     unitSystem: String,
-    onUnitChange: (String) -> Unit
+    onUnitChange: (String) -> Unit,
+    preferredCurrency: String,
+    onCurrencyChange: (String) -> Unit
 ) {
     val pages = listOf(
         OnboardingPage(
@@ -158,7 +160,57 @@ fun OnboardingScreen(
                         onCountryChange = onCountryChange,
                         currentLanguage = currentLanguage
                     )
+                    Spacer(Modifier.height(16.dp))
+                    CurrencySelector(
+                        preferredCurrency = preferredCurrency,
+                        onCurrencyChange = onCurrencyChange
+                    )
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CurrencySelector(
+    preferredCurrency: String,
+    onCurrencyChange: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val currencies = com.eliteonetube.glovebox.util.CurrencyUtility.supportedCurrencies
+    
+    val currentLabel = "$preferredCurrency (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(preferredCurrency)})"
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = currentLabel,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Currency") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .width(240.dp)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            currencies.forEach { code ->
+                DropdownMenuItem(
+                    text = { Text("$code (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(code)})") },
+                    onClick = {
+                        onCurrencyChange(code)
+                        expanded = false
+                    }
+                )
             }
         }
     }

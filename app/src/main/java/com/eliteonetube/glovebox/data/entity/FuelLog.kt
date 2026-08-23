@@ -22,6 +22,7 @@ data class FuelLog(
     val odometer: Int,
     val amount: Double,
     val totalCost: Double,
+    val currency: String = "USD",
     val location: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )

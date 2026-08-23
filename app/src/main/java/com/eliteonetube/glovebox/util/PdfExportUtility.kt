@@ -29,8 +29,11 @@ object PdfExportUtility {
         includeShop: Boolean = true,
         includeMechanic: Boolean = true,
         includeFuel: Boolean = true,
-        includeSummary: Boolean = true
+        includeSummary: Boolean = true,
+        preferredCurrency: String = "USD"
     ): File {
+        val converter = CurrencyUtility
+        // ...
         val pdfDocument = PdfDocument()
         val pageWidth = 595
         val pageHeight = 842
@@ -137,8 +140,8 @@ object PdfExportUtility {
         canvas.drawLine(margin, currentY, pageWidth - margin, currentY, linePaint)
         currentY += 15f
 
-        var totalMaintenanceCost = 0.0
-        var totalFuelCost = 0.0
+        var totalMaintenanceCostConverted = 0.0
+        var totalFuelCostConverted = 0.0
         
         records.sortedByDescending { it.date }.forEach { record ->
             checkNewPage()
@@ -146,7 +149,7 @@ object PdfExportUtility {
             val dateStr = dateFormat.format(Date(record.date))
             val typeStr = if (record.serviceType == "Other") record.otherDescription ?: "Other" else record.serviceType
             val costVal = record.cost ?: 0.0
-            totalMaintenanceCost += costVal
+            totalMaintenanceCostConverted += converter.convert(costVal, record.currency, preferredCurrency)
 
             canvas.drawText(dateStr, mColDate, currentY, bodyPaint)
             canvas.drawText(typeStr.take(25), mColType, currentY, bodyPaint)
@@ -208,13 +211,13 @@ object PdfExportUtility {
                 checkNewPage()
 
                 val dateStr = dateFormat.format(Date(log.date))
-                totalFuelCost += log.totalCost
+                totalFuelCostConverted += converter.convert(log.totalCost, log.currency, preferredCurrency)
 
                 canvas.drawText(dateStr, fColDate, currentY, bodyPaint)
                 canvas.drawText("${log.odometer} ${vehicle.odometerUnit}", fColOdo, currentY, bodyPaint)
                 canvas.drawText("%.2f L".format(log.amount), fColAmount, currentY, bodyPaint)
                 if (includeCosts) {
-                    canvas.drawText(formatCost(log.totalCost, "USD"), fColCost, currentY, bodyPaint)
+                    canvas.drawText(formatCost(log.totalCost, log.currency), fColCost, currentY, bodyPaint)
                 }
                 if (includeShop) {
                     canvas.drawText((log.location ?: "N/A").take(30), fColStation, currentY, bodyPaint)
@@ -235,7 +238,7 @@ object PdfExportUtility {
         // 5. Summary Section
         if (includeSummary) {
             checkNewPage()
-            canvas.drawText("Summary", margin, currentY, sectionHeaderPaint)
+            canvas.drawText("Summary (All values converted to $preferredCurrency)", margin, currentY, sectionHeaderPaint)
             currentY += 25f
 
             val summaryPaint = Paint().apply {
@@ -246,12 +249,12 @@ object PdfExportUtility {
 
             if (includeCosts) {
                 canvas.drawText("Total Maintenance Cost:", margin, currentY, bodyPaint)
-                canvas.drawText(formatCost(totalMaintenanceCost, "USD"), margin + 150f, currentY, summaryPaint)
+                canvas.drawText(formatCost(totalMaintenanceCostConverted, preferredCurrency), margin + 150f, currentY, summaryPaint)
                 currentY += 20f
 
                 if (includeFuel) {
                     canvas.drawText("Total Fuel Cost:", margin, currentY, bodyPaint)
-                    canvas.drawText(formatCost(totalFuelCost, "USD"), margin + 150f, currentY, summaryPaint)
+                    canvas.drawText(formatCost(totalFuelCostConverted, preferredCurrency), margin + 150f, currentY, summaryPaint)
                     currentY += 20f
 
                     canvas.drawLine(margin, currentY, margin + 250f, currentY, linePaint)
@@ -263,7 +266,7 @@ object PdfExportUtility {
                         color = Color.rgb(204, 0, 0)
                     }
                     canvas.drawText("GRAND TOTAL:", margin, currentY, summaryPaint)
-                    canvas.drawText(formatCost(totalMaintenanceCost + totalFuelCost, "USD"), margin + 150f, currentY, grandTotalPaint)
+                    canvas.drawText(formatCost(totalMaintenanceCostConverted + totalFuelCostConverted, preferredCurrency), margin + 150f, currentY, grandTotalPaint)
                 }
             } else {
                 canvas.drawText("Total Records Exported:", margin, currentY, bodyPaint)
@@ -287,8 +290,11 @@ object PdfExportUtility {
     fun generateVehicleServiceHistoryPdf(
         context: Context,
         vehicle: Vehicle,
-        records: List<ServiceRecord>
+        records: List<ServiceRecord>,
+        preferredCurrency: String = "USD"
     ): File {
+        val converter = CurrencyUtility
+        // ...
         val pdfDocument = PdfDocument()
         val pageWidth = 595
         val pageHeight = 842
@@ -354,7 +360,7 @@ object PdfExportUtility {
         currentY += 20f
 
         val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-        var totalCost = 0.0
+        var totalCostConverted = 0.0
 
         // 3. Service Records
         records.forEach { record ->
@@ -388,7 +394,7 @@ object PdfExportUtility {
             val truncatedLoc = if (locationStr.length > 20) locationStr.take(17) + "..." else locationStr
             canvas.drawText(truncatedLoc, colLocation, currentY, bodyPaint)
 
-            totalCost += (record.cost ?: 0.0)
+            totalCostConverted += converter.convert(record.cost ?: 0.0, record.currency, preferredCurrency)
             currentY += 15f
 
             // Draw notes if present
@@ -414,7 +420,7 @@ object PdfExportUtility {
 
         currentY += 20f
         canvas.drawText("Total Records: ${records.size}", margin, currentY, headerPaint)
-        val totalCostStr = "Total Cost: ${formatCost(totalCost, records.firstOrNull()?.currency ?: "USD")}"
+        val totalCostStr = "Total Cost (converted to $preferredCurrency): ${formatCost(totalCostConverted, preferredCurrency)}"
         canvas.drawText(totalCostStr, colCost, currentY, headerPaint)
 
         pdfDocument.finishPage(currentPage)
@@ -427,12 +433,7 @@ object PdfExportUtility {
     }
 
     private fun formatCost(cost: Double?, currency: String): String {
-        val symbol = when (currency) {
-            "USD" -> "$"
-            "EUR" -> "€"
-            "GBP" -> "£"
-            else -> "$currency "
-        }
+        val symbol = CurrencyUtility.getCurrencySymbol(currency)
         return "$symbol%.2f".format(cost ?: 0.0)
     }
 }

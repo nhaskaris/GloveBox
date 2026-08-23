@@ -320,16 +320,51 @@ fun AddServiceLogScreen(
                     shape = MaterialTheme.shapes.large
                 )
 
-                OutlinedTextField(
-                    value = uiState.cost,
-                    onValueChange = viewModel::onCostChange,
-                    label = { Text(stringResource(R.string.cost_label)) },
-                    leadingIcon = { Icon(Icons.Rounded.AttachMoney, contentDescription = null) },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    shape = MaterialTheme.shapes.large
-                )
+                var currencyExpanded by remember { mutableStateOf(false) }
+                val currencies = com.eliteonetube.glovebox.util.CurrencyUtility.supportedCurrencies
+
+                ExposedDropdownMenuBox(
+                    expanded = currencyExpanded,
+                    onExpandedChange = { currencyExpanded = it },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = uiState.currency,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Currency") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = currencyExpanded) },
+                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                        shape = MaterialTheme.shapes.large
+                    )
+                    ExposedDropdownMenu(
+                        expanded = currencyExpanded,
+                        onDismissRequest = { currencyExpanded = false }
+                    ) {
+                        currencies.forEach { code ->
+                            DropdownMenuItem(
+                                text = { Text("$code (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(code)})") },
+                                onClick = {
+                                    viewModel.onCurrencyChange(code)
+                                    currencyExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
+
+            OutlinedTextField(
+                value = uiState.cost,
+                onValueChange = viewModel::onCostChange,
+                label = { Text(stringResource(R.string.cost_label)) },
+                leadingIcon = { Icon(Icons.Rounded.AttachMoney, contentDescription = null) },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = MaterialTheme.shapes.large,
+                prefix = { Text(com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(uiState.currency)) }
+            )
 
             // --- Auto-Reschedule Section ---
             if (recordId == 0L) {

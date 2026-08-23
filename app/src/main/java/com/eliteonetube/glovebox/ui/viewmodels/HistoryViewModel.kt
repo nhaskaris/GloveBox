@@ -35,9 +35,14 @@ sealed class HistoryItem {
 }
 
 class HistoryViewModel(application: Application, private val vehicleId: Long) : AndroidViewModel(application) {
-    private val serviceRecordDao = GloveboxDatabase.getDatabase(application).serviceRecordDao()
-    private val fuelLogDao = GloveboxDatabase.getDatabase(application).fuelLogDao()
-    private val vehicleDao = GloveboxDatabase.getDatabase(application).vehicleDao()
+    private val db = GloveboxDatabase.getDatabase(application)
+    private val serviceRecordDao = db.serviceRecordDao()
+    private val fuelLogDao = db.fuelLogDao()
+    private val vehicleDao = db.vehicleDao()
+    private val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
+
+    val preferredCurrency: StateFlow<String> = userPrefs.preferredCurrency
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "USD")
 
     private val serviceRecords = serviceRecordDao.getServiceRecordsForVehicle(vehicleId)
     private val fuelLogs = fuelLogDao.getFuelLogsForVehicle(vehicleId)
@@ -101,6 +106,7 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
             viewModelScope.launch {
                 val services = serviceRecordDao.getServiceRecordsForVehicle(vehicleId).first()
                 val fuels = fuelLogDao.getFuelLogsForVehicle(vehicleId).first()
+                val prefCurrency = preferredCurrency.value
                 
                 val file = withContext(Dispatchers.IO) {
                     try {
@@ -113,7 +119,8 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
                             includeShop = includeShop,
                             includeMechanic = includeMechanic,
                             includeFuel = includeFuel,
-                            includeSummary = includeSummary
+                            includeSummary = includeSummary,
+                            preferredCurrency = prefCurrency
                         )
                     } catch (e: Exception) {
                         null

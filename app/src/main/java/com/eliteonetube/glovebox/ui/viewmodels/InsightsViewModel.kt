@@ -35,7 +35,8 @@ data class InsightsState(
     val predictions: List<MaintenancePrediction> = emptyList(),
     val totalCost: Double = 0.0,
     val averageEfficiency: Double = 0.0,
-    val odometerUnit: String = "km"
+    val odometerUnit: String = "km",
+    val preferredCurrency: String = "USD"
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -45,6 +46,7 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
     private val serviceRecordDao = db.serviceRecordDao()
     private val vehicleDao = db.vehicleDao()
     private val reminderDao = db.reminderDao()
+    private val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
 
     private val _selectedVehicleId = MutableStateFlow(initialVehicleId)
     val selectedVehicleId: StateFlow<Long> = _selectedVehicleId.asStateFlow()
@@ -57,14 +59,19 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
         else flow { emit(vehicleDao.getVehicleById(id)) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    val uiState: StateFlow<InsightsState> = _selectedVehicleId.flatMapLatest { id ->
+    val uiState: StateFlow<InsightsState> = combine(
+        _selectedVehicleId,
+        userPrefs.preferredCurrency
+    ) { id, preferredCurrency ->
+        id to preferredCurrency
+    }.flatMapLatest { (id, preferredCurrency) ->
         val fuelsFlow = if (id == 0L) fuelLogDao.getAllFuelLogs() else fuelLogDao.getFuelLogsForVehicle(id)
         val servicesFlow = if (id == 0L) serviceRecordDao.getAllServiceRecords() else serviceRecordDao.getServiceRecordsForVehicle(id)
         val remindersFlow = if (id == 0L) reminderDao.getAllReminders() else reminderDao.getRemindersForVehicle(id)
         val vehicleFlow: Flow<Vehicle?> = if (id == 0L) flowOf(null) else flow { emit(vehicleDao.getVehicleById(id)) }
 
         combine(fuelsFlow, servicesFlow, remindersFlow, vehicleFlow) { fuels, services, reminders, vehicle ->
-            calculateInsights(fuels, services, reminders, vehicle)
+            calculateInsights(fuels, services, reminders, vehicle, preferredCurrency)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InsightsState())
 
@@ -76,11 +83,13 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
         fuels: List<FuelLog>, 
         services: List<ServiceRecord>,
         reminders: List<Reminder>,
-        vehicle: Vehicle?
+        vehicle: Vehicle?,
+        preferredCurrency: String
     ): InsightsState {
-        if (fuels.isEmpty() && services.isEmpty()) return InsightsState()
+        if (fuels.isEmpty() && services.isEmpty()) return InsightsState(preferredCurrency = preferredCurrency)
 
         val unit = vehicle?.odometerUnit ?: "km"
+        val converter = com.eliteonetube.glovebox.util.CurrencyUtility
 
         // 1. Efficiency History (L/100km or MPG)
         val efficiencyPoints = mutableListOf<EfficiencyPoint>()
@@ -106,19 +115,19 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
         }
         efficiencyPoints.sortBy { it.date }
 
-        // 2. Spending by Category
-        val fuelTotal = fuels.sumOf { it.totalCost }
-        val serviceTotal = services.sumOf { it.cost ?: 0.0 }
+        // 2. Spending by Category (Converted to Preferred Currency)
+        val fuelTotal = fuels.sumOf { converter.convert(it.totalCost, it.currency, preferredCurrency) }
+        val serviceTotal = services.sumOf { converter.convert(it.cost ?: 0.0, it.currency, preferredCurrency) }
         
         val categorySpending = listOf(
             CategorySpending("Fuel", fuelTotal),
             CategorySpending("Service", serviceTotal)
         ).filter { it.amount > 0 }
 
-        // 3. Monthly Spending
+        // 3. Monthly Spending (Converted to Preferred Currency)
         val allCosts = mutableListOf<Pair<Long, Double>>()
-        fuels.forEach { allCosts.add(it.date to it.totalCost) }
-        services.forEach { allCosts.add(it.date to (it.cost ?: 0.0)) }
+        fuels.forEach { allCosts.add(it.date to converter.convert(it.totalCost, it.currency, preferredCurrency)) }
+        services.forEach { allCosts.add(it.date to converter.convert(it.cost ?: 0.0, it.currency, preferredCurrency)) }
 
         val monthlyMap = mutableMapOf<YearMonth, Double>()
         allCosts.forEach { (date, cost) ->
@@ -218,7 +227,8 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
             predictions = predictions,
             totalCost = fuelTotal + serviceTotal,
             averageEfficiency = if (efficiencyPoints.isNotEmpty()) efficiencyPoints.map { it.value }.average() else 0.0,
-            odometerUnit = unit
+            odometerUnit = unit,
+            preferredCurrency = preferredCurrency
         )
     }
 }

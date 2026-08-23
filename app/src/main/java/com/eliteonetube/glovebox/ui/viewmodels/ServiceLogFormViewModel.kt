@@ -19,6 +19,7 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
     private val serviceRecordDao = db.serviceRecordDao()
     private val vehicleDao = db.vehicleDao()
     private val reminderDao = db.reminderDao()
+    private val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
 
     private val _uiState = MutableStateFlow<ServiceLogFormState>(ServiceLogFormState())
     val uiState: StateFlow<ServiceLogFormState> = _uiState.asStateFlow()
@@ -27,6 +28,7 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch {
             val vehicle = vehicleDao.getVehicleById(vehicleId)
             val unit = vehicle?.odometerUnit ?: "km"
+            val preferredCurrency = userPrefs.preferredCurrency.first()
 
             if (recordId != 0L) {
                 serviceRecordDao.getServiceRecordById(recordId)?.let { record ->
@@ -36,6 +38,7 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
                         mileage = record.mileage.toString(),
                         serviceTypes = record.serviceType.split(", ").filter { it.isNotBlank() },
                         cost = record.cost?.toString() ?: "",
+                        currency = record.currency,
                         notes = record.notes,
                         receiptPhotoUri = record.receiptPhotoUri,
                         serviceLocation = record.serviceLocation ?: "",
@@ -49,6 +52,7 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
             } else {
                 _uiState.value = _uiState.value.copy(
                     unit = unit,
+                    currency = preferredCurrency,
                     serviceTypes = if (prefilledType != null) listOf(prefilledType) else emptyList()
                 )
             }
@@ -152,6 +156,10 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
         _uiState.value = _uiState.value.copy(cost = cost)
     }
 
+    fun onCurrencyChange(value: String) {
+        _uiState.value = _uiState.value.copy(currency = value)
+    }
+
     fun onNotesChange(notes: String) {
         _uiState.value = _uiState.value.copy(notes = notes)
     }
@@ -201,6 +209,7 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
             mileage = state.mileage.toIntOrNull() ?: 0,
             serviceType = state.serviceTypes.joinToString(", "),
             cost = state.cost.toDoubleOrNull(),
+            currency = state.currency,
             notes = state.notes,
             receiptPhotoUri = state.receiptPhotoUri,
             serviceLocation = if (state.isDiy) "DIY" else state.serviceLocation.takeIf { it.isNotBlank() },
@@ -277,6 +286,7 @@ data class ServiceLogFormState(
     val mileage: String = "",
     val serviceTypes: List<String> = emptyList(),
     val cost: String = "",
+    val currency: String = "USD",
     val notes: String = "",
     val receiptPhotoUri: String? = null,
     val serviceLocation: String = "",

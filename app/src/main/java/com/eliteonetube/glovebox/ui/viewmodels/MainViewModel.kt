@@ -52,6 +52,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val userCountry: StateFlow<String> = userPreferencesRepository.userCountry
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Global")
 
+    val preferredCurrency: StateFlow<String> = userPreferencesRepository.preferredCurrency
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "USD")
+
     val lastBackupTime: StateFlow<Long?> = userPreferencesRepository.lastBackupTime
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -94,6 +97,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setUserCountry(countryCode: String) {
         viewModelScope.launch {
             userPreferencesRepository.setUserCountry(countryCode)
+        }
+    }
+
+    fun setPreferredCurrency(currencyCode: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setPreferredCurrency(currencyCode)
         }
     }
 

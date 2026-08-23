@@ -11,6 +11,7 @@ data class ProspectVehicle(
     val year: Int = 0,
     val vin: String? = null,
     val askedPrice: Double? = null,
+    val currency: String = "USD",
     val sellerNotes: String = "",
     val location: String = "",
     val checklistJson: String = "{}", // Stores checked item keys as a JSON map/set

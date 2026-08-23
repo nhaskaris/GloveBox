@@ -313,6 +313,7 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                 when (key) {
                     is GloveboxRoute.Onboarding -> NavEntry(key) {
                         val userCountry by viewModel.userCountry.collectAsStateWithLifecycle()
+                        val preferredCurrency by viewModel.preferredCurrency.collectAsStateWithLifecycle()
                         OnboardingScreen(
                             onComplete = {
                                 viewModel.setOnboardingCompleted()
@@ -323,7 +324,9 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                             userCountry = userCountry,
                             onCountryChange = viewModel::setUserCountry,
                             unitSystem = viewModel.unitSystem.collectAsStateWithLifecycle().value,
-                            onUnitChange = viewModel::setUnitSystem
+                            onUnitChange = viewModel::setUnitSystem,
+                            preferredCurrency = preferredCurrency,
+                            onCurrencyChange = viewModel::setPreferredCurrency
                         )
                     }
 
