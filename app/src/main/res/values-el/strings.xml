@@ -288,6 +288,7 @@
     <string name="system_language">Προεπιλογή Συστήματος</string>
 
     <!-- Navigation Drawer -->
+    <string name="nav_home">Αρχική</string>
     <string name="nav_garage">Γκαράζ</string>
     <string name="nav_history">Ιστορικό</string>
     <string name="nav_reminders">Υπενθυμίσεις</string>

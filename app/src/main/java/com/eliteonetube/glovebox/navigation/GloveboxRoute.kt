@@ -9,6 +9,9 @@ sealed interface GloveboxRoute : NavKey {
     data object Onboarding : GloveboxRoute
 
     @Serializable
+    data object Home : GloveboxRoute
+
+    @Serializable
     data object VehicleList : GloveboxRoute
 
     @Serializable

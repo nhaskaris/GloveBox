@@ -288,6 +288,7 @@
     <string name="system_language">System Default</string>
 
     <!-- Navigation Drawer -->
+    <string name="nav_home">Home</string>
     <string name="nav_garage">Garage</string>
     <string name="nav_history">History</string>
     <string name="nav_reminders">Reminders</string>

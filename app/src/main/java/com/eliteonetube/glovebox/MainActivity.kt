@@ -59,6 +59,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.eliteonetube.glovebox.navigation.GloveboxRoute
 import com.eliteonetube.glovebox.ui.screens.*
+import com.eliteonetube.glovebox.ui.screens.home.HomeDashboardScreen
 import com.eliteonetube.glovebox.ui.theme.GloveboxTheme
 import com.eliteonetube.glovebox.ui.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
@@ -70,6 +71,7 @@ import com.eliteonetube.glovebox.navigation.rememberListDetailSceneStrategy
 
 fun GloveboxRoute.getVehicleId(): Long? {
     return when (this) {
+        is GloveboxRoute.Home -> 0L // Home is global
         is GloveboxRoute.History -> vehicleId
         is GloveboxRoute.MyParts -> vehicleId
         is GloveboxRoute.Reminders -> vehicleId
@@ -133,7 +135,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            val backStack = rememberNavBackStack(GloveboxRoute.VehicleList)
+            val backStack = rememberNavBackStack(GloveboxRoute.Home)
 
             // Handle Widget Intents
             LaunchedEffect(intent.action, activeVehicleId) {
@@ -216,6 +218,16 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
     val hasVehicles = vehicles.isNotEmpty()
 
     val navigationItems = listOfNotNull(
+        GloveboxNavItem(
+            label = stringResource(R.string.nav_home),
+            icon = Icons.Rounded.Home,
+            route = GloveboxRoute.Home,
+            onClick = {
+                scope.launch { drawerState.close() }
+                backStack.clear()
+                backStack.add(GloveboxRoute.Home)
+            }
+        ),
         GloveboxNavItem(
             label = stringResource(R.string.nav_garage),
             icon = Icons.Rounded.DirectionsCar,
@@ -351,6 +363,17 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                             onUnitChange = viewModel::setUnitSystem,
                             preferredCurrency = preferredCurrency,
                             onCurrencyChange = viewModel::setPreferredCurrency
+                        )
+                    }
+
+                    is GloveboxRoute.Home -> NavEntry(key) {
+                        HomeDashboardScreen(
+                            onNavigateToHistory = { id -> backStack.add(GloveboxRoute.History(id)) },
+                            onNavigateToAddFuel = { id -> backStack.add(GloveboxRoute.AddFuelLog(id)) },
+                            onNavigateToAddService = { id -> backStack.add(GloveboxRoute.AddServiceLog(id)) },
+                            onNavigateToAddDocument = { id -> backStack.add(GloveboxRoute.AddDocument(id)) },
+                            onNavigateToGarage = { backStack.add(GloveboxRoute.VehicleList) },
+                            onOpenDrawer = onOpenDrawer
                         )
                     }
 
@@ -772,6 +795,7 @@ data class GloveboxNavItem(
 ) {
     fun isRouteSelected(currentRoute: GloveboxRoute): Boolean {
         return when (route) {
+            is GloveboxRoute.Home -> currentRoute is GloveboxRoute.Home
             is GloveboxRoute.VehicleList -> currentRoute is GloveboxRoute.VehicleList || currentRoute is GloveboxRoute.VehicleProfile
             is GloveboxRoute.History -> currentRoute is GloveboxRoute.History || currentRoute is GloveboxRoute.AddServiceLog || currentRoute is GloveboxRoute.AddFuelLog
             is GloveboxRoute.Reminders -> currentRoute is GloveboxRoute.Reminders
