@@ -90,7 +90,13 @@ class MainActivity : AppCompatActivity() {
             val viewModel: MainViewModel = viewModel()
             val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
             val themePreference by viewModel.themePreference.collectAsStateWithLifecycle()
+            val needsRecreate by viewModel.needsRecreate.collectAsStateWithLifecycle()
             val context = LocalContext.current
+
+            if (needsRecreate) {
+                viewModel.onRecreated()
+                recreate()
+            }
             
             // Apply language change using AppCompatDelegate
             LaunchedEffect(appLanguage) {
@@ -229,7 +235,7 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                 backStack.add(GloveboxRoute.MyParts(contextVehicleId))
             }
         ) else null,
-        if (hasVehicles && contextVehicleId != 0L) GloveboxNavItem(
+        GloveboxNavItem(
             label = stringResource(R.string.nav_reminders),
             icon = Icons.Rounded.Notifications,
             route = GloveboxRoute.Reminders(contextVehicleId),
@@ -238,7 +244,7 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                 backStack.clear()
                 backStack.add(GloveboxRoute.Reminders(contextVehicleId))
             }
-        ) else null,
+        ),
         GloveboxNavItem(
             label = stringResource(R.string.nav_insights),
             icon = Icons.Rounded.BarChart,
@@ -249,7 +255,7 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                 backStack.add(GloveboxRoute.Insights(contextVehicleId))
             }
         ),
-        if (hasVehicles && contextVehicleId != 0L) GloveboxNavItem(
+        GloveboxNavItem(
             label = stringResource(R.string.nav_glovebox),
             icon = Icons.Rounded.Folder,
             route = GloveboxRoute.DigitalGlovebox(contextVehicleId),
@@ -258,7 +264,7 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                 backStack.clear()
                 backStack.add(GloveboxRoute.DigitalGlovebox(contextVehicleId))
             }
-        ) else null,
+        ),
         GloveboxNavItem(
             label = stringResource(R.string.nav_buying_guide),
             icon = Icons.Rounded.Checklist,

@@ -252,12 +252,12 @@
     <string name="light">Light</string>
     <string name="dark">Dark</string>
     <string name="vin_decoding_desc">Automatically fill car details from VIN</string>
-    <string name="cloud_backup">Cloud Backup</string>
-    <string name="google_drive_backup">Google Drive Backup</string>
-    <string name="google_drive_backup_desc">Securely back up your garage data to your Google Drive</string>
+    <string name="local_backup">Backup &amp; Restore</string>
+    <string name="local_backup_desc">Export or import your data locally</string>
     <string name="last_backup">Last backup: %s</string>
     <string name="never_backed_up">Never backed up</string>
-    <string name="backup_now">Back Up Now</string>
+    <string name="backup_now">Export</string>
+    <string name="restore_now">Import</string>
 
     <!-- VIN Scanner -->
     <string name="camera_permission_required">Camera permission is required to scan VIN</string>

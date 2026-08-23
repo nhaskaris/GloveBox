@@ -159,5 +159,10 @@ abstract class GloveboxDatabase : RoomDatabase() {
                 instance
             }
         }
+
+        fun resetDatabase() {
+            INSTANCE?.close()
+            INSTANCE = null
+        }
     }
 }

@@ -1,13 +1,15 @@
 package com.eliteonetube.glovebox.ui.viewmodels
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eliteonetube.glovebox.data.ThemePreference
 import com.eliteonetube.glovebox.data.UserPreferencesRepository
 import com.eliteonetube.glovebox.data.GloveboxDatabase
 import com.eliteonetube.glovebox.data.entity.Vehicle
-import com.eliteonetube.glovebox.data.backup.GoogleDriveBackupManager
+import com.eliteonetube.glovebox.data.backup.LocalBackupManager
+import com.eliteonetube.glovebox.data.backup.BackupResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,10 +20,13 @@ import kotlinx.coroutines.launch
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val userPreferencesRepository = UserPreferencesRepository(application)
     private val vehicleDao = GloveboxDatabase.getDatabase(application).vehicleDao()
-    private val backupManager = GoogleDriveBackupManager(application)
+    private val backupManager = LocalBackupManager(application)
 
     private val _backupStatus = MutableStateFlow<String?>(null)
     val backupStatus = _backupStatus.asStateFlow()
+
+    private val _needsRecreate = MutableStateFlow(false)
+    val needsRecreate = _needsRecreate.asStateFlow()
 
     val themePreference: StateFlow<ThemePreference> = userPreferencesRepository.themePreference
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemePreference.SYSTEM)
@@ -44,8 +49,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isVinFeatureEnabled: StateFlow<Boolean> = userPreferencesRepository.isVinFeatureEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
-    val isDriveBackupEnabled: StateFlow<Boolean> = userPreferencesRepository.isDriveBackupEnabled
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     val lastBackupTime: StateFlow<Long?> = userPreferencesRepository.lastBackupTime
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -86,23 +89,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun setDriveBackupEnabled(enabled: Boolean) {
+
+    fun exportBackup(uri: Uri) {
         viewModelScope.launch {
-            userPreferencesRepository.setDriveBackupEnabled(enabled)
+            _backupStatus.value = "Exporting backup..."
+            val result = backupManager.exportDatabase(uri)
+            handleBackupResult(result)
         }
     }
 
-    fun getBackupSignInIntent() = backupManager.getSignInIntent()
-
-    fun performBackup() {
+    fun importBackup(uri: Uri) {
         viewModelScope.launch {
-            _backupStatus.value = "Backing up..."
-            val success = backupManager.performBackup()
-            if (success) {
-                userPreferencesRepository.setLastBackupTime(System.currentTimeMillis())
-                _backupStatus.value = "Backup successful!"
-            } else {
-                _backupStatus.value = "Backup failed. Check sign-in."
+            _backupStatus.value = "Importing backup..."
+            val result = backupManager.importDatabase(uri)
+            handleBackupResult(result)
+            if (result is BackupResult.Success) {
+                _backupStatus.value = "Import successful! Refreshing..."
+                _needsRecreate.value = true
+            }
+        }
+    }
+
+    fun onRecreated() {
+        _needsRecreate.value = false
+    }
+
+    fun handleBackupResult(result: BackupResult) {
+        viewModelScope.launch {
+            when (result) {
+                is BackupResult.Success -> {
+                    userPreferencesRepository.setLastBackupTime(System.currentTimeMillis())
+                    _backupStatus.value = "Operation successful!"
+                }
+                is BackupResult.Error -> {
+                    _backupStatus.value = "Failed: ${result.message}"
+                }
             }
         }
     }

@@ -31,22 +31,25 @@ fun SettingsScreen(
     val themePreference by viewModel.themePreference.collectAsStateWithLifecycle()
     val isVinEnabled by viewModel.isVinFeatureEnabled.collectAsStateWithLifecycle()
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
-    val isDriveEnabled by viewModel.isDriveBackupEnabled.collectAsStateWithLifecycle()
     val lastBackup by viewModel.lastBackupTime.collectAsStateWithLifecycle()
     val backupStatus by viewModel.backupStatus.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            viewModel.performBackup()
-        }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/x-sqlite3")
+    ) { uri ->
+        uri?.let { viewModel.exportBackup(it) }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let { viewModel.importBackup(it) }
     }
 
     LaunchedEffect(backupStatus) {
         if (backupStatus != null) {
-            // Show snackbar or toast
             android.widget.Toast.makeText(context, backupStatus, android.widget.Toast.LENGTH_SHORT).show()
             viewModel.clearBackupStatus()
         }
@@ -192,35 +195,42 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             ListItem(
-                headlineContent = { Text(stringResource(R.string.cloud_backup)) },
-                supportingContent = { Text(stringResource(R.string.google_drive_backup_desc)) },
-                leadingContent = { Icon(Icons.Rounded.CloudUpload, contentDescription = null) },
-                trailingContent = {
-                    Switch(
-                        checked = isDriveEnabled,
-                        onCheckedChange = { viewModel.setDriveBackupEnabled(it) }
-                    )
-                }
+                headlineContent = { Text(stringResource(R.string.local_backup)) },
+                supportingContent = { Text(stringResource(R.string.local_backup_desc)) },
+                leadingContent = { Icon(Icons.Rounded.Backup, contentDescription = null) }
             )
 
-            if (isDriveEnabled) {
-                ListItem(
-                    headlineContent = {
-                        val timeText = if (lastBackup != null) {
-                            val sdf = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale.getDefault())
-                            stringResource(R.string.last_backup, sdf.format(java.util.Date(lastBackup!!)))
-                        } else {
-                            stringResource(R.string.never_backed_up)
-                        }
-                        Text(timeText)
-                    },
-                    trailingContent = {
-                        TextButton(onClick = { 
-                            launcher.launch(viewModel.getBackupSignInIntent())
-                        }) {
-                            Text(stringResource(R.string.backup_now))
-                        }
-                    },
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 56.dp, end = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Button(
+                    onClick = { exportLauncher.launch("glovebox_backup_${System.currentTimeMillis()}.db") },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Rounded.Download, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.backup_now))
+                }
+                
+                OutlinedButton(
+                    onClick = { importLauncher.launch(arrayOf("application/x-sqlite3", "application/octet-stream")) },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Rounded.Upload, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.restore_now))
+                }
+            }
+
+            if (lastBackup != null) {
+                val sdf = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale.getDefault())
+                Text(
+                    text = stringResource(R.string.last_backup, sdf.format(java.util.Date(lastBackup!!))),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 56.dp)
                 )
             }

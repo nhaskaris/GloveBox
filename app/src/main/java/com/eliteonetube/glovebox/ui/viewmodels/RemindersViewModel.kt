@@ -31,6 +31,7 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
     }
 
     private fun loadVehicleData() {
+        if (vehicleId == 0L) return
         viewModelScope.launch {
             vehicleDao.getVehicleById(vehicleId)?.let { vehicle ->
                 _currentOdometer.value = vehicle.odometer
@@ -39,6 +40,7 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
     }
 
     private fun calculateEstimatedOdometer() {
+        if (vehicleId == 0L) return
         viewModelScope.launch {
             val vehicle = vehicleDao.getVehicleById(vehicleId) ?: return@launch
             val logs = fuelLogDao.getFuelLogsForVehicle(vehicleId).first()
@@ -64,7 +66,7 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
         }
     }
 
-    val reminders: StateFlow<List<Reminder>> = reminderDao.getRemindersForVehicle(vehicleId)
+    val reminders: StateFlow<List<Reminder>> = (if (vehicleId == 0L) reminderDao.getAllReminders() else reminderDao.getRemindersForVehicle(vehicleId))
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

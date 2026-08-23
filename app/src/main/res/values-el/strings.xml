@@ -252,12 +252,12 @@
     <string name="light">Φωτεινό</string>
     <string name="dark">Σκοτεινό</string>
     <string name="vin_decoding_desc">Αυτόματη συμπλήρωση στοιχείων αυτοκινήτου από το VIN</string>
-    <string name="cloud_backup">Αντίγραφο Ασφαλείας στο Cloud</string>
-    <string name="google_drive_backup">Αντίγραφο Ασφαλείας Google Drive</string>
-    <string name="google_drive_backup_desc">Δημιουργήστε με ασφάλεια αντίγραφα των δεδομένων σας στο Google Drive</string>
+    <string name="local_backup">Αντίγραφο Ασφαλείας &amp; Επαναφορά</string>
+    <string name="local_backup_desc">Εξαγωγή ή εισαγωγή των δεδομένων σας τοπικά</string>
     <string name="last_backup">Τελευταίο αντίγραφο: %s</string>
     <string name="never_backed_up">Ποτέ</string>
-    <string name="backup_now">Δημιουργία Τώρα</string>
+    <string name="backup_now">Εξαγωγή</string>
+    <string name="restore_now">Εισαγωγή</string>
 
     <!-- VIN Scanner -->
     <string name="camera_permission_required">Απαιτείται άδεια κάμερας για τη σάρωση του VIN</string>

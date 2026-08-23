@@ -23,7 +23,6 @@ class UserPreferencesRepository(private val context: Context) {
         val UNIT_SYSTEM = stringPreferencesKey("unit_system")
         val IS_ONBOARDING_COMPLETED = booleanPreferencesKey("is_onboarding_completed")
         val IS_VIN_FEATURE_ENABLED = booleanPreferencesKey("is_vin_feature_enabled")
-        val IS_DRIVE_BACKUP_ENABLED = booleanPreferencesKey("is_drive_backup_enabled")
         val LAST_BACKUP_TIME = longPreferencesKey("last_backup_time")
     }
 
@@ -58,10 +57,6 @@ class UserPreferencesRepository(private val context: Context) {
             preferences[PreferencesKeys.IS_VIN_FEATURE_ENABLED] ?: true
         }
 
-    val isDriveBackupEnabled: Flow<Boolean> = dataStore.data
-        .map { preferences ->
-            preferences[PreferencesKeys.IS_DRIVE_BACKUP_ENABLED] ?: false
-        }
 
     val lastBackupTime: Flow<Long?> = dataStore.data
         .map { preferences ->
@@ -108,11 +103,6 @@ class UserPreferencesRepository(private val context: Context) {
         }
     }
 
-    suspend fun setDriveBackupEnabled(enabled: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[PreferencesKeys.IS_DRIVE_BACKUP_ENABLED] = enabled
-        }
-    }
 
     suspend fun setLastBackupTime(timestamp: Long) {
         dataStore.edit { preferences ->
