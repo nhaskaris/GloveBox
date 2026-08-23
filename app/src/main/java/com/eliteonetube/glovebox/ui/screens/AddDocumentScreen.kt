@@ -47,16 +47,17 @@ fun AddDocumentScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    val isGreek = LocalConfiguration.current.locales[0].language == "el"
+    val userCountry by viewModel.userCountry.collectAsStateWithLifecycle()
+    val isGreece = userCountry == "GR"
 
-    val categories = remember(isGreek) {
+    val categories = remember(isGreece) {
         val base = listOf(
             R.string.cat_insurance,
             R.string.cat_registration,
             R.string.cat_warranty,
             R.string.cat_invoice
         )
-        val greekSpecific = if (isGreek) listOf(R.string.cat_kteo, R.string.cat_emissions) else emptyList()
+        val greekSpecific = if (isGreece) listOf(R.string.cat_kteo, R.string.cat_emissions) else emptyList()
         (base + greekSpecific + listOf(R.string.cat_other))
     }
     

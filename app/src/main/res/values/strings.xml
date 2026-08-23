@@ -64,6 +64,10 @@
     <string name="version_label">Version %s</string>
     <string name="help_feedback_label">Help &amp; Feedback</string>
 
+    <string name="settings_region">Region / Country</string>
+    <string name="region_greece">Greece</string>
+    <string name="region_global">Global / Other</string>
+
     <string name="garage_empty_desc">Your garage is empty. Add your first vehicle to start tracking maintenance and fuel.</string>
     <string name="section_identification">Identification</string>
     <string name="section_vehicle_details">Vehicle Details</string>

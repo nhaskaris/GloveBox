@@ -23,6 +23,7 @@ class UserPreferencesRepository(private val context: Context) {
         val UNIT_SYSTEM = stringPreferencesKey("unit_system")
         val IS_ONBOARDING_COMPLETED = booleanPreferencesKey("is_onboarding_completed")
         val IS_VIN_FEATURE_ENABLED = booleanPreferencesKey("is_vin_feature_enabled")
+        val USER_COUNTRY = stringPreferencesKey("user_country")
         val LAST_BACKUP_TIME = longPreferencesKey("last_backup_time")
     }
 
@@ -55,6 +56,11 @@ class UserPreferencesRepository(private val context: Context) {
     val isVinFeatureEnabled: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.IS_VIN_FEATURE_ENABLED] ?: true
+        }
+
+    val userCountry: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.USER_COUNTRY] ?: "Global"
         }
 
 
@@ -100,6 +106,12 @@ class UserPreferencesRepository(private val context: Context) {
     suspend fun setVinFeatureEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_VIN_FEATURE_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setUserCountry(countryCode: String) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.USER_COUNTRY] = countryCode
         }
     }
 

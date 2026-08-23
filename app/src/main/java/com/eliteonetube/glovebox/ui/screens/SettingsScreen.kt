@@ -2,7 +2,10 @@ package com.eliteonetube.glovebox.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,6 +24,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.data.ThemePreference
 import com.eliteonetube.glovebox.ui.viewmodels.MainViewModel
+import java.util.Locale
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -166,6 +173,95 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             ListItem(
+                headlineContent = { Text(stringResource(R.string.settings_region)) },
+                leadingContent = { Icon(Icons.Rounded.Public, contentDescription = null) }
+            )
+
+            val countryState = viewModel.userCountry.collectAsStateWithLifecycle()
+            var showRegionSheet by remember { mutableStateOf(false) }
+            var regionQuery by remember { mutableStateOf("") }
+
+            val regions = remember(appLanguage) {
+                val displayLocale = appLanguage?.let { Locale.forLanguageTag(it) } ?: Locale.getDefault()
+                val isoCountries = Locale.getISOCountries()
+                val countryList = isoCountries.map { code ->
+                    code to Locale.Builder().setRegion(code).build().getDisplayCountry(displayLocale)
+                }.sortedBy { it.second }
+
+                listOf("Global" to "Global / Other") + countryList
+            }
+
+            val currentRegionLabel = regions.find { it.first == countryState.value }?.second ?: countryState.value
+
+            Box(modifier = Modifier.padding(start = 56.dp)) {
+                Box {
+                    OutlinedTextField(
+                        value = currentRegionLabel,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(),
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    // Transparent overlay to intercept taps, since OutlinedTextField
+                    // has no native onClick and is readOnly (no keyboard should show).
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { showRegionSheet = true }
+                    )
+                }
+            }
+
+            if (showRegionSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        showRegionSheet = false
+                        regionQuery = ""
+                    }
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = regionQuery,
+                            onValueChange = { regionQuery = it },
+                            placeholder = { Text("Search country...") },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+
+                        val filtered = remember(regions, regionQuery) {
+                            if (regionQuery.isBlank()) regions
+                            else regions.filter { it.second.contains(regionQuery, ignoreCase = true) }
+                        }
+
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 500.dp)
+                        ) {
+                            items(filtered, key = { it.first }) { (code, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    onClick = {
+                                        viewModel.setUserCountry(code)
+                                        regionQuery = ""
+                                        showRegionSheet = false
+                                    }
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+                    }
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            ListItem(
                 headlineContent = { Text(stringResource(R.string.vehicle_tools)) },
                 supportingContent = { Text(stringResource(R.string.manage_special_features)) },
                 leadingContent = { Icon(Icons.Rounded.Settings, contentDescription = null) }
@@ -214,7 +310,7 @@ fun SettingsScreen(
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.backup_now))
                 }
-                
+
                 OutlinedButton(
                     onClick = { importLauncher.launch(arrayOf("application/x-sqlite3", "application/octet-stream")) },
                     modifier = Modifier.weight(1f)

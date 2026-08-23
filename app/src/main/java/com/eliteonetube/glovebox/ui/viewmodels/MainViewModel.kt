@@ -49,6 +49,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isVinFeatureEnabled: StateFlow<Boolean> = userPreferencesRepository.isVinFeatureEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
+    val userCountry: StateFlow<String> = userPreferencesRepository.userCountry
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Global")
 
     val lastBackupTime: StateFlow<Long?> = userPreferencesRepository.lastBackupTime
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -86,6 +88,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setVinFeatureEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setVinFeatureEnabled(enabled)
+        }
+    }
+
+    fun setUserCountry(countryCode: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setUserCountry(countryCode)
         }
     }
 

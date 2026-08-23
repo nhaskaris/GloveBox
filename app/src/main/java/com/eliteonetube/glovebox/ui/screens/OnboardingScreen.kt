@@ -17,12 +17,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.eliteonetube.glovebox.R
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
     currentLanguage: String?,
     onLanguageChange: (String?) -> Unit,
+    userCountry: String,
+    onCountryChange: (String) -> Unit,
     onComplete: () -> Unit,
     unitSystem: String,
     onUnitChange: (String) -> Unit
@@ -149,7 +152,68 @@ fun OnboardingScreen(
                         unitSystem = unitSystem,
                         onUnitChange = onUnitChange
                     )
+                    Spacer(Modifier.height(16.dp))
+                    RegionSelector(
+                        userCountry = userCountry,
+                        onCountryChange = onCountryChange,
+                        currentLanguage = currentLanguage
+                    )
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RegionSelector(
+    userCountry: String,
+    onCountryChange: (String) -> Unit,
+    currentLanguage: String?
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    val regions = remember(currentLanguage) {
+        val displayLocale = currentLanguage?.let { Locale.forLanguageTag(it) } ?: Locale.getDefault()
+        val isoCountries = Locale.getISOCountries()
+        val countryList = isoCountries.map { code ->
+            code to Locale.Builder().setRegion(code).build().getDisplayCountry(displayLocale)
+        }.sortedBy { it.second }
+        
+        listOf("Global" to "Global / Other") + countryList
+    }
+
+    val currentLabel = regions.find { it.first == userCountry }?.second ?: userCountry
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = currentLabel,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(R.string.settings_region)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .width(240.dp)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            regions.forEach { (code, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        onCountryChange(code)
+                        expanded = false
+                    }
+                )
             }
         }
     }

@@ -29,12 +29,16 @@ import java.util.regex.Pattern
 class DocumentFormViewModel(application: Application) : AndroidViewModel(application) {
     private val documentDao = GloveboxDatabase.getDatabase(application).vehicleDocumentDao()
     private val vehicleDao = GloveboxDatabase.getDatabase(application).vehicleDao()
+    private val userPreferencesRepository = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
 
     private val _uiState = MutableStateFlow(DocumentFormState())
     val uiState: StateFlow<DocumentFormState> = _uiState.asStateFlow()
 
     val vehicles: StateFlow<List<Vehicle>> = vehicleDao.getAllVehicles()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val userCountry: StateFlow<String> = userPreferencesRepository.userCountry
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Global")
 
     fun onNameChange(value: String) { _uiState.value = _uiState.value.copy(name = value) }
     fun onCategoryChange(value: String) { _uiState.value = _uiState.value.copy(category = value) }

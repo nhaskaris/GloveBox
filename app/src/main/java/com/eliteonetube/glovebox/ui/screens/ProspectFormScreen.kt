@@ -213,11 +213,7 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
                         leadingContent = { Icon(Icons.Rounded.CameraAlt, contentDescription = null) },
                         modifier = Modifier.clickable {
                             showImageSourceDialog = false
-                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                                cameraLauncher.launch(tempUri)
-                            } else {
-                                permissionLauncher.launch(Manifest.permission.CAMERA)
-                            }
+                            permissionLauncher.launch(Manifest.permission.CAMERA)
                         }
                     )
                     ListItem(

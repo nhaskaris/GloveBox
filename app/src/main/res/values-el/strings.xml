@@ -64,6 +64,10 @@
     <string name="version_label">Έκδοση %s</string>
     <string name="help_feedback_label">Βοήθεια &amp; Σχόλια</string>
 
+    <string name="settings_region">Περιοχή / Χώρα</string>
+    <string name="region_greece">Ελλάδα</string>
+    <string name="region_global">Παγκόσμια / Άλλη</string>
+
     <string name="garage_empty_desc">Το γκαράζ σας είναι άδειο. Προσθέστε το πρώτο σας όχημα για να ξεκινήσετε την παρακολούθηση.</string>
     <string name="section_identification">Ταυτοποίηση</string>
     <string name="section_vehicle_details">Λεπτομέρειες Οχήματος</string>
