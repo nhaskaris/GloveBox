@@ -228,6 +228,7 @@ class ProspectViewModel(application: Application) : AndroidViewModel(application
             db.serviceRecordDao().insertServiceRecord(purchaseRecord)
 
             prospectDao.deleteProspect(prospect)
+            com.eliteonetube.glovebox.util.WidgetHelper.updateAllWidgets(getApplication())
             onResult(newId)
         }
     }

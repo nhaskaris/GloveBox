@@ -196,6 +196,7 @@ class VehicleViewModel(application: Application, private val vehicleId: Long) : 
                     vehicleDao.updateVehicle(updatedVehicle)
                     _vehicle.value = updatedVehicle
                 }
+                com.eliteonetube.glovebox.util.WidgetHelper.updateAllWidgets(getApplication())
                 onSuccess()
             }
         }

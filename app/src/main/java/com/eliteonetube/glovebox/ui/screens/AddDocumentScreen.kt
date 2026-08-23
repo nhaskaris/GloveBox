@@ -137,10 +137,8 @@ fun AddDocumentScreen(
         )
     }
 
-    LaunchedEffect(vehicleId) {
-        if (docId == 0L) {
-            viewModel.initialize(vehicleId)
-        }
+    LaunchedEffect(vehicleId, docId) {
+        viewModel.initialize(vehicleId, docId)
     }
 
     Scaffold(

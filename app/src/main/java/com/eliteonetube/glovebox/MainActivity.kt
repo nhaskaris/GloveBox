@@ -2,6 +2,7 @@ package com.eliteonetube.glovebox
 
 import android.Manifest
 import android.content.ContextWrapper
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.content.res.Configuration
@@ -83,14 +84,21 @@ fun GloveboxRoute.getVehicleId(): Long? {
 }
 
 class MainActivity : AppCompatActivity() {
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent) // Update the intent for the LaunchedEffect
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.eliteonetube.glovebox.util.NotificationHelper.createNotificationChannel(this)
         enableEdgeToEdge()
         setContent {
             val viewModel: MainViewModel = viewModel()
             val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
             val themePreference by viewModel.themePreference.collectAsStateWithLifecycle()
             val needsRecreate by viewModel.needsRecreate.collectAsStateWithLifecycle()
+            val activeVehicleId by viewModel.activeVehicleId.collectAsStateWithLifecycle()
             val context = LocalContext.current
 
             if (needsRecreate) {
@@ -126,6 +134,22 @@ class MainActivity : AppCompatActivity() {
             }
 
             val backStack = rememberNavBackStack(GloveboxRoute.VehicleList)
+
+            // Handle Widget Intents
+            LaunchedEffect(intent.action, activeVehicleId) {
+                if (activeVehicleId != null && activeVehicleId != 0L) {
+                    when (intent.action) {
+                        "com.eliteonetube.glovebox.ACTION_ADD_FUEL" -> {
+                            backStack.add(GloveboxRoute.AddFuelLog(activeVehicleId!!))
+                            intent.action = null // Clear to prevent re-triggering
+                        }
+                        "com.eliteonetube.glovebox.ACTION_ADD_SERVICE" -> {
+                            backStack.add(GloveboxRoute.AddServiceLog(activeVehicleId!!))
+                            intent.action = null
+                        }
+                    }
+                }
+            }
 
             // CRITICAL: We MUST provide all owners from the Activity to the Localized Context
             CompositionLocalProvider(

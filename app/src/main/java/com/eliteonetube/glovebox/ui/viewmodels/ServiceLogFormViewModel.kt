@@ -275,6 +275,15 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
             } else {
                 serviceRecordDao.updateServiceRecord(record)
             }
+
+            // Re-calculate and schedule predictive alerts
+            com.eliteonetube.glovebox.util.MaintenancePredictor.schedulePredictiveAlerts(
+                getApplication(),
+                vehicleId
+            )
+
+            com.eliteonetube.glovebox.util.WidgetHelper.updateAllWidgets(getApplication())
+
             onResult()
         }
     }

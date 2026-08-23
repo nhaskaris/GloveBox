@@ -262,6 +262,9 @@
     <string name="never_backed_up">Never backed up</string>
     <string name="backup_now">Export</string>
     <string name="restore_now">Import</string>
+    <string name="widget_quick_actions_description">Quickly log fuel or service</string>
+    <string name="widget_vehicle_status_description">Check your vehicle status and upcoming reminders</string>
+    <string name="no_vehicle_selected_widget">No vehicle selected - tap to open</string>
 
     <!-- VIN Scanner -->
     <string name="camera_permission_required">Camera permission is required to scan VIN</string>

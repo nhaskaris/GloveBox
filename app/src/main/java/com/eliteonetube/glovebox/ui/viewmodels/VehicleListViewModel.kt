@@ -24,6 +24,7 @@ class VehicleListViewModel(application: Application) : AndroidViewModel(applicat
     fun setActiveVehicle(vehicleId: Long) {
         viewModelScope.launch {
             userPreferencesRepository.setActiveVehicleId(vehicleId)
+            com.eliteonetube.glovebox.util.WidgetHelper.updateAllWidgets(getApplication())
         }
     }
 
@@ -34,6 +35,7 @@ class VehicleListViewModel(application: Application) : AndroidViewModel(applicat
                 userPreferencesRepository.setActiveVehicleId(0L)
             }
             vehicleDao.deleteVehicle(vehicle)
+            com.eliteonetube.glovebox.util.WidgetHelper.updateAllWidgets(getApplication())
         }
     }
 }

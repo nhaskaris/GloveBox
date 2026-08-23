@@ -262,6 +262,9 @@
     <string name="never_backed_up">Ποτέ</string>
     <string name="backup_now">Εξαγωγή</string>
     <string name="restore_now">Εισαγωγή</string>
+    <string name="widget_quick_actions_description">Γρήγορη καταγραφή καυσίμου ή συντήρησης</string>
+    <string name="widget_vehicle_status_description">Δείτε την κατάσταση του οχήματος και επερχόμενες υπενθυμίσεις</string>
+    <string name="no_vehicle_selected_widget">Δεν έχει επιλεγεί όχημα - πατήστε για άνοιγμα</string>
 
     <!-- VIN Scanner -->
     <string name="camera_permission_required">Απαιτείται άδεια κάμερας για τη σάρωση του VIN</string>

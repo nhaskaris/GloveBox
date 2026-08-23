@@ -129,17 +129,33 @@ class DocumentFormViewModel(application: Application) : AndroidViewModel(applica
         return null
     }
 
-    fun initialize(vehicleId: Long) {
-        if (vehicleId != 0L) {
-            _uiState.value = _uiState.value.copy(
-                isUniversal = false,
-                linkedVehicleId = vehicleId
-            )
-        } else {
-            _uiState.value = _uiState.value.copy(
-                isUniversal = true,
-                linkedVehicleId = null
-            )
+    fun initialize(vehicleId: Long, docId: Long = 0L) {
+        viewModelScope.launch {
+            if (docId != 0L) {
+                documentDao.getDocumentById(docId)?.let { doc ->
+                    _uiState.value = DocumentFormState(
+                        docId = doc.id,
+                        name = doc.name,
+                        category = doc.category,
+                        photoUri = doc.photoUri,
+                        expiryDate = doc.expiryDate,
+                        isUniversal = doc.vehicleId == null,
+                        linkedVehicleId = doc.vehicleId
+                    )
+                }
+            } else {
+                if (vehicleId != 0L) {
+                    _uiState.value = DocumentFormState(
+                        isUniversal = false,
+                        linkedVehicleId = vehicleId
+                    )
+                } else {
+                    _uiState.value = DocumentFormState(
+                        isUniversal = true,
+                        linkedVehicleId = null
+                    )
+                }
+            }
         }
     }
 
@@ -148,6 +164,7 @@ class DocumentFormViewModel(application: Application) : AndroidViewModel(applica
         if (state.photoUri == null) return
 
         val document = VehicleDocument(
+            id = state.docId, // Pass existing ID if editing
             vehicleId = if (state.isUniversal) null else state.linkedVehicleId,
             name = state.name.ifBlank { state.category },
             category = state.category,
@@ -155,19 +172,27 @@ class DocumentFormViewModel(application: Application) : AndroidViewModel(applica
             expiryDate = state.expiryDate
         )
         viewModelScope.launch {
-            val id = documentDao.insertDocument(document)
+            val id = if (document.id == 0L) {
+                documentDao.insertDocument(document)
+            } else {
+                documentDao.updateDocument(document)
+                document.id
+            }
             
-            // Schedule notification if expiry date is set
+            // Clean up old notifications if editing
+            if (state.docId != 0L) {
+                com.eliteonetube.glovebox.util.NotificationHelper.cancelNotification(getApplication(), id + 1000000)
+                com.eliteonetube.glovebox.util.NotificationHelper.cancelNotification(getApplication(), id + 2000000)
+                com.eliteonetube.glovebox.util.NotificationHelper.cancelNotification(getApplication(), id + 3000000)
+            }
+
+            // Schedule staggered notifications if expiry date is set
             state.expiryDate?.let { expiry ->
-                val context = getApplication<Application>()
-                val thirtyDaysBefore = expiry - (30L * 24 * 60 * 60 * 1000)
-                val sevenDaysBefore = expiry - (7L * 24 * 60 * 60 * 1000)
-                
-                com.eliteonetube.glovebox.util.NotificationHelper.scheduleNotification(
-                    context, id, "Document Expiry", "${document.name} expires in 30 days", thirtyDaysBefore
-                )
-                com.eliteonetube.glovebox.util.NotificationHelper.scheduleNotification(
-                    context, id + 1000000, "Document Expiry", "${document.name} expires in 7 days", sevenDaysBefore
+                com.eliteonetube.glovebox.util.NotificationHelper.scheduleDocumentExpiries(
+                    getApplication(),
+                    id,
+                    document.name,
+                    expiry
                 )
             }
             
@@ -177,6 +202,7 @@ class DocumentFormViewModel(application: Application) : AndroidViewModel(applica
 }
 
 data class DocumentFormState(
+    val docId: Long = 0,
     val name: String = "",
     val category: String = "Insurance",
     val photoUri: String? = null,

@@ -70,6 +70,15 @@ class FuelLogFormViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             if (log.id == 0L) fuelLogDao.insertFuelLog(log)
             else fuelLogDao.updateFuelLog(log)
+            
+            // Re-calculate and schedule predictive alerts
+            com.eliteonetube.glovebox.util.MaintenancePredictor.schedulePredictiveAlerts(
+                getApplication(),
+                vehicleId
+            )
+            
+            com.eliteonetube.glovebox.util.WidgetHelper.updateAllWidgets(getApplication())
+            
             onResult()
         }
     }

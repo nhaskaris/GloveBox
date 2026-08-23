@@ -79,6 +79,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setActiveVehicleId(vehicleId: Long) {
         viewModelScope.launch {
             userPreferencesRepository.setActiveVehicleId(vehicleId)
+            com.eliteonetube.glovebox.util.WidgetHelper.updateAllWidgets(getApplication())
         }
     }
 

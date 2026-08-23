@@ -15,8 +15,12 @@ class NotificationReceiver : BroadcastReceiver() {
         val id = intent.getIntExtra("id", 0)
         val title = intent.getStringExtra("title") ?: "Glovebox Alert"
         val message = intent.getStringExtra("message") ?: "You have a vehicle reminder."
+        val type = intent.getStringExtra("type") ?: NotificationHelper.TYPE_MAINTENANCE
 
-        val activityIntent = Intent(context, MainActivity::class.java)
+        val activityIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        
         val pendingIntent = PendingIntent.getActivity(
             context,
             id,
@@ -24,11 +28,20 @@ class NotificationReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Choose icon based on type
+        val iconRes = when (type) {
+            NotificationHelper.TYPE_DOCUMENT -> android.R.drawable.ic_menu_save
+            NotificationHelper.TYPE_PREDICTIVE -> android.R.drawable.ic_menu_recent_history
+            else -> android.R.drawable.ic_dialog_info
+        }
+
         val notification = NotificationCompat.Builder(context, NotificationHelper.CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info) // Fallback icon
+            .setSmallIcon(iconRes)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
