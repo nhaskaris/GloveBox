@@ -539,6 +539,7 @@ fun NavigationWrapper(
             modifier = Modifier
                 .fillMaxHeight()
                 .statusBarsPadding()
+                .navigationBarsPadding()
         ) {
             DrawerHeader()
             
@@ -755,6 +756,7 @@ fun DrawerFooter() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .padding(24.dp)
     ) {
         HorizontalDivider(
