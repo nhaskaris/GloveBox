@@ -1,6 +1,8 @@
 package com.eliteonetube.glovebox.ui.screens
 
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -76,12 +78,15 @@ fun HistoryScreenPreview() {
             currentFilter = HistoryFilter.ALL,
             onFilterChange = {},
             onAddRecord = {},
+            onAddRecordWithScan = {},
             onEditRecord = {},
             onAddFuel = {},
             onEditFuel = {},
             onDeleteService = {},
             onDeleteFuel = {},
-            onExportPdf = {}
+            onExportPdf = {},
+            onExportCsv = {},
+            onImportFile = {}
         )
     }
 }
@@ -91,6 +96,7 @@ fun HistoryScreenPreview() {
 fun HistoryScreen(
     vehicleId: Long,
     onAddRecord: () -> Unit,
+    onAddRecordWithScan: (String) -> Unit,
     onEditRecord: (Long) -> Unit,
     onAddFuel: () -> Unit,
     onEditFuel: (Long) -> Unit,
@@ -108,9 +114,36 @@ fun HistoryScreen(
     val vehicle by viewModel.vehicle.collectAsStateWithLifecycle()
     val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
     val preferredCurrency by viewModel.preferredCurrency.collectAsStateWithLifecycle()
+    val csvStatus by viewModel.csvOperationStatus.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     var showExportDialog by remember { mutableStateOf(false) }
+
+    val exportCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        uri?.let { viewModel.exportToCsv(it) }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            val type = context.contentResolver.getType(it) ?: ""
+            if (type.contains("csv")) {
+                viewModel.importFromCsv(it)
+            } else if (type.contains("image") || type.contains("pdf")) {
+                onAddRecordWithScan(it.toString())
+            }
+        }
+    }
+
+    LaunchedEffect(csvStatus) {
+        if (csvStatus != null) {
+            android.widget.Toast.makeText(context, csvStatus, android.widget.Toast.LENGTH_SHORT).show()
+            viewModel.clearCsvStatus()
+        }
+    }
 
     HistoryContent(
         items = items,
@@ -118,10 +151,13 @@ fun HistoryScreen(
         currentFilter = currentFilter,
         onFilterChange = { viewModel.setFilter(it) },
         onAddRecord = onAddRecord,
+        onAddRecordWithScan = onAddRecordWithScan,
         onEditRecord = onEditRecord,
         onAddFuel = onAddFuel,
         onEditFuel = onEditFuel,
         onExportPdf = { showExportDialog = true },
+        onExportCsv = { exportCsvLauncher.launch("service_history_${vehicle?.make ?: "car"}_${System.currentTimeMillis()}.csv") },
+        onImportFile = { importLauncher.launch(arrayOf("text/csv", "image/*", "application/pdf")) },
         onDeleteService = { viewModel.deleteServiceRecord(it) },
         onDeleteFuel = { viewModel.deleteFuelLog(it) },
         onOpenDrawer = onOpenDrawer,
@@ -217,12 +253,15 @@ fun HistoryContent(
     currentFilter: HistoryFilter,
     onFilterChange: (HistoryFilter) -> Unit,
     onAddRecord: () -> Unit,
+    onAddRecordWithScan: (String) -> Unit,
     onEditRecord: (Long) -> Unit,
     onAddFuel: () -> Unit,
     onEditFuel: (Long) -> Unit,
     onDeleteService: (ServiceRecord) -> Unit,
     onDeleteFuel: (FuelLog) -> Unit,
     onExportPdf: () -> Unit,
+    onExportCsv: () -> Unit,
+    onImportFile: () -> Unit,
     onOpenDrawer: (() -> Unit)? = null,
     preferredCurrency: String = "USD"
 ) {
@@ -245,8 +284,34 @@ fun HistoryContent(
                 actions = {
                     if (items.isNotEmpty()) {
                         IconButton(onClick = onExportPdf) {
-                            Icon(Icons.Rounded.PictureAsPdf, contentDescription = null)
+                            Icon(Icons.Rounded.PictureAsPdf, contentDescription = "Export PDF")
                         }
+                    }
+                    
+                    var showMenu by remember { mutableStateOf(false) }
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.more_options))
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.export_csv)) },
+                            leadingIcon = { Icon(Icons.Rounded.Download, contentDescription = null) },
+                            onClick = {
+                                showMenu = false
+                                onExportCsv()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.import_file)) },
+                            leadingIcon = { Icon(Icons.Rounded.Upload, contentDescription = null) },
+                            onClick = {
+                                showMenu = false
+                                onImportFile()
+                            }
+                        )
                     }
                 }
             )

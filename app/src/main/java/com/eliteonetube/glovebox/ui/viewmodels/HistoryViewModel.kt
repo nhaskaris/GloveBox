@@ -7,6 +7,8 @@ import com.eliteonetube.glovebox.data.GloveboxDatabase
 import com.eliteonetube.glovebox.data.entity.FuelLog
 import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import com.eliteonetube.glovebox.util.PdfExportUtility
+import com.eliteonetube.glovebox.util.CsvUtility
+import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -69,6 +71,9 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
     private val _vehicle = kotlinx.coroutines.flow.MutableStateFlow<com.eliteonetube.glovebox.data.entity.Vehicle?>(null)
     val vehicle: StateFlow<com.eliteonetube.glovebox.data.entity.Vehicle?> = _vehicle
 
+    private val _csvOperationStatus = MutableStateFlow<String?>(null)
+    val csvOperationStatus = _csvOperationStatus.asStateFlow()
+
     init {
         viewModelScope.launch {
             _vehicle.value = vehicleDao.getVehicleById(vehicleId)
@@ -88,6 +93,46 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
     fun deleteFuelLog(log: FuelLog) {
         viewModelScope.launch {
             fuelLogDao.deleteFuelLog(log)
+        }
+    }
+
+    fun clearCsvStatus() {
+        _csvOperationStatus.value = null
+    }
+
+    fun exportToCsv(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val services = serviceRecordDao.getServiceRecordsForVehicle(vehicleId).first()
+                val csv = CsvUtility.exportServiceRecords(services)
+                getApplication<Application>().contentResolver.openOutputStream(uri)?.use { 
+                    it.write(csv.toByteArray())
+                }
+                _csvOperationStatus.value = getApplication<Application>().getString(com.eliteonetube.glovebox.R.string.export_success)
+            } catch (e: Exception) {
+                _csvOperationStatus.value = getApplication<Application>().getString(com.eliteonetube.glovebox.R.string.export_failed, e.message)
+            }
+        }
+    }
+
+    fun importFromCsv(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val csv = getApplication<Application>().contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                if (csv != null) {
+                    val imported = CsvUtility.parseServiceRecords(csv, vehicleId)
+                    if (imported.isEmpty()) {
+                        _csvOperationStatus.value = getApplication<Application>().getString(com.eliteonetube.glovebox.R.string.import_no_records)
+                        return@launch
+                    }
+                    imported.forEach { serviceRecordDao.insertServiceRecord(it) }
+                    _csvOperationStatus.value = getApplication<Application>().getString(com.eliteonetube.glovebox.R.string.import_success, imported.size)
+                } else {
+                    _csvOperationStatus.value = getApplication<Application>().getString(com.eliteonetube.glovebox.R.string.import_read_error)
+                }
+            } catch (e: Exception) {
+                _csvOperationStatus.value = getApplication<Application>().getString(com.eliteonetube.glovebox.R.string.import_failed, e.message)
+            }
         }
     }
 

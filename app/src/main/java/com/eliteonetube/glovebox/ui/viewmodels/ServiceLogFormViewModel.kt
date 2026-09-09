@@ -24,13 +24,14 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
     private val _uiState = MutableStateFlow<ServiceLogFormState>(ServiceLogFormState())
     val uiState: StateFlow<ServiceLogFormState> = _uiState.asStateFlow()
 
-    fun loadData(vehicleId: Long, recordId: Long, prefilledType: String? = null) {
+    fun loadData(vehicleId: Long, recordId: Long, prefilledType: String? = null, scanUri: String? = null) {
         viewModelScope.launch {
             val vehicle = vehicleDao.getVehicleById(vehicleId)
             val unit = vehicle?.odometerUnit ?: "km"
             val preferredCurrency = userPrefs.preferredCurrency.first()
 
             if (recordId != 0L) {
+                // ... (existing loading logic)
                 serviceRecordDao.getServiceRecordById(recordId)?.let { record ->
                     _uiState.value = ServiceLogFormState(
                         recordId = record.id,
@@ -55,7 +56,63 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
                     currency = preferredCurrency,
                     serviceTypes = if (prefilledType != null) listOf(prefilledType) else emptyList()
                 )
+                
+                // Trigger scanning if scanUri is provided
+                scanUri?.let { uriStr ->
+                    scanInvoice(android.net.Uri.parse(uriStr), vehicleId)
+                }
             }
+        }
+    }
+
+    private fun scanInvoice(uri: android.net.Uri, vehicleId: Long) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isScanning = true, receiptPhotoUri = uri.toString())
+            val results = com.eliteonetube.glovebox.util.InvoiceScanner.scanUri(getApplication(), uri)
+            
+            if (results.isNotEmpty()) {
+                val first = results.first()
+                _uiState.value = _uiState.value.copy(
+                    isScanning = false,
+                    pendingScans = results,
+                    currentScanIndex = 0,
+                    totalScans = results.size,
+                    date = first.date ?: _uiState.value.date,
+                    cost = first.totalCost?.toString() ?: "",
+                    mileage = first.mileage?.toString() ?: "",
+                    serviceTypes = if (first.detectedServiceType != null) listOf(first.detectedServiceType) else emptyList()
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isScanning = false,
+                    notes = "No service records were detected in the file. Please enter details manually."
+                )
+            }
+        }
+    }
+
+    fun skipCurrentScan(onComplete: () -> Unit) {
+        loadNextScan(onComplete)
+    }
+
+    private fun loadNextScan(onComplete: () -> Unit) {
+        val nextIndex = _uiState.value.currentScanIndex + 1
+        if (nextIndex < _uiState.value.totalScans) {
+            val nextScan = _uiState.value.pendingScans[nextIndex]
+            _uiState.value = _uiState.value.copy(
+                currentScanIndex = nextIndex,
+                date = nextScan.date ?: System.currentTimeMillis(),
+                cost = nextScan.totalCost?.toString() ?: "",
+                mileage = nextScan.mileage?.toString() ?: "",
+                serviceTypes = if (nextScan.detectedServiceType != null) listOf(nextScan.detectedServiceType) else emptyList(),
+                notes = "",
+                laborHours = "",
+                partsUsed = ""
+            )
+        } else {
+            // No more scans
+            _uiState.value = _uiState.value.copy(pendingScans = emptyList(), totalScans = 0)
+            onComplete()
         }
     }
 
@@ -284,7 +341,12 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
 
             com.eliteonetube.glovebox.util.WidgetHelper.updateAllWidgets(getApplication())
 
-            onResult()
+            // If we have more items to review, load the next one
+            if (state.currentScanIndex < state.totalScans - 1) {
+                loadNextScan(onResult)
+            } else {
+                onResult()
+            }
         }
     }
 }
@@ -306,5 +368,9 @@ data class ServiceLogFormState(
     val unit: String = "km",
     val isSchedulingNext: Boolean = false,
     val nextIntervalMileage: String = "10000",
-    val nextIntervalMonths: String = "6"
+    val nextIntervalMonths: String = "6",
+    val isScanning: Boolean = false,
+    val pendingScans: List<com.eliteonetube.glovebox.util.ScannedInvoice> = emptyList(),
+    val currentScanIndex: Int = 0,
+    val totalScans: Int = 0
 )

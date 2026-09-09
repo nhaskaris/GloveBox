@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -76,12 +77,19 @@ fun DigitalGloveboxScreen(
             Box(
                 modifier = Modifier
                     .padding(innerPadding)
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(stringResource(R.string.no_documents_stored))
+                Text(
+                    text = stringResource(R.string.no_documents_stored),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-        } else {
+        }
+ else {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier

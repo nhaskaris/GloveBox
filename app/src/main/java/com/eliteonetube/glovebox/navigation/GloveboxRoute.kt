@@ -24,7 +24,8 @@ sealed interface GloveboxRoute : NavKey {
     data class AddServiceLog(
         val vehicleId: Long, 
         val recordId: Long = 0L, 
-        val prefilledType: String? = null
+        val prefilledType: String? = null,
+        val scanUri: String? = null
     ) : GloveboxRoute
 
     @Serializable

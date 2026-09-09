@@ -136,6 +136,15 @@
     <string name="no_history_yet">Δεν υπάρχει ιστορικό ακόμα.\nΠατήστε + για να προσθέσετε συντήρηση ή αρχεία καυσίμων.</string>
     <string name="parts_label">Ανταλλακτικά: %s</string>
     <string name="share_history">Κοινοποίηση Ιστορικού</string>
+    <string name="export_csv">Εξαγωγή σε CSV</string>
+    <string name="import_file">Εισαγωγή από αρχείο</string>
+    <string name="more_options">Περισσότερες επιλογές</string>
+    <string name="export_success">Η εξαγωγή ολοκληρώθηκε!</string>
+    <string name="export_failed">Η εξαγωγή απέτυχε: %s</string>
+    <string name="import_no_records">Δεν βρέθηκαν έγκυρες εγγραφές στο αρχείο.</string>
+    <string name="import_success">Εισήχθησαν επιτυχώς %d εγγραφές!</string>
+    <string name="import_read_error">Αδυναμία ανάγνωσης αρχείου.</string>
+    <string name="import_failed">Η εισαγωγή απέτυχε: %s</string>
 
     <!-- Insights -->
     <string name="total_spending">Συνολικά Έξοδα</string>

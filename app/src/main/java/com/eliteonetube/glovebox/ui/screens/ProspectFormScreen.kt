@@ -336,42 +336,6 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
                         )
                     }
 
-                    var currencyExpanded by remember { mutableStateOf(false) }
-                    val currencies = com.eliteonetube.glovebox.util.CurrencyUtility.supportedCurrencies
-
-                    ExposedDropdownMenuBox(
-                        expanded = currencyExpanded,
-                        onExpandedChange = { currencyExpanded = it }
-                    ) {
-                        OutlinedTextField(
-                            value = "${state.currency} (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(state.currency)})",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Currency") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = currencyExpanded) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                            shape = MaterialTheme.shapes.medium
-                        )
-
-                        ExposedDropdownMenu(
-                            expanded = currencyExpanded,
-                            onDismissRequest = { currencyExpanded = false }
-                        ) {
-                            currencies.forEach { code ->
-                                DropdownMenuItem(
-                                    text = { Text("$code (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(code)})") },
-                                    onClick = {
-                                        viewModel.onCurrencyChange(code)
-                                        currencyExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-
                     ExposedDropdownMenuBox(
                         expanded = makeExpanded,
                         onExpandedChange = { makeExpanded = it }

@@ -409,6 +409,7 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                         HistoryScreen(
                             vehicleId = key.vehicleId,
                             onAddRecord = { backStack.add(GloveboxRoute.AddServiceLog(key.vehicleId)) },
+                            onAddRecordWithScan = { uri -> backStack.add(GloveboxRoute.AddServiceLog(key.vehicleId, scanUri = uri)) },
                             onEditRecord = { id -> backStack.add(GloveboxRoute.AddServiceLog(key.vehicleId, id)) },
                             onAddFuel = { backStack.add(GloveboxRoute.AddFuelLog(key.vehicleId)) },
                             onEditFuel = { id -> backStack.add(GloveboxRoute.AddFuelLog(key.vehicleId, id)) },
@@ -424,6 +425,7 @@ fun MainContent(viewModel: MainViewModel, appLanguage: String?, backStack: NavBa
                             vehicleId = key.vehicleId,
                             recordId = key.recordId,
                             prefilledType = key.prefilledType,
+                            scanUri = key.scanUri,
                             onNavigateBack = onNavigateBack
                         )
                     }

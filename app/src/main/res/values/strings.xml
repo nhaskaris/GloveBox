@@ -136,6 +136,15 @@
     <string name="no_history_yet">No history yet.\nTap + to add service or fuel logs.</string>
     <string name="parts_label">Parts: %s</string>
     <string name="share_history">Share History</string>
+    <string name="export_csv">Export to CSV</string>
+    <string name="import_file">Import from File</string>
+    <string name="more_options">More options</string>
+    <string name="export_success">Export successful!</string>
+    <string name="export_failed">Export failed: %s</string>
+    <string name="import_no_records">No valid records found in file.</string>
+    <string name="import_success">Successfully imported %d records!</string>
+    <string name="import_read_error">Could not read file.</string>
+    <string name="import_failed">Import failed: %s</string>
 
     <!-- Insights -->
     <string name="total_spending">Total Spending</string>

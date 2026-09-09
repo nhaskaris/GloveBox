@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.NavigateNext
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -44,6 +45,7 @@ fun AddServiceLogScreen(
     vehicleId: Long,
     recordId: Long = 0L,
     prefilledType: String? = null,
+    scanUri: String? = null,
     onNavigateBack: () -> Unit,
     viewModel: ServiceLogFormViewModel = viewModel()
 ) {
@@ -127,8 +129,8 @@ fun AddServiceLogScreen(
         )
     }
 
-    LaunchedEffect(vehicleId, recordId, prefilledType) {
-        viewModel.loadData(vehicleId, recordId, prefilledType)
+    LaunchedEffect(vehicleId, recordId, prefilledType, scanUri) {
+        viewModel.loadData(vehicleId, recordId, prefilledType, scanUri)
     }
 
     val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
@@ -162,29 +164,58 @@ fun AddServiceLogScreen(
     Scaffold(
         topBar = {
             MediumTopAppBar(
-                title = { Text(if (recordId == 0L) stringResource(R.string.add_service_log) else stringResource(R.string.edit_service_log)) },
+                title = { 
+                    Column {
+                        Text(if (recordId == 0L) stringResource(R.string.add_service_log) else stringResource(R.string.edit_service_log))
+                        if (uiState.totalScans > 1) {
+                            Text(
+                                text = "Entry ${uiState.currentScanIndex + 1} of ${uiState.totalScans}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     if (LocalBackButtonVisibility.current) {
                         IconButton(onClick = onNavigateBack) {
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
                         }
                     }
+                },
+                actions = {
+                    if (uiState.totalScans > 1) {
+                        TextButton(onClick = { viewModel.skipCurrentScan(onNavigateBack) }) {
+                            Text("Skip")
+                        }
+                    }
                 }
             )
         },
         floatingActionButton = {
-            val isReadyToSave = uiState.serviceTypes.isNotEmpty() || uiState.notes.isNotBlank()
+            val isReadyToSave = (uiState.serviceTypes.isNotEmpty() || uiState.notes.isNotBlank()) && !uiState.isScanning
+            val isLastItem = uiState.currentScanIndex == uiState.totalScans - 1 || uiState.totalScans <= 1
+            
             ExtendedFloatingActionButton(
                 onClick = {
                     if (isReadyToSave) {
                         viewModel.saveRecord(vehicleId, onNavigateBack)
                     }
                 },
-                icon = { Icon(Icons.Rounded.Save, contentDescription = null) },
-                text = { Text(stringResource(R.string.save_record)) },
-                expanded = isReadyToSave,
-                containerColor = if (isReadyToSave) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = if (isReadyToSave) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                icon = { 
+                    if (uiState.isScanning) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    else Icon(if (isLastItem) Icons.Rounded.Save else Icons.AutoMirrored.Rounded.NavigateNext, contentDescription = null) 
+                },
+                text = { 
+                    Text(
+                        if (uiState.isScanning) "Scanning..." 
+                        else if (isLastItem) stringResource(R.string.save_record) 
+                        else "Save & Next"
+                    ) 
+                },
+                expanded = isReadyToSave || uiState.isScanning,
+                containerColor = if (isReadyToSave || uiState.isScanning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = if (isReadyToSave || uiState.isScanning) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
         }
     )
@@ -315,44 +346,10 @@ fun AddServiceLogScreen(
                     onValueChange = viewModel::onMileageChange,
                     label = { Text(stringResource(R.string.mileage_label, uiState.unit)) },
                     leadingIcon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = MaterialTheme.shapes.large
                 )
-
-                var currencyExpanded by remember { mutableStateOf(false) }
-                val currencies = com.eliteonetube.glovebox.util.CurrencyUtility.supportedCurrencies
-
-                ExposedDropdownMenuBox(
-                    expanded = currencyExpanded,
-                    onExpandedChange = { currencyExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = uiState.currency,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Currency") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = currencyExpanded) },
-                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                        shape = MaterialTheme.shapes.large
-                    )
-                    ExposedDropdownMenu(
-                        expanded = currencyExpanded,
-                        onDismissRequest = { currencyExpanded = false }
-                    ) {
-                        currencies.forEach { code ->
-                            DropdownMenuItem(
-                                text = { Text("$code (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(code)})") },
-                                onClick = {
-                                    viewModel.onCurrencyChange(code)
-                                    currencyExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
             }
 
             OutlinedTextField(
@@ -381,15 +378,20 @@ fun AddServiceLogScreen(
                                         type.lowercase().contains(keyword) 
                                     } 
                                 }) {
-                                    Surface(
-                                        color = MaterialTheme.colorScheme.primaryContainer,
-                                        shape = MaterialTheme.shapes.extraSmall
+                                    TooltipBox(
+                                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                                        tooltip = {
+                                            PlainTooltip {
+                                                Text(stringResource(R.string.smart_suggestion_badge))
+                                            }
+                                        },
+                                        state = rememberTooltipState()
                                     ) {
-                                        Text(
-                                            text = stringResource(R.string.smart_suggestion_badge),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                                            fontWeight = FontWeight.Black
+                                        Icon(
+                                            imageVector = Icons.Rounded.AutoFixHigh,
+                                            contentDescription = stringResource(R.string.smart_suggestion_badge),
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(18.dp)
                                         )
                                     }
                                 }
