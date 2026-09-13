@@ -90,6 +90,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // --- Theme Section ---
             ListItem(
                 headlineContent = { Text(stringResource(R.string.theme)) },
                 supportingContent = { Text(stringResource(R.string.choose_theme)) },
@@ -119,34 +120,62 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            // --- Language Section ---
             ListItem(
                 headlineContent = { Text(stringResource(R.string.select_language)) },
                 leadingContent = { Icon(Icons.Rounded.Language, contentDescription = null) }
             )
 
-            Column(
-                modifier = Modifier.padding(start = 56.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                LanguageOption(
-                    text = stringResource(R.string.system_language),
-                    selected = appLanguage == null,
-                    onClick = { viewModel.setAppLanguage(null) }
-                )
-                LanguageOption(
-                    text = stringResource(R.string.language_english),
-                    selected = appLanguage == "en",
-                    onClick = { viewModel.setAppLanguage("en") }
-                )
-                LanguageOption(
-                    text = stringResource(R.string.language_greek),
-                    selected = appLanguage == "el",
-                    onClick = { viewModel.setAppLanguage("el") }
-                )
+            var showLanguageSheet by remember { mutableStateOf(false) }
+            val languages = listOf(
+                null to stringResource(R.string.system_language),
+                "en" to stringResource(R.string.language_english),
+                "el" to stringResource(R.string.language_greek),
+                "de" to stringResource(R.string.language_german),
+                "es" to stringResource(R.string.language_spanish),
+                "fr" to stringResource(R.string.language_french),
+                "it" to stringResource(R.string.language_italian)
+            )
+            val currentLanguageLabel = languages.find { it.first == appLanguage }?.second ?: stringResource(R.string.system_language)
+
+            Box(modifier = Modifier.padding(start = 56.dp)) {
+                Box {
+                    OutlinedTextField(
+                        value = currentLanguageLabel,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { showLanguageSheet = true }
+                    )
+                }
+            }
+
+            if (showLanguageSheet) {
+                ModalBottomSheet(onDismissRequest = { showLanguageSheet = false }) {
+                    LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
+                        items(languages) { (code, label) ->
+                            DropdownMenuItem(
+                                text = { Text(label) },
+                                onClick = {
+                                    viewModel.setAppLanguage(code)
+                                    showLanguageSheet = false
+                                }
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            // --- Measurement Section ---
             ListItem(
                 headlineContent = { Text("Measurement System") },
                 supportingContent = { Text("Choose between Metric and Imperial") },
@@ -172,6 +201,7 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            // --- Currency Section ---
             ListItem(
                 headlineContent = { Text("Preferred Currency") },
                 supportingContent = { Text("Used for fleet-wide cost summaries") },
@@ -219,6 +249,7 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            // --- Region Section ---
             ListItem(
                 headlineContent = { Text(stringResource(R.string.settings_region)) },
                 leadingContent = { Icon(Icons.Rounded.Public, contentDescription = null) }
@@ -306,6 +337,7 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            // --- Vehicle Tools Section ---
             ListItem(
                 headlineContent = { Text(stringResource(R.string.vehicle_tools)) },
                 supportingContent = { Text(stringResource(R.string.manage_special_features)) },
@@ -335,6 +367,7 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            // --- Backup Section ---
             ListItem(
                 headlineContent = { Text(stringResource(R.string.local_backup)) },
                 supportingContent = { Text(stringResource(R.string.local_backup_desc)) },
@@ -377,15 +410,6 @@ fun SettingsScreen(
             }
         }
     }
-}
-
-@Composable
-fun LanguageOption(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    ThemeOption(text, selected, onClick)
 }
 
 @Composable

@@ -295,6 +295,10 @@
     <string name="language_english">English</string>
     <string name="language_greek">Ελληνικά</string>
     <string name="system_language">System Default</string>
+    <string name="language_german">German</string>
+    <string name="language_spanish">Spanish</string>
+    <string name="language_french">French</string>
+    <string name="language_italian">Italian</string>
 
     <!-- Navigation Drawer -->
     <string name="nav_home">Home</string>

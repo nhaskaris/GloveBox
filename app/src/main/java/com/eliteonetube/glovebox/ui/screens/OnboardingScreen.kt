@@ -1,10 +1,13 @@
 package com.eliteonetube.glovebox.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -178,41 +181,41 @@ fun CurrencySelector(
     preferredCurrency: String,
     onCurrencyChange: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
     val currencies = com.eliteonetube.glovebox.util.CurrencyUtility.supportedCurrencies
-    
     val currentLabel = "$preferredCurrency (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(preferredCurrency)})"
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
-    ) {
+    Box {
         OutlinedTextField(
             value = currentLabel,
             onValueChange = {},
             readOnly = true,
             label = { Text("Currency") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .width(240.dp)
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
+            modifier = Modifier.width(240.dp),
             shape = MaterialTheme.shapes.medium
         )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { showSheet = true }
+        )
+    }
 
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            currencies.forEach { code ->
-                DropdownMenuItem(
-                    text = { Text("$code (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(code)})") },
-                    onClick = {
-                        onCurrencyChange(code)
-                        expanded = false
-                    }
-                )
+    if (showSheet) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }) {
+            LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
+                items(currencies) { code ->
+                    DropdownMenuItem(
+                        text = { Text("$code (${com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(code)})") },
+                        onClick = {
+                            onCurrencyChange(code)
+                            showSheet = false
+                        }
+                    )
+                }
             }
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -224,7 +227,8 @@ fun RegionSelector(
     onCountryChange: (String) -> Unit,
     currentLanguage: String?
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
     
     val regions = remember(currentLanguage) {
         val displayLocale = currentLanguage?.let { Locale.forLanguageTag(it) } ?: Locale.getDefault()
@@ -238,36 +242,58 @@ fun RegionSelector(
 
     val currentLabel = regions.find { it.first == userCountry }?.second ?: userCountry
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
-    ) {
+    Box {
         OutlinedTextField(
             value = currentLabel,
             onValueChange = {},
             readOnly = true,
             label = { Text(stringResource(R.string.settings_region)) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .width(240.dp)
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
+            modifier = Modifier.width(240.dp),
             shape = MaterialTheme.shapes.medium
         )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { showSheet = true }
+        )
+    }
 
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            regions.forEach { (code, label) ->
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    onClick = {
-                        onCountryChange(code)
-                        expanded = false
-                    }
+    if (showSheet) {
+        ModalBottomSheet(onDismissRequest = { 
+            showSheet = false
+            query = ""
+        }) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    placeholder = { Text("Search country...") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
+
+                val filtered = remember(regions, query) {
+                    if (query.isBlank()) regions
+                    else regions.filter { it.second.contains(query, ignoreCase = true) }
+                }
+
+                LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
+                    items(filtered, key = { it.first }) { (code, label) ->
+                        DropdownMenuItem(
+                            text = { Text(label) },
+                            onClick = {
+                                onCountryChange(code)
+                                showSheet = false
+                                query = ""
+                            }
+                        )
+                    }
+                }
             }
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -278,7 +304,7 @@ fun UnitSelector(
     unitSystem: String,
     onUnitChange: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
     val units = listOf(
         "km" to "Kilometers (km, L/100km)",
         "mi" to "Miles (mi, MPG)"
@@ -286,36 +312,37 @@ fun UnitSelector(
 
     val currentLabel = units.find { it.first == unitSystem }?.second ?: units[0].second
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
-    ) {
+    Box {
         OutlinedTextField(
             value = currentLabel,
             onValueChange = {},
             readOnly = true,
             label = { Text("Measurement System") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .width(240.dp)
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
+            modifier = Modifier.width(240.dp),
             shape = MaterialTheme.shapes.medium
         )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { showSheet = true }
+        )
+    }
 
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            units.forEach { (code, label) ->
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    onClick = {
-                        onUnitChange(code)
-                        expanded = false
-                    }
-                )
+    if (showSheet) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                units.forEach { (code, label) ->
+                    DropdownMenuItem(
+                        text = { Text(label) },
+                        onClick = {
+                            onUnitChange(code)
+                            showSheet = false
+                        }
+                    )
+                }
             }
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -326,45 +353,50 @@ fun LanguageSelector(
     currentLanguage: String?,
     onLanguageChange: (String?) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
     val languages = listOf(
         null to stringResource(R.string.system_language),
         "en" to stringResource(R.string.language_english),
-        "el" to stringResource(R.string.language_greek)
+        "el" to stringResource(R.string.language_greek),
+        "de" to stringResource(R.string.language_german),
+        "es" to stringResource(R.string.language_spanish),
+        "fr" to stringResource(R.string.language_french),
+        "it" to stringResource(R.string.language_italian)
     )
 
     val currentLabel = languages.find { it.first == currentLanguage }?.second ?: stringResource(R.string.system_language)
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
-    ) {
+    Box {
         OutlinedTextField(
             value = currentLabel,
             onValueChange = {},
             readOnly = true,
             label = { Text(stringResource(R.string.select_language)) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .width(240.dp)
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true),
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
+            modifier = Modifier.width(240.dp),
             shape = MaterialTheme.shapes.medium
         )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { showSheet = true }
+        )
+    }
 
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            languages.forEach { (code, label) ->
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    onClick = {
-                        onLanguageChange(code)
-                        expanded = false
-                    }
-                )
+    if (showSheet) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }) {
+            LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
+                items(languages) { (code, label) ->
+                    DropdownMenuItem(
+                        text = { Text(label) },
+                        onClick = {
+                            onLanguageChange(code)
+                            showSheet = false
+                        }
+                    )
+                }
             }
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
