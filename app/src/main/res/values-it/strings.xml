@@ -120,6 +120,7 @@
     <string name="no_history_yet">Ancora nessuna cronologia.\nTocca + per aggiungere servizi o rifornimenti.</string>
     <string name="parts_label">Componenti: %s</string>
     <string name="share_history">Condividi cronologia</string>
+    <string name="export_csv">Esporta in CSV</string>
     <string name="import_file">Importa da file</string>
     <string name="more_options">Altre opzioni</string>
     <string name="export_success">Esportazione completata!</string>
@@ -212,6 +213,7 @@
     <string name="fuel_type_placeholder">Seleziona o scrivi tipo</string>
     <string name="auto_fill_vin">Auto-compila da VIN</string>
     <string name="vehicle_not_found">Veicolo non trovato</string>
+    <string name="connection_error">Errore di connessione o analisi</string>
     <string name="vin_auto_fill_description">Inserisci i dettagli o usa il VIN per la compilazione automatica.</string>
     <string name="vin_error_length">Il VIN deve essere di 17 caratteri</string>
     <string name="vin_error_chars">Il VIN non può contenere I, O o Q</string>

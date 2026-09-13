@@ -120,6 +120,7 @@
     <string name="no_history_yet">Aucun historique pour l\'instant.\nAppuyez sur + pour ajouter des services ou du carburant.</string>
     <string name="parts_label">Pièces : %s</string>
     <string name="share_history">Partager l\'historique</string>
+    <string name="export_csv">Exporter en CSV</string>
     <string name="import_file">Importer depuis un fichier</string>
     <string name="more_options">Plus d\'options</string>
     <string name="export_success">Exportation réussie !</string>
@@ -212,6 +213,7 @@
     <string name="fuel_type_placeholder">Choisir ou taper le type de carburant</string>
     <string name="auto_fill_vin">Auto-remplir depuis le VIN</string>
     <string name="vehicle_not_found">Véhicule non trouvé</string>
+    <string name="connection_error">Erreur de connexion ou d\'analyse</string>
     <string name="vin_auto_fill_description">Entrez les détails ou utilisez le VIN pour auto-remplir.</string>
     <string name="vin_error_length">Le VIN doit comporter 17 caractères</string>
     <string name="vin_error_chars">Le VIN ne peut pas contenir I, O ou Q</string>

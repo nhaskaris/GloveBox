@@ -120,6 +120,7 @@
     <string name="no_history_yet">Sin historial aún.\nToque + para añadir registros.</string>
     <string name="parts_label">Piezas: %s</string>
     <string name="share_history">Compartir historial</string>
+    <string name="export_csv">Exportar a CSV</string>
     <string name="import_file">Importar desde archivo</string>
     <string name="more_options">Más opciones</string>
     <string name="export_success">¡Exportación exitosa!</string>
@@ -212,6 +213,7 @@
     <string name="fuel_type_placeholder">Seleccione o escriba tipo</string>
     <string name="auto_fill_vin">Auto-llenar desde VIN</string>
     <string name="vehicle_not_found">Vehículo no encontrado</string>
+    <string name="connection_error">Error de conexión o análisis</string>
     <string name="vin_auto_fill_description">Ingrese detalles o use el VIN para auto-llenar.</string>
     <string name="vin_error_length">El VIN debe tener 17 caracteres</string>
     <string name="vin_error_chars">El VIN no puede contener I, O o Q</string>

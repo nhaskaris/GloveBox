@@ -120,6 +120,7 @@
     <string name="no_history_yet">Noch kein Verlauf.\nTippen Sie auf +, um Service- oder Tankprotokolle hinzuzufügen.</string>
     <string name="parts_label">Teile: %s</string>
     <string name="share_history">Verlauf teilen</string>
+    <string name="export_csv">In CSV exportieren</string>
     <string name="import_file">Aus Datei importieren</string>
     <string name="more_options">Weitere Optionen</string>
     <string name="export_success">Export erfolgreich!</string>
@@ -212,6 +213,7 @@
     <string name="fuel_type_placeholder">Kraftstoffart wählen oder eingeben</string>
     <string name="auto_fill_vin">Aus VIN automatisch ausfüllen</string>
     <string name="vehicle_not_found">Fahrzeug nicht gefunden</string>
+    <string name="connection_error">Verbindungs- oder Parsing-Fehler</string>
     <string name="vin_auto_fill_description">Geben Sie Ihre Fahrzeugdetails ein oder nutzen Sie die VIN zum automatischen Ausfüllen.</string>
     <string name="vin_error_length">VIN muss 17 Zeichen lang sein</string>
     <string name="vin_error_chars">VIN darf nicht I, O oder Q enthalten</string>
