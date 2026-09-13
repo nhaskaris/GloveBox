@@ -20,20 +20,18 @@ object NotificationHelper {
     const val TYPE_PREDICTIVE = "predictive"
 
     fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifications for vehicle document expiry and maintenance"
-                enableLights(true)
-                lightColor = android.graphics.Color.BLUE
-                enableVibration(true)
-            }
-            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(channel)
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Notifications for vehicle document expiry and maintenance"
+            enableLights(true)
+            lightColor = android.graphics.Color.BLUE
+            enableVibration(true)
         }
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.createNotificationChannel(channel)
     }
 
     fun scheduleNotification(

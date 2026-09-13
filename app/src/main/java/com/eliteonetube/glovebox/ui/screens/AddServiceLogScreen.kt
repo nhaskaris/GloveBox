@@ -379,7 +379,9 @@ fun AddServiceLogScreen(
                                     } 
                                 }) {
                                     TooltipBox(
-                                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                                            TooltipAnchorPosition.Above
+                                        ),
                                         tooltip = {
                                             PlainTooltip {
                                                 Text(stringResource(R.string.smart_suggestion_badge))

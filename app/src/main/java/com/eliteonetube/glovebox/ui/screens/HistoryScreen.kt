@@ -37,8 +37,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val dateFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
 
 private fun formatCost(cost: Double?, currency: String = "USD"): String {
     val symbol = com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(currency)
@@ -574,7 +572,11 @@ fun FuelLogHistoryItem(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val dateString = remember(log.date) {
+    val dateFormatter = remember {
+        DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
+    }
+    
+    val dateString = remember(log.date, dateFormatter) {
         Instant.ofEpochMilli(log.date)
             .atZone(ZoneId.systemDefault())
             .toLocalDate()
@@ -659,7 +661,11 @@ fun ServiceRecordItem(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val dateString = remember(record.date) {
+    val dateFormatter = remember {
+        DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
+    }
+
+    val dateString = remember(record.date, dateFormatter) {
         Instant.ofEpochMilli(record.date)
             .atZone(ZoneId.systemDefault())
             .toLocalDate()
