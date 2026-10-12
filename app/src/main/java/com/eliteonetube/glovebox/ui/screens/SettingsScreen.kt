@@ -247,6 +247,35 @@ fun SettingsScreen(
                 }
             }
 
+            // --- Exchange rates for any other currencies in use (entered by hand, never downloaded) ---
+            val currenciesInUse by viewModel.currenciesInUse.collectAsStateWithLifecycle()
+            val exchangeRates by viewModel.exchangeRates.collectAsStateWithLifecycle()
+            val otherCurrencies = currenciesInUse.filter { it != prefCurrency }
+            if (otherCurrencies.isNotEmpty()) {
+                Column(
+                    modifier = Modifier.padding(start = 56.dp, top = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.exchange_rates_title),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        stringResource(R.string.exchange_rates_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    otherCurrencies.forEach { code ->
+                        ExchangeRateField(
+                            code = code,
+                            preferredCurrency = prefCurrency,
+                            currentRate = exchangeRates.rates[code],
+                            onRateChange = { viewModel.setExchangeRate(code, it) }
+                        )
+                    }
+                }
+            }
+
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             // --- Region Section ---
@@ -434,4 +463,29 @@ fun ThemeOption(
             modifier = Modifier.padding(start = 16.dp)
         )
     }
+}
+
+@Composable
+private fun ExchangeRateField(
+    code: String,
+    preferredCurrency: String,
+    currentRate: Double?,
+    onRateChange: (Double?) -> Unit
+) {
+    // Keep what the user is typing locally; only valid positive numbers are stored.
+    var text by remember(code, preferredCurrency) { mutableStateOf(currentRate?.toString() ?: "") }
+    OutlinedTextField(
+        value = text,
+        onValueChange = { input ->
+            if (input.all { it.isDigit() || it == '.' || it == ',' }) {
+                text = input
+                onRateChange(input.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 })
+            }
+        },
+        label = { Text(stringResource(R.string.exchange_rate_field, code, preferredCurrency)) },
+        singleLine = true,
+        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium
+    )
 }

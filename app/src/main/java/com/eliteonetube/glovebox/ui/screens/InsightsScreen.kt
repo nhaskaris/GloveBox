@@ -44,6 +44,7 @@ fun InsightsScreen(
     })
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val currencySymbol = com.eliteonetube.glovebox.util.CurrencyUtility.getCurrencySymbol(uiState.preferredCurrency)
     val vehicles by viewModel.vehicles.collectAsStateWithLifecycle()
     val selectedId by viewModel.selectedVehicleId.collectAsStateWithLifecycle()
     val selectedVehicle by viewModel.selectedVehicle.collectAsStateWithLifecycle()
@@ -106,7 +107,7 @@ fun InsightsScreen(
                 Card(modifier = Modifier.weight(1f)) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(stringResource(R.string.total_spending), style = MaterialTheme.typography.labelMedium)
-                        Text("$${"%.2f".format(uiState.totalCost)}", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+                        Text("$currencySymbol${"%.2f".format(uiState.totalCost)}", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 Card(modifier = Modifier.weight(1f)) {
@@ -115,6 +116,14 @@ fun InsightsScreen(
                         Text(stringResource(R.string.efficiency_unit_label, "%.1f".format(uiState.averageEfficiency)), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.secondary)
                     }
                 }
+            }
+
+            if (uiState.unconvertedCount > 0) {
+                Text(
+                    text = stringResource(R.string.costs_excluded_note, uiState.unconvertedCount),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
             }
 
             // 2. Smart Maintenance Predictions
@@ -136,14 +145,14 @@ fun InsightsScreen(
             // 3. Category Breakdown
             if (uiState.spendingByCategory.isNotEmpty()) {
                 ChartCard(title = stringResource(R.string.spending_breakdown)) {
-                    DonutChart(items = uiState.spendingByCategory)
+                    DonutChart(items = uiState.spendingByCategory, symbol = currencySymbol)
                 }
             }
 
             // 4. Monthly Spend
             if (uiState.monthlySpending.isNotEmpty()) {
                 ChartCard(title = stringResource(R.string.monthly_spend)) {
-                    SimpleBarChart(data = uiState.monthlySpending)
+                    SimpleBarChart(data = uiState.monthlySpending, symbol = currencySymbol)
                 }
             }
 
@@ -341,7 +350,7 @@ fun EfficiencyLineChart(points: List<EfficiencyPoint>) {
 }
 
 @Composable
-fun DonutChart(items: List<CategorySpending>) {
+fun DonutChart(items: List<CategorySpending>, symbol: String = "$") {
     if (items.isEmpty()) return
 
     if (items.size == 1) {
@@ -361,7 +370,7 @@ fun DonutChart(items: List<CategorySpending>) {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "$${"%.2f".format(item.amount)}",
+                    text = "$symbol${"%.2f".format(item.amount)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -401,7 +410,7 @@ fun DonutChart(items: List<CategorySpending>) {
                 }
             }
             Text(
-                text = "$${"%.0f".format(total)}",
+                text = "$symbol${"%.0f".format(total)}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.Center)
@@ -424,7 +433,7 @@ fun DonutChart(items: List<CategorySpending>) {
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = "$${"%.2f".format(item.amount)}",
+                        text = "$symbol${"%.2f".format(item.amount)}",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -435,7 +444,7 @@ fun DonutChart(items: List<CategorySpending>) {
 }
 
 @Composable
-fun SimpleBarChart(data: List<MonthlySpending>) {
+fun SimpleBarChart(data: List<MonthlySpending>, symbol: String = "$") {
     if (data.isEmpty()) return
 
     if (data.size == 1) {
@@ -443,7 +452,7 @@ fun SimpleBarChart(data: List<MonthlySpending>) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "$${"%.2f".format(item.amount)}",
+                    text = "$symbol${"%.2f".format(item.amount)}",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary

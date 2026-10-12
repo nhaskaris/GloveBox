@@ -8,12 +8,12 @@ import com.eliteonetube.glovebox.data.entity.FuelLog
 import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import com.eliteonetube.glovebox.util.PdfExportUtility
 import com.eliteonetube.glovebox.util.CsvUtility
+import com.eliteonetube.glovebox.util.ExchangeRates
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,10 +50,16 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
     private val serviceRecords = serviceRecordDao.getServiceRecordsForVehicle(vehicleId)
     private val fuelLogs = fuelLogDao.getFuelLogsForVehicle(vehicleId)
 
+    val exchangeRates: StateFlow<ExchangeRates> = userPrefs.exchangeRates
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExchangeRates("USD"))
+
     private val _filter = MutableStateFlow(HistoryFilter.ALL)
     val filter: StateFlow<HistoryFilter> = _filter.asStateFlow()
 
-    val historyItems: StateFlow<List<HistoryItem>> = combine(serviceRecords, fuelLogs, _filter) { services, fuels, currentFilter ->
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    val historyItems: StateFlow<List<HistoryItem>> = combine(serviceRecords, fuelLogs, _filter, _searchQuery) { services, fuels, currentFilter, query ->
         val items = mutableListOf<HistoryItem>()
         if (currentFilter == HistoryFilter.ALL || currentFilter == HistoryFilter.SERVICE) {
             items.addAll(services.map { HistoryItem.Service(it) })
@@ -61,8 +67,7 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
         if (currentFilter == HistoryFilter.ALL || currentFilter == HistoryFilter.FUEL) {
             items.addAll(fuels.map { HistoryItem.Fuel(it) })
         }
-        items.sortByDescending { it.date }
-        items
+        items.filter { it.matchesQuery(query) }.sortedByDescending { it.date }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -83,6 +88,10 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
 
     fun setFilter(filter: HistoryFilter) {
         _filter.value = filter
+    }
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
     }
 
     fun deleteServiceRecord(record: ServiceRecord) {
@@ -159,6 +168,7 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
                 val services = serviceRecordDao.getServiceRecordsForVehicle(vehicleId).first()
                 val fuels = fuelLogDao.getFuelLogsForVehicle(vehicleId).first()
                 val prefCurrency = preferredCurrency.value
+                val rates = exchangeRates.value
                 
                 val file = withContext(Dispatchers.IO) {
                     try {
@@ -172,7 +182,8 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
                             includeMechanic = includeMechanic,
                             includeFuel = includeFuel,
                             includeSummary = includeSummary,
-                            preferredCurrency = prefCurrency
+                            preferredCurrency = prefCurrency,
+                            exchangeRates = rates
                         )
                     } catch (e: Exception) {
                         null
@@ -188,4 +199,21 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
 
 enum class HistoryFilter {
     ALL, SERVICE, FUEL
+}
+
+/**
+ * True when every word of [query] appears (case-insensitively) in at least one searchable field.
+ * A blank query matches everything.
+ */
+internal fun HistoryItem.matchesQuery(query: String): Boolean {
+    val words = query.trim().lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
+    if (words.isEmpty()) return true
+    val fields = when (this) {
+        is HistoryItem.Service -> listOfNotNull(
+            record.serviceType, record.otherDescription, record.serviceLocation,
+            record.mechanicName, record.partsUsed, record.notes
+        )
+        is HistoryItem.Fuel -> listOfNotNull(log.location)
+    }.map { it.lowercase() }
+    return words.all { word -> fields.any { it.contains(word) } }
 }

@@ -326,4 +326,18 @@
     <string name="backup_err_corrupt">El archivo de copia seleccionado está dañado.</string>
     <string name="backup_err_unknown">Error desconocido</string>
     <string name="import_success_skipped">Se importaron %1$d registros. %2$d omitidos (duplicados o filas no válidas).</string>
+    <string name="costs_excluded_note">%1$d registros en otras monedas no están incluidos. Define los tipos de cambio en Ajustes.</string>
+    <string name="exchange_rates_title">Tipos de cambio</string>
+    <string name="exchange_rates_desc">Introduce tus propios tipos para que los costes en otras monedas cuenten en los totales. No se descarga nada.</string>
+    <string name="exchange_rate_field">1 %1$s en %2$s</string>
+    <string name="history_search_hint">Buscar en el historial</string>
+    <string name="history_clear_search">Borrar búsqueda</string>
+    <string name="history_no_results">Nada coincide con tu búsqueda</string>
+    <string name="odometer_warn_title">Revisa la lectura del odómetro</string>
+    <string name="odometer_warn_lower">Es menor que una entrada anterior (%1$d %2$s). Los odómetros solo suben: ¿es un error?</string>
+    <string name="odometer_warn_higher">Es mayor que una entrada posterior (%1$d %2$s). ¿Es un error?</string>
+    <string name="odometer_warn_jump">Son %1$d %2$s más que la entrada anterior (%3$d %2$s). ¿Es un error?</string>
+    <string name="save_anyway">Guardar de todos modos</string>
+    <string name="edit_reading">Editar lectura</string>
+    <string name="close_matching_reminders">Marcar como hechos los recordatorios coincidentes: %1$s</string>
 </resources>

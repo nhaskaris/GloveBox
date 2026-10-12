@@ -192,7 +192,8 @@ class DocumentFormViewModel(application: Application) : AndroidViewModel(applica
                     getApplication(),
                     id,
                     document.name,
-                    expiry
+                    expiry,
+                    document.vehicleId
                 )
             }
             

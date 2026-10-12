@@ -364,4 +364,18 @@
     <string name="backup_err_corrupt">Το επιλεγμένο αρχείο είναι κατεστραμμένο.</string>
     <string name="backup_err_unknown">Άγνωστο σφάλμα</string>
     <string name="import_success_skipped">Εισήχθησαν %1$d εγγραφές. %2$d παραλείφθηκαν (διπλότυπα ή μη έγκυρες γραμμές).</string>
+    <string name="costs_excluded_note">%1$d εγγραφές σε άλλα νομίσματα δεν περιλαμβάνονται. Όρισε ισοτιμίες στις Ρυθμίσεις.</string>
+    <string name="exchange_rates_title">Ισοτιμίες</string>
+    <string name="exchange_rates_desc">Δώσε τις δικές σου ισοτιμίες ώστε τα κόστη σε άλλα νομίσματα να υπολογίζονται στα σύνολα. Δεν γίνεται λήψη δεδομένων.</string>
+    <string name="exchange_rate_field">1 %1$s σε %2$s</string>
+    <string name="history_search_hint">Αναζήτηση ιστορικού</string>
+    <string name="history_clear_search">Εκκαθάριση αναζήτησης</string>
+    <string name="history_no_results">Δεν βρέθηκαν αποτελέσματα</string>
+    <string name="odometer_warn_title">Έλεγξε την ένδειξη οδομέτρου</string>
+    <string name="odometer_warn_lower">Είναι μικρότερη από προηγούμενη καταχώριση (%1$d %2$s). Τα οδόμετρα αυξάνονται μόνο – μήπως είναι λάθος;</string>
+    <string name="odometer_warn_higher">Είναι μεγαλύτερη από μεταγενέστερη καταχώριση (%1$d %2$s). Μήπως είναι λάθος;</string>
+    <string name="odometer_warn_jump">Είναι %1$d %2$s περισσότερα από την προηγούμενη καταχώριση (%3$d %2$s). Μήπως είναι λάθος;</string>
+    <string name="save_anyway">Αποθήκευση ούτως ή άλλως</string>
+    <string name="edit_reading">Επεξεργασία ένδειξης</string>
+    <string name="close_matching_reminders">Σήμανση σχετικών υπενθυμίσεων ως ολοκληρωμένων: %1$s</string>
 </resources>

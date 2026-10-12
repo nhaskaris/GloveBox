@@ -326,4 +326,18 @@
     <string name="backup_err_corrupt">Die ausgewählte Backup-Datei ist beschädigt.</string>
     <string name="backup_err_unknown">Unbekannter Fehler</string>
     <string name="import_success_skipped">%1$d Einträge importiert. %2$d übersprungen (Duplikate oder ungültige Zeilen).</string>
+    <string name="costs_excluded_note">%1$d Einträge in anderen Währungen sind nicht enthalten. Lege Wechselkurse in den Einstellungen fest.</string>
+    <string name="exchange_rates_title">Wechselkurse</string>
+    <string name="exchange_rates_desc">Gib eigene Kurse ein, damit Kosten in anderen Währungen in die Summen einfließen. Es wird nichts heruntergeladen.</string>
+    <string name="exchange_rate_field">1 %1$s in %2$s</string>
+    <string name="history_search_hint">Verlauf durchsuchen</string>
+    <string name="history_clear_search">Suche löschen</string>
+    <string name="history_no_results">Keine Treffer für deine Suche</string>
+    <string name="odometer_warn_title">Kilometerstand prüfen</string>
+    <string name="odometer_warn_lower">Das ist weniger als ein früherer Eintrag (%1$d %2$s). Kilometerstände steigen nur – ein Tippfehler?</string>
+    <string name="odometer_warn_higher">Das ist mehr als ein späterer Eintrag (%1$d %2$s). Ein Tippfehler?</string>
+    <string name="odometer_warn_jump">Das sind %1$d %2$s mehr als beim vorigen Eintrag (%3$d %2$s). Ein Tippfehler?</string>
+    <string name="save_anyway">Trotzdem speichern</string>
+    <string name="edit_reading">Wert ändern</string>
+    <string name="close_matching_reminders">Passende Erinnerungen als erledigt markieren: %1$s</string>
 </resources>

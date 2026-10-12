@@ -326,4 +326,18 @@
     <string name="backup_err_corrupt">Il file di backup selezionato è danneggiato.</string>
     <string name="backup_err_unknown">Errore sconosciuto</string>
     <string name="import_success_skipped">Importati %1$d record. %2$d saltati (duplicati o righe non valide).</string>
+    <string name="costs_excluded_note">%1$d record in altre valute non sono inclusi. Imposta i tassi di cambio nelle Impostazioni.</string>
+    <string name="exchange_rates_title">Tassi di cambio</string>
+    <string name="exchange_rates_desc">Inserisci i tuoi tassi così i costi in altre valute rientrano nei totali. Non viene scaricato nulla.</string>
+    <string name="exchange_rate_field">1 %1$s in %2$s</string>
+    <string name="history_search_hint">Cerca nella cronologia</string>
+    <string name="history_clear_search">Cancella ricerca</string>
+    <string name="history_no_results">Nessun risultato per la ricerca</string>
+    <string name="odometer_warn_title">Controlla la lettura del contachilometri</string>
+    <string name="odometer_warn_lower">È inferiore a una voce precedente (%1$d %2$s). I contachilometri possono solo aumentare: è un errore di battitura?</string>
+    <string name="odometer_warn_higher">È superiore a una voce successiva (%1$d %2$s). È un errore di battitura?</string>
+    <string name="odometer_warn_jump">Sono %1$d %2$s in più rispetto alla voce precedente (%3$d %2$s). È un errore di battitura?</string>
+    <string name="save_anyway">Salva comunque</string>
+    <string name="edit_reading">Modifica lettura</string>
+    <string name="close_matching_reminders">Segna come completati i promemoria corrispondenti: %1$s</string>
 </resources>

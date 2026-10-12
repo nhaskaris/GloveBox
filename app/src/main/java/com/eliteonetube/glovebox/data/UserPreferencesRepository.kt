@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.eliteonetube.glovebox.util.ExchangeRates
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -26,6 +27,7 @@ class UserPreferencesRepository(private val context: Context) {
         val USER_COUNTRY = stringPreferencesKey("user_country")
         val PREFERRED_CURRENCY = stringPreferencesKey("preferred_currency")
         val LAST_BACKUP_TIME = longPreferencesKey("last_backup_time")
+        val EXCHANGE_RATES = stringPreferencesKey("exchange_rates")
     }
 
     val activeVehicleId: Flow<Long?> = dataStore.data
@@ -69,6 +71,10 @@ class UserPreferencesRepository(private val context: Context) {
             preferences[PreferencesKeys.PREFERRED_CURRENCY] ?: "USD"
         }
 
+
+    /** User-entered exchange rates, always expressed against the preferred currency. */
+    val exchangeRates: Flow<ExchangeRates> = dataStore.data
+        .map { preferences -> readRates(preferences) }
 
     val lastBackupTime: Flow<Long?> = dataStore.data
         .map { preferences ->
@@ -127,6 +133,18 @@ class UserPreferencesRepository(private val context: Context) {
         }
     }
 
+
+    /** Sets (or, with a null/invalid [rate], clears) how many preferred-currency units 1 [code] is worth. */
+    suspend fun setExchangeRate(code: String, rate: Double?) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.EXCHANGE_RATES] = readRates(preferences).with(code, rate).serialize()
+        }
+    }
+
+    private fun readRates(preferences: Preferences): ExchangeRates {
+        val preferred = preferences[PreferencesKeys.PREFERRED_CURRENCY] ?: "USD"
+        return ExchangeRates.parse(preferences[PreferencesKeys.EXCHANGE_RATES], preferred).rebased(preferred)
+    }
 
     suspend fun setLastBackupTime(timestamp: Long) {
         dataStore.edit { preferences ->

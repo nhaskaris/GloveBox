@@ -20,6 +20,11 @@ object NotificationHelper {
     const val TYPE_DOCUMENT = "document"
     const val TYPE_PREDICTIVE = "predictive"
 
+    // Used to open the relevant screen when a notification is tapped.
+    const val ACTION_OPEN_FROM_NOTIFICATION = "com.eliteonetube.glovebox.ACTION_OPEN_FROM_NOTIFICATION"
+    const val EXTRA_TYPE = "type"
+    const val EXTRA_VEHICLE_ID = "vehicleId"
+
     fun createNotificationChannel(context: Context) {
         val channel = NotificationChannel(
             CHANNEL_ID,
@@ -41,7 +46,8 @@ object NotificationHelper {
         title: String,
         message: String,
         timeMillis: Long,
-        type: String = TYPE_MAINTENANCE
+        type: String = TYPE_MAINTENANCE,
+        vehicleId: Long? = null
     ) {
         // Don't schedule if time is in the past
         if (timeMillis <= System.currentTimeMillis()) return
@@ -50,7 +56,8 @@ object NotificationHelper {
             putExtra("id", id.toInt())
             putExtra("title", title)
             putExtra("message", message)
-            putExtra("type", type)
+            putExtra(EXTRA_TYPE, type)
+            putExtra(EXTRA_VEHICLE_ID, vehicleId ?: -1L)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -83,7 +90,7 @@ object NotificationHelper {
     /**
      * Schedules a sequence of alerts for a document (e.g., 30 days, 7 days, and day of).
      */
-    fun scheduleDocumentExpiries(context: Context, docId: Long, docName: String, expiryDate: Long) {
+    fun scheduleDocumentExpiries(context: Context, docId: Long, docName: String, expiryDate: Long, vehicleId: Long? = null) {
         val thirtyDays = 30L * 24 * 60 * 60 * 1000
         val sevenDays = 7L * 24 * 60 * 60 * 1000
 
@@ -92,21 +99,24 @@ object NotificationHelper {
             context.getString(R.string.notif_doc_expiry_title),
             context.getString(R.string.notif_doc_30d, docName),
             expiryDate - thirtyDays,
-            TYPE_DOCUMENT
+            TYPE_DOCUMENT,
+            vehicleId
         )
         scheduleNotification(
             context, docId + DOC_7D_OFFSET,
             context.getString(R.string.notif_doc_expiry_title),
             context.getString(R.string.notif_doc_7d, docName),
             expiryDate - sevenDays,
-            TYPE_DOCUMENT
+            TYPE_DOCUMENT,
+            vehicleId
         )
         scheduleNotification(
             context, docId + DOC_DAY_OFFSET,
             context.getString(R.string.notif_doc_expired_title),
             context.getString(R.string.notif_doc_today, docName),
             expiryDate,
-            TYPE_DOCUMENT
+            TYPE_DOCUMENT,
+            vehicleId
         )
     }
 
@@ -126,7 +136,9 @@ object NotificationHelper {
                     reminder.id,
                     context.getString(R.string.notif_maintenance_due_title),
                     reminder.description,
-                    reminder.targetDate!!
+                    reminder.targetDate!!,
+                    TYPE_MAINTENANCE,
+                    reminder.vehicleId
                 )
             }
 
@@ -134,7 +146,7 @@ object NotificationHelper {
         val documents = db.vehicleDocumentDao().getUniversalDocuments().first() +
             vehicles.flatMap { db.vehicleDocumentDao().getDocumentsForVehicle(it.id).first() }
         documents.forEach { doc ->
-            doc.expiryDate?.let { scheduleDocumentExpiries(context, doc.id, doc.name, it) }
+            doc.expiryDate?.let { scheduleDocumentExpiries(context, doc.id, doc.name, it, doc.vehicleId) }
         }
 
         vehicles.forEach { MaintenancePredictor.schedulePredictiveAlerts(context, it.id) }

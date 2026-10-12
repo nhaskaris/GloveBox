@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eliteonetube.glovebox.data.GloveboxDatabase
 import com.eliteonetube.glovebox.data.entity.FuelLog
+import com.eliteonetube.glovebox.util.OdometerCheck
+import com.eliteonetube.glovebox.util.OdometerGuard
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,7 +57,12 @@ class FuelLogFormViewModel(application: Application) : AndroidViewModel(applicat
     fun onCurrencyChange(value: String) { _uiState.value = _uiState.value.copy(currency = value) }
     fun onLocationChange(value: String) { _uiState.value = _uiState.value.copy(location = value) }
 
-    fun saveLog(vehicleId: Long, onResult: () -> Unit) {
+    fun dismissOdometerWarning() {
+        _uiState.value = _uiState.value.copy(odometerWarning = null)
+    }
+
+    /** Saves the log; unless [force] is set, an odometer reading that looks wrong is flagged first. */
+    fun saveLog(vehicleId: Long, onResult: () -> Unit, force: Boolean = false) {
         val state = _uiState.value
         val log = FuelLog(
             id = state.logId,
@@ -68,6 +75,14 @@ class FuelLogFormViewModel(application: Application) : AndroidViewModel(applicat
             location = state.location.takeIf { it.isNotBlank() }
         )
         viewModelScope.launch {
+            if (!force) {
+                val check = OdometerGuard.check(getApplication(), vehicleId, log.odometer, log.date, excludeFuelLogId = log.id)
+                if (check != OdometerCheck.Ok) {
+                    _uiState.value = _uiState.value.copy(odometerWarning = check)
+                    return@launch
+                }
+            }
+            _uiState.value = _uiState.value.copy(odometerWarning = null)
             if (log.id == 0L) fuelLogDao.insertFuelLog(log)
             else fuelLogDao.updateFuelLog(log)
             
@@ -92,5 +107,6 @@ data class FuelLogFormState(
     val totalCost: String = "",
     val currency: String = "USD",
     val location: String = "",
-    val unit: String = "km"
+    val unit: String = "km",
+    val odometerWarning: OdometerCheck? = null
 )

@@ -6,6 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.eliteonetube.glovebox.data.GloveboxDatabase
 import com.eliteonetube.glovebox.data.entity.Reminder
 import com.eliteonetube.glovebox.data.entity.ServiceRecord
+import com.eliteonetube.glovebox.util.NotificationHelper
+import com.eliteonetube.glovebox.util.OdometerCheck
+import com.eliteonetube.glovebox.util.ReminderMatcher
+import com.eliteonetube.glovebox.util.OdometerGuard
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +24,15 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
     private val vehicleDao = db.vehicleDao()
     private val reminderDao = db.reminderDao()
     private val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
+
+    /** Open reminders of the vehicle being edited, used to offer closing the ones a service fulfils. */
+    private var openReminders: List<Reminder> = emptyList()
+
+    private fun ServiceLogFormState.withMatchingReminders() = copy(
+        matchingReminders = openReminders
+            .filter { r -> serviceTypes.any { ReminderMatcher.matches(r.description, it) } }
+            .map { it.description }
+    )
 
     private val _uiState = MutableStateFlow<ServiceLogFormState>(ServiceLogFormState())
     val uiState: StateFlow<ServiceLogFormState> = _uiState.asStateFlow()
@@ -51,11 +64,12 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
                     )
                 }
             } else {
+                openReminders = reminderDao.getRemindersForVehicle(vehicleId).first().filter { !it.isCompleted }
                 _uiState.value = _uiState.value.copy(
                     unit = unit,
                     currency = preferredCurrency,
                     serviceTypes = if (prefilledType != null) listOf(prefilledType) else emptyList()
-                )
+                ).withMatchingReminders()
                 
                 // Trigger scanning if scanUri is provided
                 scanUri?.let { uriStr ->
@@ -81,7 +95,7 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
                     cost = first.totalCost?.toString() ?: "",
                     mileage = first.mileage?.toString() ?: "",
                     serviceTypes = if (first.detectedServiceType != null) listOf(first.detectedServiceType) else emptyList()
-                )
+                ).withMatchingReminders()
             } else {
                 _uiState.value = _uiState.value.copy(
                     isScanning = false,
@@ -108,7 +122,7 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
                 notes = "",
                 laborHours = "",
                 partsUsed = ""
-            )
+            ).withMatchingReminders()
         } else {
             // No more scans
             _uiState.value = _uiState.value.copy(pendingScans = emptyList(), totalScans = 0)
@@ -206,7 +220,11 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
             isSchedulingNext = autoSchedule,
             nextIntervalMileage = intervalMileage,
             nextIntervalMonths = intervalMonths
-        )
+        ).withMatchingReminders()
+    }
+
+    fun onCloseMatchingRemindersToggle(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(closeMatchingReminders = enabled)
     }
 
     fun onCostChange(cost: String) {
@@ -257,7 +275,58 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
         _uiState.value = _uiState.value.copy(nextIntervalMonths = value)
     }
 
-    fun saveRecord(vehicleId: Long, onResult: () -> Unit) {
+    /**
+     * Closes open reminders that this service fulfils. One-off reminders are marked done; recurring
+     * ones are renewed from their own interval. Recurring reminders for the first service type are
+     * left to the "schedule next" logic in [saveRecord], which uses the intervals the user entered.
+     */
+    private suspend fun completeMatchingReminders(vehicleId: Long, state: ServiceLogFormState, record: ServiceRecord) {
+        val app = getApplication<android.app.Application>()
+        val matches = reminderDao.getRemindersForVehicle(vehicleId).first()
+            .filter { !it.isCompleted && state.serviceTypes.any { type -> ReminderMatcher.matches(it.description, type) } }
+
+        for (reminder in matches) {
+            val handledBySchedulingNext = reminder.isRecurring && state.isSchedulingNext &&
+                state.serviceTypes.firstOrNull()?.let { ReminderMatcher.matches(reminder.description, it) } == true
+            if (handledBySchedulingNext) continue
+
+            val nextMileage = reminder.intervalMileage?.takeIf { record.mileage > 0 }?.let { record.mileage + it }
+            val nextDate = reminder.intervalMonths?.let { months ->
+                Calendar.getInstance().apply { timeInMillis = record.date; add(Calendar.MONTH, months) }.timeInMillis
+            }
+            val renews = reminder.isRecurring && (nextMileage != null || nextDate != null)
+
+            reminderDao.updateReminder(
+                reminder.copy(
+                    isCompleted = !renews,
+                    targetMileage = if (renews) nextMileage else reminder.targetMileage,
+                    targetDate = if (renews) nextDate else reminder.targetDate,
+                    lastCompletedMileage = record.mileage.takeIf { it > 0 } ?: reminder.lastCompletedMileage,
+                    lastCompletedDate = record.date
+                )
+            )
+
+            NotificationHelper.cancelNotification(app, reminder.id)
+            NotificationHelper.cancelNotification(app, NotificationHelper.predictiveReminderId(reminder.id))
+            if (renews && nextDate != null) {
+                NotificationHelper.scheduleNotification(
+                    app,
+                    reminder.id,
+                    app.getString(com.eliteonetube.glovebox.R.string.notif_maintenance_due_title),
+                    reminder.description,
+                    nextDate,
+                    vehicleId = reminder.vehicleId
+                )
+            }
+        }
+    }
+
+    fun dismissOdometerWarning() {
+        _uiState.value = _uiState.value.copy(odometerWarning = null)
+    }
+
+    /** Saves the record; unless [force] is set, an odometer reading that looks wrong is flagged first. */
+    fun saveRecord(vehicleId: Long, onResult: () -> Unit, force: Boolean = false) {
         val state = _uiState.value
         val record = ServiceRecord(
             id = state.recordId,
@@ -278,9 +347,20 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
         )
 
         viewModelScope.launch {
+            if (!force) {
+                val check = OdometerGuard.check(getApplication(), vehicleId, record.mileage, record.date, excludeServiceRecordId = record.id)
+                if (check != OdometerCheck.Ok) {
+                    _uiState.value = _uiState.value.copy(odometerWarning = check)
+                    return@launch
+                }
+            }
+            _uiState.value = _uiState.value.copy(odometerWarning = null)
+
             if (record.id == 0L) {
                 serviceRecordDao.insertServiceRecord(record)
-                
+
+                if (state.closeMatchingReminders) completeMatchingReminders(vehicleId, state, record)
+
                 // Smart Auto-Reschedule logic
                 if (state.isSchedulingNext && state.serviceTypes.isNotEmpty()) {
                     val serviceName = state.serviceTypes.first()
@@ -372,5 +452,9 @@ data class ServiceLogFormState(
     val isScanning: Boolean = false,
     val pendingScans: List<com.eliteonetube.glovebox.util.ScannedInvoice> = emptyList(),
     val currentScanIndex: Int = 0,
-    val totalScans: Int = 0
+    val totalScans: Int = 0,
+    val odometerWarning: OdometerCheck? = null,
+    /** Descriptions of open reminders that the selected service types would fulfil. */
+    val matchingReminders: List<String> = emptyList(),
+    val closeMatchingReminders: Boolean = true
 )

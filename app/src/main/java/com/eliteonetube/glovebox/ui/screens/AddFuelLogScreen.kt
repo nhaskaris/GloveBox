@@ -37,6 +37,15 @@ fun AddFuelLogScreen(
         viewModel.loadData(vehicleId, logId)
     }
 
+    uiState.odometerWarning?.let { warning ->
+        OdometerWarningDialog(
+            check = warning,
+            unit = uiState.unit,
+            onSaveAnyway = { viewModel.saveLog(vehicleId, onNavigateBack, force = true) },
+            onDismiss = viewModel::dismissOdometerWarning
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

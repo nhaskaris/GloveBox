@@ -326,4 +326,18 @@
     <string name="backup_err_corrupt">Le fichier de sauvegarde sélectionné est corrompu.</string>
     <string name="backup_err_unknown">Erreur inconnue</string>
     <string name="import_success_skipped">%1$d enregistrements importés. %2$d ignorés (doublons ou lignes invalides).</string>
+    <string name="costs_excluded_note">%1$d enregistrements dans d\'autres devises ne sont pas inclus. Définissez les taux de change dans les Paramètres.</string>
+    <string name="exchange_rates_title">Taux de change</string>
+    <string name="exchange_rates_desc">Saisissez vos propres taux pour que les coûts dans d\'autres devises soient comptés dans les totaux. Rien n\'est téléchargé.</string>
+    <string name="exchange_rate_field">1 %1$s en %2$s</string>
+    <string name="history_search_hint">Rechercher dans l\'historique</string>
+    <string name="history_clear_search">Effacer la recherche</string>
+    <string name="history_no_results">Aucun résultat pour votre recherche</string>
+    <string name="odometer_warn_title">Vérifiez le relevé du compteur</string>
+    <string name="odometer_warn_lower">C\'est inférieur à une entrée précédente (%1$d %2$s). Un compteur ne fait qu\'augmenter : est-ce une faute de frappe ?</string>
+    <string name="odometer_warn_higher">C\'est supérieur à une entrée ultérieure (%1$d %2$s). Est-ce une faute de frappe ?</string>
+    <string name="odometer_warn_jump">C\'est %1$d %2$s de plus que l\'entrée précédente (%3$d %2$s). Est-ce une faute de frappe ?</string>
+    <string name="save_anyway">Enregistrer quand même</string>
+    <string name="edit_reading">Modifier le relevé</string>
+    <string name="close_matching_reminders">Marquer les rappels correspondants comme terminés : %1$s</string>
 </resources>

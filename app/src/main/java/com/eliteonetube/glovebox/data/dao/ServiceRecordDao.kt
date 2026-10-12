@@ -12,6 +12,9 @@ interface ServiceRecordDao {
     @Query("SELECT * FROM service_records WHERE vehicleId = :vehicleId ORDER BY date DESC")
     fun getServiceRecordsForVehicle(vehicleId: Long): Flow<List<ServiceRecord>>
 
+    @Query("SELECT DISTINCT currency FROM service_records")
+    fun getDistinctCurrencies(): Flow<List<String>>
+
     @Query("SELECT * FROM service_records WHERE id = :id")
     suspend fun getServiceRecordById(id: Long): ServiceRecord?
 

@@ -8,6 +8,9 @@ import com.eliteonetube.glovebox.data.entity.FuelLog
 import com.eliteonetube.glovebox.data.entity.Reminder
 import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import com.eliteonetube.glovebox.data.entity.Vehicle
+import com.eliteonetube.glovebox.util.ExchangeRates
+import com.eliteonetube.glovebox.util.FuelEfficiency
+import com.eliteonetube.glovebox.util.sum
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -34,6 +37,8 @@ data class InsightsState(
     val monthlySpending: List<MonthlySpending> = emptyList(),
     val predictions: List<MaintenancePrediction> = emptyList(),
     val totalCost: Double = 0.0,
+    /** Records whose currency couldn't be converted (no exchange rate entered) and are left out of the totals. */
+    val unconvertedCount: Int = 0,
     val averageEfficiency: Double = 0.0,
     val odometerUnit: String = "km",
     val preferredCurrency: String = "USD"
@@ -59,19 +64,30 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
         else flow { emit(vehicleDao.getVehicleById(id)) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    private class VehicleData(
+        val fuels: List<FuelLog>,
+        val services: List<ServiceRecord>,
+        val reminders: List<Reminder>,
+        val vehicle: Vehicle?
+    )
+
     val uiState: StateFlow<InsightsState> = combine(
         _selectedVehicleId,
-        userPrefs.preferredCurrency
-    ) { id, preferredCurrency ->
-        id to preferredCurrency
-    }.flatMapLatest { (id, preferredCurrency) ->
+        userPrefs.preferredCurrency,
+        userPrefs.exchangeRates
+    ) { id, preferredCurrency, rates ->
+        Triple(id, preferredCurrency, rates)
+    }.flatMapLatest { (id, preferredCurrency, rates) ->
         val fuelsFlow = if (id == 0L) fuelLogDao.getAllFuelLogs() else fuelLogDao.getFuelLogsForVehicle(id)
         val servicesFlow = if (id == 0L) serviceRecordDao.getAllServiceRecords() else serviceRecordDao.getServiceRecordsForVehicle(id)
         val remindersFlow = if (id == 0L) reminderDao.getAllReminders() else reminderDao.getRemindersForVehicle(id)
         val vehicleFlow: Flow<Vehicle?> = if (id == 0L) flowOf(null) else flow { emit(vehicleDao.getVehicleById(id)) }
 
-        combine(fuelsFlow, servicesFlow, remindersFlow, vehicleFlow) { fuels, services, reminders, vehicle ->
-            calculateInsights(fuels, services, reminders, vehicle, preferredCurrency)
+        val dataFlow = combine(fuelsFlow, servicesFlow, remindersFlow, vehicleFlow) { fuels, services, reminders, vehicle ->
+            VehicleData(fuels, services, reminders, vehicle)
+        }
+        combine(dataFlow, vehicleDao.getAllVehicles()) { data, allVehicles ->
+            calculateInsights(data.fuels, data.services, data.reminders, data.vehicle, allVehicles, preferredCurrency, rates)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InsightsState())
 
@@ -84,57 +100,49 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
         services: List<ServiceRecord>,
         reminders: List<Reminder>,
         vehicle: Vehicle?,
-        preferredCurrency: String
+        allVehicles: List<Vehicle>,
+        preferredCurrency: String,
+        rates: ExchangeRates
     ): InsightsState {
         if (fuels.isEmpty() && services.isEmpty()) return InsightsState(preferredCurrency = preferredCurrency)
 
-        val unit = vehicle?.odometerUnit ?: "km"
-        val converter = com.eliteonetube.glovebox.util.CurrencyUtility
+        // For "all vehicles", show the unit most vehicles use and leave out the others.
+        val unitById = allVehicles.associate { it.id to it.odometerUnit }
+        val unit = vehicle?.odometerUnit
+            ?: allVehicles.groupingBy { it.odometerUnit }.eachCount().maxByOrNull { it.value }?.key
+            ?: "km"
 
-        // 1. Efficiency History (L/100km or MPG)
-        val efficiencyPoints = mutableListOf<EfficiencyPoint>()
-        val fuelsByVehicle = fuels.groupBy { it.vehicleId }
-        
-        fuelsByVehicle.forEach { (vId, vehicleFuels) ->
-            val vUnit = if (vId == vehicle?.id) vehicle.odometerUnit else "km"
-            
-            val sortedFuels = vehicleFuels.sortedBy { it.date }
-            for (i in 0 until sortedFuels.size - 1) {
-                val current = sortedFuels[i]
-                val next = sortedFuels[i + 1]
-                val distance = next.odometer - current.odometer
-                if (distance > 0) {
-                    val efficiency = if (vUnit == "mi") {
-                        distance.toDouble() / next.amount
-                    } else {
-                        (next.amount / distance) * 100
-                    }
-                    efficiencyPoints.add(EfficiencyPoint(next.date, efficiency))
-                }
-            }
-        }
-        efficiencyPoints.sortBy { it.date }
+        // 1. Efficiency (L/100km or MPG), per vehicle so odometers never mix
+        val fuelsInUnit = fuels.groupBy { it.vehicleId }.filter { (vId, _) -> (unitById[vId] ?: unit) == unit }
+        val efficiencyPoints = fuelsInUnit.values
+            .flatMap { FuelEfficiency.points(it, unit) }
+            .sortedBy { it.date }
+            .map { EfficiencyPoint(it.date, it.value) }
+        val averageEfficiency = fuelsInUnit.values.mapNotNull { FuelEfficiency.average(it, unit) }
+            .takeIf { it.isNotEmpty() }?.average() ?: 0.0
 
-        // 2. Spending by Category (Converted to Preferred Currency)
-        val fuelTotal = fuels.sumOf { converter.convert(it.totalCost, it.currency, preferredCurrency) }
-        val serviceTotal = services.sumOf { converter.convert(it.cost ?: 0.0, it.currency, preferredCurrency) }
-        
+        // 2. Spending by Category (converted with the user's own exchange rates)
+        val fuelSum = rates.sum(fuels.map { it.totalCost to it.currency }, preferredCurrency)
+        val serviceSum = rates.sum(services.mapNotNull { r -> r.cost?.let { it to r.currency } }, preferredCurrency)
+        val fuelTotal = fuelSum.total
+        val serviceTotal = serviceSum.total
+
         val categorySpending = listOf(
             CategorySpending("Fuel", fuelTotal),
             CategorySpending("Service", serviceTotal)
         ).filter { it.amount > 0 }
 
-        // 3. Monthly Spending (Converted to Preferred Currency)
-        val allCosts = mutableListOf<Pair<Long, Double>>()
-        fuels.forEach { allCosts.add(it.date to converter.convert(it.totalCost, it.currency, preferredCurrency)) }
-        services.forEach { allCosts.add(it.date to converter.convert(it.cost ?: 0.0, it.currency, preferredCurrency)) }
+        // 3. Monthly Spending
+        val allCosts = fuels.map { it.date to (it.totalCost to it.currency) } +
+            services.mapNotNull { r -> r.cost?.let { r.date to (it to r.currency) } }
 
         val monthlyMap = mutableMapOf<YearMonth, Double>()
         allCosts.forEach { (date, cost) ->
+            val converted = rates.convert(cost.first, cost.second, preferredCurrency) ?: return@forEach
             val month = YearMonth.from(Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()))
-            monthlyMap[month] = monthlyMap.getOrDefault(month, 0.0) + cost
+            monthlyMap[month] = monthlyMap.getOrDefault(month, 0.0) + converted
         }
-        
+
         val monthlySpending = monthlyMap.entries
             .sortedBy { it.key }
             .takeLast(6)
@@ -226,7 +234,8 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
             monthlySpending = monthlySpending,
             predictions = predictions,
             totalCost = fuelTotal + serviceTotal,
-            averageEfficiency = if (efficiencyPoints.isNotEmpty()) efficiencyPoints.map { it.value }.average() else 0.0,
+            unconvertedCount = fuelSum.unconverted + serviceSum.unconverted,
+            averageEfficiency = averageEfficiency,
             odometerUnit = unit,
             preferredCurrency = preferredCurrency
         )

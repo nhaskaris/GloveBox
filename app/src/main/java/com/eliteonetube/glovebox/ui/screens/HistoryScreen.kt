@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import com.eliteonetube.glovebox.util.ExchangeRates
+import com.eliteonetube.glovebox.util.sum
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -111,6 +113,8 @@ fun HistoryScreen(
     val items by viewModel.historyItems.collectAsStateWithLifecycle()
     val vehicle by viewModel.vehicle.collectAsStateWithLifecycle()
     val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val exchangeRates by viewModel.exchangeRates.collectAsStateWithLifecycle()
     val preferredCurrency by viewModel.preferredCurrency.collectAsStateWithLifecycle()
     val csvStatus by viewModel.csvOperationStatus.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -159,7 +163,10 @@ fun HistoryScreen(
         onDeleteService = { viewModel.deleteServiceRecord(it) },
         onDeleteFuel = { viewModel.deleteFuelLog(it) },
         onOpenDrawer = onOpenDrawer,
-        preferredCurrency = preferredCurrency
+        preferredCurrency = preferredCurrency,
+        exchangeRates = exchangeRates,
+        searchQuery = searchQuery,
+        onSearchChange = viewModel::setSearchQuery
     )
 
     if (showExportDialog) {
@@ -261,7 +268,10 @@ fun HistoryContent(
     onExportCsv: () -> Unit,
     onImportFile: () -> Unit,
     onOpenDrawer: (() -> Unit)? = null,
-    preferredCurrency: String = "USD"
+    preferredCurrency: String = "USD",
+    exchangeRates: ExchangeRates = ExchangeRates("USD"),
+    searchQuery: String = "",
+    onSearchChange: (String) -> Unit = {}
 ) {
     val mileageUnit = vehicle?.odometerUnit ?: "km"
     var recordPendingDelete by rememberSaveable { mutableStateOf<HistoryItem?>(null) }
@@ -359,6 +369,23 @@ fun HistoryContent(
         }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchChange,
+                placeholder = { Text(stringResource(R.string.history_search_hint)) },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { onSearchChange("") }) {
+                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.history_clear_search))
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp)
+            )
+
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
@@ -380,7 +407,18 @@ fun HistoryContent(
                 }
             }
 
-            if (items.isEmpty()) {
+            if (items.isEmpty() && searchQuery.isNotBlank()) {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        stringResource(R.string.history_no_results),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else if (items.isEmpty()) {
                 Box(
                     modifier = Modifier.weight(1f).fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -427,7 +465,7 @@ fun HistoryContent(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
-                        HistorySummaryCard(items, preferredCurrency)
+                        HistorySummaryCard(items, preferredCurrency, exchangeRates)
                     }
                     items(items, key = { "${it.javaClass.simpleName}_${it.sortId}" }) { item ->
                         when (item) {
@@ -481,13 +519,17 @@ fun HistoryContent(
 }
 
 @Composable
-fun HistorySummaryCard(items: List<HistoryItem>, preferredCurrency: String) {
-    val totalCost = items.sumOf { 
-        when (it) {
-            is HistoryItem.Service -> com.eliteonetube.glovebox.util.CurrencyUtility.convert(it.record.cost ?: 0.0, it.record.currency, preferredCurrency)
-            is HistoryItem.Fuel -> com.eliteonetube.glovebox.util.CurrencyUtility.convert(it.log.totalCost, it.log.currency, preferredCurrency)
-        }
-    }
+fun HistorySummaryCard(items: List<HistoryItem>, preferredCurrency: String, exchangeRates: ExchangeRates = ExchangeRates(preferredCurrency)) {
+    val converted = exchangeRates.sum(
+        items.mapNotNull {
+            when (it) {
+                is HistoryItem.Service -> it.record.cost?.let { cost -> cost to it.record.currency }
+                is HistoryItem.Fuel -> it.log.totalCost to it.log.currency
+            }
+        },
+        preferredCurrency
+    )
+    val totalCost = converted.total
     
     val serviceCount = items.count { it is HistoryItem.Service }
     val fuelCount = items.count { it is HistoryItem.Fuel }
@@ -520,6 +562,13 @@ fun HistorySummaryCard(items: List<HistoryItem>, preferredCurrency: String) {
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                    if (converted.unconverted > 0) {
+                        Text(
+                            text = stringResource(R.string.costs_excluded_note, converted.unconverted),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
                 Surface(
                     color = MaterialTheme.colorScheme.primary,

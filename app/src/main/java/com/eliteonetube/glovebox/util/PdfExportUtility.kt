@@ -30,9 +30,10 @@ object PdfExportUtility {
         includeMechanic: Boolean = true,
         includeFuel: Boolean = true,
         includeSummary: Boolean = true,
-        preferredCurrency: String = "USD"
+        preferredCurrency: String = "USD",
+        exchangeRates: ExchangeRates = ExchangeRates(preferredCurrency)
     ): File {
-        val converter = CurrencyUtility
+        var unconvertedCount = 0
         // ...
         val pdfDocument = PdfDocument()
         val pageWidth = 595
@@ -149,7 +150,7 @@ object PdfExportUtility {
             val dateStr = dateFormat.format(Date(record.date))
             val typeStr = if (record.serviceType == "Other") record.otherDescription ?: "Other" else record.serviceType
             val costVal = record.cost ?: 0.0
-            totalMaintenanceCostConverted += converter.convert(costVal, record.currency, preferredCurrency)
+            exchangeRates.convert(costVal, record.currency, preferredCurrency)?.let { totalMaintenanceCostConverted += it } ?: unconvertedCount++
 
             canvas.drawText(dateStr, mColDate, currentY, bodyPaint)
             canvas.drawText(typeStr.take(25), mColType, currentY, bodyPaint)
@@ -211,7 +212,7 @@ object PdfExportUtility {
                 checkNewPage()
 
                 val dateStr = dateFormat.format(Date(log.date))
-                totalFuelCostConverted += converter.convert(log.totalCost, log.currency, preferredCurrency)
+                exchangeRates.convert(log.totalCost, log.currency, preferredCurrency)?.let { totalFuelCostConverted += it } ?: unconvertedCount++
 
                 canvas.drawText(dateStr, fColDate, currentY, bodyPaint)
                 canvas.drawText("${log.odometer} ${vehicle.odometerUnit}", fColOdo, currentY, bodyPaint)
@@ -240,6 +241,11 @@ object PdfExportUtility {
             checkNewPage()
             canvas.drawText("Summary (All values converted to $preferredCurrency)", margin, currentY, sectionHeaderPaint)
             currentY += 25f
+
+            if (includeCosts && unconvertedCount > 0) {
+                canvas.drawText("Note: $unconvertedCount record(s) in other currencies are not included in these totals.", margin, currentY, bodyPaint)
+                currentY += 20f
+            }
 
             val summaryPaint = Paint().apply {
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -291,9 +297,10 @@ object PdfExportUtility {
         context: Context,
         vehicle: Vehicle,
         records: List<ServiceRecord>,
-        preferredCurrency: String = "USD"
+        preferredCurrency: String = "USD",
+        exchangeRates: ExchangeRates = ExchangeRates(preferredCurrency)
     ): File {
-        val converter = CurrencyUtility
+        var unconvertedCount = 0
         // ...
         val pdfDocument = PdfDocument()
         val pageWidth = 595
@@ -394,7 +401,7 @@ object PdfExportUtility {
             val truncatedLoc = if (locationStr.length > 20) locationStr.take(17) + "..." else locationStr
             canvas.drawText(truncatedLoc, colLocation, currentY, bodyPaint)
 
-            totalCostConverted += converter.convert(record.cost ?: 0.0, record.currency, preferredCurrency)
+            exchangeRates.convert(record.cost ?: 0.0, record.currency, preferredCurrency)?.let { totalCostConverted += it } ?: unconvertedCount++
             currentY += 15f
 
             // Draw notes if present
@@ -422,6 +429,10 @@ object PdfExportUtility {
         canvas.drawText("Total Records: ${records.size}", margin, currentY, headerPaint)
         val totalCostStr = "Total Cost (converted to $preferredCurrency): ${formatCost(totalCostConverted, preferredCurrency)}"
         canvas.drawText(totalCostStr, colCost, currentY, headerPaint)
+        if (unconvertedCount > 0) {
+            currentY += 18f
+            canvas.drawText("$unconvertedCount record(s) in other currencies are not included in the total.", margin, currentY, headerPaint)
+        }
 
         pdfDocument.finishPage(currentPage)
 

@@ -11,7 +11,9 @@ import com.eliteonetube.glovebox.data.GloveboxDatabase
 import com.eliteonetube.glovebox.data.entity.Vehicle
 import com.eliteonetube.glovebox.data.backup.LocalBackupManager
 import com.eliteonetube.glovebox.data.backup.BackupResult
+import com.eliteonetube.glovebox.util.ExchangeRates
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,6 +58,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val preferredCurrency: StateFlow<String> = userPreferencesRepository.preferredCurrency
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "USD")
 
+    val exchangeRates: StateFlow<ExchangeRates> = userPreferencesRepository.exchangeRates
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExchangeRates("USD"))
+
+    /** Currencies that appear on at least one fuel or service record. */
+    val currenciesInUse: StateFlow<List<String>> = combine(
+        GloveboxDatabase.getDatabase(application).fuelLogDao().getDistinctCurrencies(),
+        GloveboxDatabase.getDatabase(application).serviceRecordDao().getDistinctCurrencies()
+    ) { fuel, service -> (fuel + service).distinct().sorted() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val lastBackupTime: StateFlow<Long?> = userPreferencesRepository.lastBackupTime
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -99,6 +111,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setUserCountry(countryCode: String) {
         viewModelScope.launch {
             userPreferencesRepository.setUserCountry(countryCode)
+        }
+    }
+
+    fun setExchangeRate(code: String, rate: Double?) {
+        viewModelScope.launch {
+            userPreferencesRepository.setExchangeRate(code, rate)
         }
     }
 

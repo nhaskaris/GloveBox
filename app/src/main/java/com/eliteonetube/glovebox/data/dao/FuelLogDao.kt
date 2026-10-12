@@ -12,6 +12,9 @@ interface FuelLogDao {
     @Query("SELECT * FROM fuel_logs WHERE vehicleId = :vehicleId ORDER BY date DESC")
     fun getFuelLogsForVehicle(vehicleId: Long): Flow<List<FuelLog>>
 
+    @Query("SELECT DISTINCT currency FROM fuel_logs")
+    fun getDistinctCurrencies(): Flow<List<String>>
+
     @Query("SELECT * FROM fuel_logs WHERE id = :id")
     suspend fun getFuelLogById(id: Long): FuelLog?
 

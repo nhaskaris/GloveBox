@@ -161,6 +161,15 @@ fun AddServiceLogScreen(
         }
     }
 
+    uiState.odometerWarning?.let { warning ->
+        OdometerWarningDialog(
+            check = warning,
+            unit = uiState.unit,
+            onSaveAnyway = { viewModel.saveRecord(vehicleId, onNavigateBack, force = true) },
+            onDismiss = viewModel::dismissOdometerWarning
+        )
+    }
+
     Scaffold(
         topBar = {
             MediumTopAppBar(
@@ -420,6 +429,25 @@ fun AddServiceLogScreen(
                             }
                         }
                     }
+                }
+            }
+
+            // --- Offer to close reminders this service fulfils ---
+            if (uiState.recordId == 0L && uiState.matchingReminders.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.close_matching_reminders, uiState.matchingReminders.joinToString(", ")),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = uiState.closeMatchingReminders,
+                        onCheckedChange = viewModel::onCloseMatchingRemindersToggle
+                    )
                 }
             }
 

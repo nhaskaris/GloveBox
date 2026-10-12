@@ -28,6 +28,8 @@ import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.runtime.*
+import com.eliteonetube.glovebox.data.GloveboxDatabase
+import com.eliteonetube.glovebox.util.NotificationHelper
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -85,15 +87,39 @@ fun GloveboxRoute.getVehicleId(): Long? {
     }
 }
 
+/** Where a tapped notification should take the user. */
+private data class NotificationTarget(val type: String, val vehicleId: Long) {
+    fun toRoute(): GloveboxRoute? = when {
+        vehicleId <= 0L -> null
+        type == NotificationHelper.TYPE_DOCUMENT -> GloveboxRoute.DigitalGlovebox(vehicleId)
+        type == NotificationHelper.TYPE_PREDICTIVE -> GloveboxRoute.Insights(vehicleId)
+        else -> GloveboxRoute.Reminders(vehicleId)
+    }
+}
+
 class MainActivity : AppCompatActivity() {
+    private var pendingTarget by mutableStateOf<NotificationTarget?>(null)
+
+    /** Reads (and consumes) a notification-tap intent so it isn't replayed on recreate. */
+    private fun consumeNotificationIntent(intent: Intent?) {
+        if (intent?.action != NotificationHelper.ACTION_OPEN_FROM_NOTIFICATION) return
+        pendingTarget = NotificationTarget(
+            type = intent.getStringExtra(NotificationHelper.EXTRA_TYPE) ?: NotificationHelper.TYPE_MAINTENANCE,
+            vehicleId = intent.getLongExtra(NotificationHelper.EXTRA_VEHICLE_ID, -1L)
+        )
+        intent.action = null
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent) // Update the intent for the LaunchedEffect
+        consumeNotificationIntent(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         com.eliteonetube.glovebox.util.NotificationHelper.createNotificationChannel(this)
+        consumeNotificationIntent(intent)
         enableEdgeToEdge()
         setContent {
             val viewModel: MainViewModel = viewModel()
@@ -152,6 +178,20 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+            }
+
+            // Open the screen a tapped notification refers to, on top of Home.
+            val onboardingDone by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle()
+            val target = pendingTarget
+            LaunchedEffect(target, onboardingDone) {
+                if (target == null || onboardingDone != true) return@LaunchedEffect
+                val route = target.toRoute()
+                val vehicleExists = route != null &&
+                    GloveboxDatabase.getDatabase(context).vehicleDao().getVehicleById(target.vehicleId) != null
+                if (route != null && vehicleExists && backStack.lastOrNull() != route) {
+                    backStack.add(route)
+                }
+                pendingTarget = null
             }
 
             // CRITICAL: We MUST provide all owners from the Activity to the Localized Context

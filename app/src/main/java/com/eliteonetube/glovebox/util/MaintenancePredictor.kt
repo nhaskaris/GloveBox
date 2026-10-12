@@ -52,7 +52,8 @@ object MaintenancePredictor {
                     context.getString(R.string.notif_predicted_title),
                     context.getString(R.string.notif_predicted_message, name, dateFormat.format(java.util.Date(predictedDate))),
                     predictedDate,
-                    NotificationHelper.TYPE_PREDICTIVE
+                    NotificationHelper.TYPE_PREDICTIVE,
+                    vehicleId
                 )
             }
         }
@@ -71,7 +72,8 @@ object MaintenancePredictor {
                     context.getString(R.string.notif_upcoming_title),
                     context.getString(R.string.notif_upcoming_message, reminder.description),
                     predictedDate,
-                    NotificationHelper.TYPE_PREDICTIVE
+                    NotificationHelper.TYPE_PREDICTIVE,
+                    vehicleId
                 )
             }
         }

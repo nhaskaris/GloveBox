@@ -18,6 +18,9 @@ class NotificationReceiver : BroadcastReceiver() {
         val type = intent.getStringExtra("type") ?: NotificationHelper.TYPE_MAINTENANCE
 
         val activityIntent = Intent(context, MainActivity::class.java).apply {
+            action = NotificationHelper.ACTION_OPEN_FROM_NOTIFICATION
+            putExtra(NotificationHelper.EXTRA_TYPE, type)
+            putExtra(NotificationHelper.EXTRA_VEHICLE_ID, intent.getLongExtra(NotificationHelper.EXTRA_VEHICLE_ID, -1L))
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         

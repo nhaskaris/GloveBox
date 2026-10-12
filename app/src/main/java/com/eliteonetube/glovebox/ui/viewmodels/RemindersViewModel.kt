@@ -101,7 +101,8 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
                     id,
                     getApplication<android.app.Application>().getString(com.eliteonetube.glovebox.R.string.notif_maintenance_due_title),
                     description,
-                    date
+                    date,
+                    vehicleId = vehicleId
                 )
             }
         }
@@ -139,7 +140,8 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
                         reminder.id,
                         getApplication<android.app.Application>().getString(com.eliteonetube.glovebox.R.string.notif_maintenance_due_title),
                         reminder.description,
-                        date
+                        date,
+                        vehicleId = reminder.vehicleId
                     )
                 }
             } else {
