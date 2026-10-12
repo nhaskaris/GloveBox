@@ -190,7 +190,7 @@ fun CurrencySelector(
             value = currentLabel,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Currency") },
+            label = { Text(stringResource(R.string.currency_label)) },
             trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
             modifier = Modifier.width(240.dp),
             shape = MaterialTheme.shapes.medium
@@ -268,7 +268,7 @@ fun RegionSelector(
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    placeholder = { Text("Search country...") },
+                    placeholder = { Text(stringResource(R.string.search_country_hint)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -317,7 +317,7 @@ fun UnitSelector(
             value = currentLabel,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Measurement System") },
+            label = { Text(stringResource(R.string.settings_measurement_system)) },
             trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
             modifier = Modifier.width(240.dp),
             shape = MaterialTheme.shapes.medium

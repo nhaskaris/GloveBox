@@ -304,7 +304,7 @@ fun EfficiencyLineChart(points: List<EfficiencyPoint>) {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Log another fill-up to see your trend",
+                    text = stringResource(R.string.insights_trend_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = onSurfaceVariant
                 )
@@ -366,7 +366,7 @@ fun DonutChart(items: List<CategorySpending>) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "All spending so far",
+                    text = stringResource(R.string.insights_all_spending),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -454,7 +454,7 @@ fun SimpleBarChart(data: List<MonthlySpending>) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Log another month to see a trend",
+                    text = stringResource(R.string.insights_month_trend_hint),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

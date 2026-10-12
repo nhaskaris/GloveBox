@@ -10,3 +10,12 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+# Keep readable stack traces in Play Console / Android Vitals crash reports.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+# AppFunctions are discovered by the system through generated metadata.
+-keep class com.eliteonetube.glovebox.appfunctions.** { *; }
+
+# Moshi codegen adapters are looked up by name for @JsonClass(generateAdapter = true) models.
+-keep class com.eliteonetube.glovebox.data.api.** { *; }

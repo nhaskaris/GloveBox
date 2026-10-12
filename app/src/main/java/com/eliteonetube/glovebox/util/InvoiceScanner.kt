@@ -25,7 +25,7 @@ data class ScannedInvoice(
 )
 
 object InvoiceScanner {
-    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private val recognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
 
     suspend fun scanUri(context: Context, uri: Uri): List<ScannedInvoice> = withContext(Dispatchers.IO) {
         val allResults = mutableListOf<ScannedInvoice>()
@@ -64,7 +64,7 @@ object InvoiceScanner {
         allResults
     }
 
-    private fun extractMultipleServices(text: String): List<ScannedInvoice> {
+    internal fun extractMultipleServices(text: String): List<ScannedInvoice> {
         val invoices = mutableListOf<ScannedInvoice>()
         
         // Pattern to identify the start of a service block

@@ -237,9 +237,9 @@ fun VehicleItem(
                         )
                     }
                     
-                    if (vehicle.licensePlate != null) {
+                    vehicle.licensePlate?.let { plate ->
                         Text(
-                            text = vehicle.licensePlate!!,
+                            text = plate,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

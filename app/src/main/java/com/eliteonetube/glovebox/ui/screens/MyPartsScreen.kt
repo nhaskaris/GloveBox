@@ -61,8 +61,9 @@ fun MyPartsScreen(
                 editingPart = null
             },
             onConfirm = { name, number, brand, notes, photoUri ->
-                if (editingPart != null) {
-                    viewModel.updatePart(editingPart!!.copy(name = name, partNumber = number, brand = brand, notes = notes, photoUri = photoUri))
+                val currentPart = editingPart
+                if (currentPart != null) {
+                    viewModel.updatePart(currentPart.copy(name = name, partNumber = number, brand = brand, notes = notes, photoUri = photoUri))
                 } else {
                     viewModel.addPart(name, number, brand, notes, photoUri)
                 }

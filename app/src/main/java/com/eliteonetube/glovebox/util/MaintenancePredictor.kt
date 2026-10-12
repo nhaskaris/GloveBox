@@ -1,6 +1,7 @@
 package com.eliteonetube.glovebox.util
 
 import android.content.Context
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.data.GloveboxDatabase
 import com.eliteonetube.glovebox.data.entity.FuelLog
 import com.eliteonetube.glovebox.data.entity.Reminder
@@ -18,19 +19,9 @@ object MaintenancePredictor {
         val services = db.serviceRecordDao().getServiceRecordsForVehicle(vehicleId).first()
         val reminders = db.reminderDao().getRemindersForVehicle(vehicleId).first()
 
-        val allOdoLogs = (fuels.map { it.date to it.odometer } + 
-                         services.map { it.date to it.mileage })
-            .sortedBy { it.first }
-        
-        if (allOdoLogs.size < 2) return
-
-        val first = allOdoLogs.first()
-        val last = allOdoLogs.last()
-        val totalDist = last.second - first.second
-        val totalDays = TimeUnit.MILLISECONDS.toDays(last.first - first.first)
-        
-        if (totalDist <= 0 || totalDays <= 0) return
-        val avgDailyDist = totalDist.toDouble() / totalDays
+        val avgDailyDist = OdometerStats.averageDailyDistance(
+            fuels.map { it.date to it.odometer } + services.map { it.date to it.mileage }
+        ) ?: return
 
         // Standard maintenance intervals
         val unit = vehicle.odometerUnit
@@ -40,7 +31,9 @@ object MaintenancePredictor {
             "Brake Service" to if (unit == "mi") 40000 else 65000
         )
 
-        standardServices.forEach { (name, interval) ->
+        val dateFormat = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM)
+
+        standardServices.forEachIndexed { index, (name, interval) ->
             val lastService = services.filter { it.serviceType.contains(name, ignoreCase = true) }
                 .maxByOrNull { it.date }
             
@@ -53,14 +46,11 @@ object MaintenancePredictor {
                 val daysToTarget = (distRemaining / avgDailyDist).toLong()
                 val predictedDate = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(daysToTarget)
                 
-                // Use a unique ID range for predictive alerts (e.g., 5,000,000 + name hash)
-                val alertId = 5000000L + name.hashCode().toLong()
-                
                 NotificationHelper.scheduleNotification(
                     context,
-                    alertId,
-                    "Predicted Maintenance",
-                    "Your $name is estimated to be due around ${last.first + TimeUnit.DAYS.toMillis(daysToTarget)}",
+                    NotificationHelper.predictiveServiceId(vehicleId, index),
+                    context.getString(R.string.notif_predicted_title),
+                    context.getString(R.string.notif_predicted_message, name, dateFormat.format(java.util.Date(predictedDate))),
                     predictedDate,
                     NotificationHelper.TYPE_PREDICTIVE
                 )
@@ -69,7 +59,7 @@ object MaintenancePredictor {
         
         // Also schedule for manual mileage-based reminders
         reminders.filter { !it.isCompleted && it.targetMileage != null }.forEach { reminder ->
-            val target = reminder.targetMileage!!
+            val target = reminder.targetMileage ?: return@forEach
             if (target > vehicle.odometer) {
                 val distRemaining = target - vehicle.odometer
                 val daysToTarget = (distRemaining / avgDailyDist).toLong()
@@ -77,9 +67,9 @@ object MaintenancePredictor {
                 
                 NotificationHelper.scheduleNotification(
                     context,
-                    6000000L + reminder.id,
-                    "Upcoming Maintenance",
-                    "${reminder.description} is predicted to be due soon",
+                    NotificationHelper.predictiveReminderId(reminder.id),
+                    context.getString(R.string.notif_upcoming_title),
+                    context.getString(R.string.notif_upcoming_message, reminder.description),
                     predictedDate,
                     NotificationHelper.TYPE_PREDICTIVE
                 )

@@ -161,7 +161,7 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
                         .map { it.description.lowercase() }
 
                     reminders.filter { it.vehicleId == vehicle.id && !it.isCompleted && it.targetMileage != null }.forEach { reminder ->
-                        val target = reminder.targetMileage!!
+                        val target = reminder.targetMileage ?: return@forEach
                         if (target > vehicle.odometer) {
                             val distRemaining = target - vehicle.odometer
                             val daysToTarget = (distRemaining / avgDailyDist).toLong()

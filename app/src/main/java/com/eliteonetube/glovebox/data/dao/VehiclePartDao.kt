@@ -9,7 +9,7 @@ interface VehiclePartDao {
     @Query("SELECT * FROM vehicle_parts WHERE vehicleId = :vehicleId ORDER BY name ASC")
     fun getPartsForVehicle(vehicleId: Long): Flow<List<VehiclePart>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertPart(part: VehiclePart): Long
 
     @Update

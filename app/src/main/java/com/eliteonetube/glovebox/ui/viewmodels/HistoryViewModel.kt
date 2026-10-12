@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -120,13 +121,19 @@ class HistoryViewModel(application: Application, private val vehicleId: Long) : 
             try {
                 val csv = getApplication<Application>().contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                 if (csv != null) {
-                    val imported = CsvUtility.parseServiceRecords(csv, vehicleId)
-                    if (imported.isEmpty()) {
-                        _csvOperationStatus.value = getApplication<Application>().getString(com.eliteonetube.glovebox.R.string.import_no_records)
+                    val existing = serviceRecordDao.getServiceRecordsForVehicle(vehicleId).first()
+                    val result = CsvUtility.parseServiceRecords(csv, vehicleId, existing)
+                    val app = getApplication<Application>()
+                    if (result.records.isEmpty()) {
+                        _csvOperationStatus.value = app.getString(com.eliteonetube.glovebox.R.string.import_no_records)
                         return@launch
                     }
-                    imported.forEach { serviceRecordDao.insertServiceRecord(it) }
-                    _csvOperationStatus.value = getApplication<Application>().getString(com.eliteonetube.glovebox.R.string.import_success, imported.size)
+                    result.records.forEach { serviceRecordDao.insertServiceRecord(it) }
+                    _csvOperationStatus.value = if (result.skipped > 0) {
+                        app.getString(com.eliteonetube.glovebox.R.string.import_success_skipped, result.records.size, result.skipped)
+                    } else {
+                        app.getString(com.eliteonetube.glovebox.R.string.import_success, result.records.size)
+                    }
                 } else {
                     _csvOperationStatus.value = getApplication<Application>().getString(com.eliteonetube.glovebox.R.string.import_read_error)
                 }

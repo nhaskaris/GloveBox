@@ -1,20 +1,17 @@
 package com.eliteonetube.glovebox.ui.viewmodels
 
+import kotlin.coroutines.cancellation.CancellationException
 import android.app.Application
+import com.eliteonetube.glovebox.data.api.VinApiClient
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eliteonetube.glovebox.data.GloveboxDatabase
-import com.eliteonetube.glovebox.data.api.VinDecoderApi
 import com.eliteonetube.glovebox.data.entity.Vehicle
 import com.eliteonetube.glovebox.data.entity.VehiclePart
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class VehicleViewModel(application: Application, private val vehicleId: Long) : AndroidViewModel(application) {
@@ -23,15 +20,7 @@ class VehicleViewModel(application: Application, private val vehicleId: Long) : 
     private val vehiclePartDao = GloveboxDatabase.getDatabase(application).vehiclePartDao()
     private val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
 
-    private val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
-
-    private val vinApi = Retrofit.Builder()
-        .baseUrl("https://vpic.nhtsa.dot.gov/api/")
-        .addConverterFactory(MoshiConverterFactory.create(moshi))
-        .build()
-        .create(VinDecoderApi::class.java)
+    private val vinApi = VinApiClient.api
 
     private val _vehicle = MutableStateFlow<Vehicle?>(null)
     val vehicle: StateFlow<Vehicle?> = _vehicle.asStateFlow()
@@ -130,7 +119,7 @@ class VehicleViewModel(application: Application, private val vehicleId: Long) : 
                 
                 val make = results.find { it.Variable == "Make" }?.Value ?: ""
                 val model = results.find { it.Variable == "Model" }?.Value ?: ""
-                val year = results.find { it.Variable == "Model Year" }?.Value?.toIntOrNull() ?: 2024
+                val year = results.find { it.Variable == "Model Year" }?.Value?.toIntOrNull()
                 val fuel = results.find { it.Variable == "Fuel Type - Primary" }?.Value ?: ""
                 val trim = results.find { it.Variable == "Trim" }?.Value ?: ""
 
@@ -145,7 +134,9 @@ class VehicleViewModel(application: Application, private val vehicleId: Long) : 
                 } else {
                     _vinDecodingState.value = VinDecodingState.Error(com.eliteonetube.glovebox.R.string.vehicle_not_found)
                 }
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 Log.e("VehicleViewModel", "VIN Decoding Error", e)
                 _vinDecodingState.value = VinDecodingState.Error(com.eliteonetube.glovebox.R.string.connection_error)
             }
@@ -206,6 +197,6 @@ class VehicleViewModel(application: Application, private val vehicleId: Long) : 
 sealed class VinDecodingState {
     data object Idle : VinDecodingState()
     data object Loading : VinDecodingState()
-    data class Success(val make: String, val model: String, val year: Int, val fuelType: String, val trim: String) : VinDecodingState()
+    data class Success(val make: String, val model: String, val year: Int?, val fuelType: String, val trim: String) : VinDecodingState()
     data class Error(val messageResId: Int) : VinDecodingState()
 }

@@ -99,7 +99,7 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
                 com.eliteonetube.glovebox.util.NotificationHelper.scheduleNotification(
                     getApplication(),
                     id,
-                    "Maintenance Due",
+                    getApplication<android.app.Application>().getString(com.eliteonetube.glovebox.R.string.notif_maintenance_due_title),
                     description,
                     date
                 )
@@ -137,7 +137,7 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
                     com.eliteonetube.glovebox.util.NotificationHelper.scheduleNotification(
                         getApplication(),
                         reminder.id,
-                        "Maintenance Due",
+                        getApplication<android.app.Application>().getString(com.eliteonetube.glovebox.R.string.notif_maintenance_due_title),
                         reminder.description,
                         date
                     )
@@ -151,6 +151,10 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
                         getApplication(),
                         reminder.id
                     )
+                    com.eliteonetube.glovebox.util.NotificationHelper.cancelNotification(
+                        getApplication(),
+                        com.eliteonetube.glovebox.util.NotificationHelper.predictiveReminderId(reminder.id)
+                    )
                 }
             }
         }
@@ -162,6 +166,10 @@ class RemindersViewModel(application: Application, private val vehicleId: Long) 
             com.eliteonetube.glovebox.util.NotificationHelper.cancelNotification(
                 getApplication(),
                 reminder.id
+            )
+            com.eliteonetube.glovebox.util.NotificationHelper.cancelNotification(
+                getApplication(),
+                com.eliteonetube.glovebox.util.NotificationHelper.predictiveReminderId(reminder.id)
             )
         }
     }

@@ -85,7 +85,7 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
             } else {
                 _uiState.value = _uiState.value.copy(
                     isScanning = false,
-                    notes = "No service records were detected in the file. Please enter details manually."
+                    notes = getApplication<android.app.Application>().getString(com.eliteonetube.glovebox.R.string.scan_no_records)
                 )
             }
         }

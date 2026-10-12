@@ -217,7 +217,7 @@ fun VehicleProfileContent(
         if (vinState is VinDecodingState.Success) {
             make = vinState.make
             model = vinState.model
-            year = vinState.year.toString()
+            year = vinState.year?.toString() ?: ""
             fuelType = vinState.fuelType
             trim = vinState.trim
             onMakeQueryChange(make)

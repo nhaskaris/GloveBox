@@ -169,7 +169,7 @@ fun AddServiceLogScreen(
                         Text(if (recordId == 0L) stringResource(R.string.add_service_log) else stringResource(R.string.edit_service_log))
                         if (uiState.totalScans > 1) {
                             Text(
-                                text = "Entry ${uiState.currentScanIndex + 1} of ${uiState.totalScans}",
+                                text = stringResource(R.string.scan_entry_progress, uiState.currentScanIndex + 1, uiState.totalScans),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -186,7 +186,7 @@ fun AddServiceLogScreen(
                 actions = {
                     if (uiState.totalScans > 1) {
                         TextButton(onClick = { viewModel.skipCurrentScan(onNavigateBack) }) {
-                            Text("Skip")
+                            Text(stringResource(R.string.skip_entry))
                         }
                     }
                 }

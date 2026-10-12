@@ -1,20 +1,17 @@
 package com.eliteonetube.glovebox.ui.viewmodels
 
+import kotlin.coroutines.cancellation.CancellationException
 import android.app.Application
+import com.eliteonetube.glovebox.data.api.VinApiClient
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eliteonetube.glovebox.data.GloveboxDatabase
-import com.eliteonetube.glovebox.data.api.VinDecoderApi
 import com.eliteonetube.glovebox.data.entity.ProspectVehicle
 import com.eliteonetube.glovebox.data.entity.Vehicle
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
 
 data class ProspectFormState(
     val id: Long = 0,
@@ -40,15 +37,7 @@ class ProspectViewModel(application: Application) : AndroidViewModel(application
     private val vehicleCatalogDao = db.vehicleCatalogDao()
     private val userPrefs = com.eliteonetube.glovebox.data.UserPreferencesRepository(application)
     
-    private val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
-
-    private val vinApi = Retrofit.Builder()
-        .baseUrl("https://vpic.nhtsa.dot.gov/api/")
-        .addConverterFactory(MoshiConverterFactory.create(moshi))
-        .build()
-        .create(VinDecoderApi::class.java)
+    private val vinApi = VinApiClient.api
 
     val allProspects = prospectDao.getAllProspects()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -157,7 +146,9 @@ class ProspectViewModel(application: Application) : AndroidViewModel(application
                 )
                 _selectedMake.value = make
                 _makeQuery.value = make
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 _formState.value = _formState.value.copy(isLoading = false, errorResId = com.eliteonetube.glovebox.R.string.connection_error)
             }
         }

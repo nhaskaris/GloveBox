@@ -15,16 +15,17 @@ android {
         applicationId = "com.eliteonetube.glovebox"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "1.0.0-2"
+        versionCode = 6
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
+            // R8 shrinking/obfuscation. Extra keep rules live in src/main/keepRules/rules.keep.
             optimization {
-                enable = false
+                enable = true
             }
         }
     }
@@ -43,6 +44,10 @@ android {
             excludes += "META-INF/DEPENDENCIES"
         }
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -87,12 +92,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.moshi.kotlin)
     implementation(libs.okhttp)
-    implementation(libs.play.services.location)
-    implementation(libs.play.services.auth)
-    implementation(libs.google.api.client.android)
-    implementation(libs.google.api.client.gson)
-    implementation(libs.google.http.client.android)
-    implementation(libs.google.api.services.drive)
     implementation(libs.play.services.mlkit.barcode.scanning)
     implementation(libs.play.services.mlkit.text.recognition)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)

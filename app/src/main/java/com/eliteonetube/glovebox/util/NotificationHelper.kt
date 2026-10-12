@@ -6,8 +6,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import com.eliteonetube.glovebox.MainActivity
+import com.eliteonetube.glovebox.R
+import com.eliteonetube.glovebox.data.GloveboxDatabase
+import kotlinx.coroutines.flow.first
 import com.eliteonetube.glovebox.receiver.NotificationReceiver
 
 object NotificationHelper {
@@ -59,23 +60,25 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Maintenance and document reminders don't need to-the-minute precision, so use an
+        // inexact alarm: no SCHEDULE_EXACT_ALARM permission, and still delivered during Doze.
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent)
-                } else {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent)
-                }
-            } else {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent)
-            }
-        } catch (e: SecurityException) {
-            // Fallback for missing exact alarm permission
-            alarmManager.set(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent)
-        }
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent)
     }
+
+    // Alarm request-code namespaces. Reminder alarms keep using the raw reminder id.
+    private const val DOC_30D_OFFSET = 1_000_000L
+    private const val DOC_7D_OFFSET = 2_000_000L
+    private const val DOC_DAY_OFFSET = 3_000_000L
+    private const val PREDICTIVE_SERVICE_BASE = 5_000_000L
+    private const val PREDICTIVE_REMINDER_BASE = 6_000_000L
+    private const val PREDICTIVE_SERVICE_SLOTS = 10L
+
+    /** Stable id for the predictive alert of service [serviceIndex] of [vehicleId]. */
+    fun predictiveServiceId(vehicleId: Long, serviceIndex: Int): Long =
+        PREDICTIVE_SERVICE_BASE + (vehicleId % 90_000L) * PREDICTIVE_SERVICE_SLOTS + serviceIndex
+
+    fun predictiveReminderId(reminderId: Long): Long = PREDICTIVE_REMINDER_BASE + reminderId
 
     /**
      * Schedules a sequence of alerts for a document (e.g., 30 days, 7 days, and day of).
@@ -84,35 +87,79 @@ object NotificationHelper {
         val thirtyDays = 30L * 24 * 60 * 60 * 1000
         val sevenDays = 7L * 24 * 60 * 60 * 1000
 
-        // Alert IDs are offset to avoid collisions
-        // docId, docId + 1M, docId + 2M
-        
-        // 30 days before
         scheduleNotification(
-            context, docId + 1000000,
-            "Document Expiry",
-            "$docName expires in 30 days",
+            context, docId + DOC_30D_OFFSET,
+            context.getString(R.string.notif_doc_expiry_title),
+            context.getString(R.string.notif_doc_30d, docName),
             expiryDate - thirtyDays,
             TYPE_DOCUMENT
         )
-
-        // 7 days before
         scheduleNotification(
-            context, docId + 2000000,
-            "Document Expiry",
-            "$docName expires in 1 week",
+            context, docId + DOC_7D_OFFSET,
+            context.getString(R.string.notif_doc_expiry_title),
+            context.getString(R.string.notif_doc_7d, docName),
             expiryDate - sevenDays,
             TYPE_DOCUMENT
         )
-
-        // On the day
         scheduleNotification(
-            context, docId + 3000000,
-            "Document Expired",
-            "$docName expires today!",
+            context, docId + DOC_DAY_OFFSET,
+            context.getString(R.string.notif_doc_expired_title),
+            context.getString(R.string.notif_doc_today, docName),
             expiryDate,
             TYPE_DOCUMENT
         )
+    }
+
+    /**
+     * Re-creates every pending alarm from the database. AlarmManager forgets all alarms on
+     * reboot, app update and (for RTC alarms) clock/timezone changes, so this runs from
+     * [com.eliteonetube.glovebox.receiver.BootReceiver].
+     */
+    suspend fun rescheduleAll(context: Context) {
+        val db = GloveboxDatabase.getDatabase(context)
+
+        db.reminderDao().getAllReminders().first()
+            .filter { !it.isCompleted && it.targetDate != null }
+            .forEach { reminder ->
+                scheduleNotification(
+                    context,
+                    reminder.id,
+                    context.getString(R.string.notif_maintenance_due_title),
+                    reminder.description,
+                    reminder.targetDate!!
+                )
+            }
+
+        val vehicles = db.vehicleDao().getAllVehicles().first()
+        val documents = db.vehicleDocumentDao().getUniversalDocuments().first() +
+            vehicles.flatMap { db.vehicleDocumentDao().getDocumentsForVehicle(it.id).first() }
+        documents.forEach { doc ->
+            doc.expiryDate?.let { scheduleDocumentExpiries(context, doc.id, doc.name, it) }
+        }
+
+        vehicles.forEach { MaintenancePredictor.schedulePredictiveAlerts(context, it.id) }
+    }
+
+    /** Cancels every alarm this app has scheduled for rows currently in the database. */
+    suspend fun cancelAll(context: Context) {
+        val db = GloveboxDatabase.getDatabase(context)
+        db.reminderDao().getAllReminders().first().forEach {
+            cancelNotification(context, it.id)
+            cancelNotification(context, predictiveReminderId(it.id))
+        }
+        val vehicles = db.vehicleDao().getAllVehicles().first()
+        val documents = db.vehicleDocumentDao().getUniversalDocuments().first() +
+            vehicles.flatMap { db.vehicleDocumentDao().getDocumentsForVehicle(it.id).first() }
+        documents.forEach {
+            cancelNotification(context, it.id + DOC_30D_OFFSET)
+            cancelNotification(context, it.id + DOC_7D_OFFSET)
+            cancelNotification(context, it.id + DOC_DAY_OFFSET)
+        }
+        vehicles.forEach { v ->
+            for (i in 0 until PREDICTIVE_SERVICE_SLOTS.toInt()) {
+                cancelNotification(context, predictiveServiceId(v.id, i))
+            }
+        }
     }
 
     fun cancelNotification(context: Context, id: Long) {

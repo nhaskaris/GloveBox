@@ -15,7 +15,7 @@ interface FuelLogDao {
     @Query("SELECT * FROM fuel_logs WHERE id = :id")
     suspend fun getFuelLogById(id: Long): FuelLog?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertFuelLog(log: FuelLog): Long
 
     @Update

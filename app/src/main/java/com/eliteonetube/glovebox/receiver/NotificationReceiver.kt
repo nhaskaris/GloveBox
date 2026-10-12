@@ -13,12 +13,12 @@ import com.eliteonetube.glovebox.util.NotificationHelper
 class NotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getIntExtra("id", 0)
-        val title = intent.getStringExtra("title") ?: "Glovebox Alert"
-        val message = intent.getStringExtra("message") ?: "You have a vehicle reminder."
+        val title = intent.getStringExtra("title") ?: context.getString(R.string.notif_default_title)
+        val message = intent.getStringExtra("message") ?: context.getString(R.string.notif_default_message)
         val type = intent.getStringExtra("type") ?: NotificationHelper.TYPE_MAINTENANCE
 
         val activityIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         
         val pendingIntent = PendingIntent.getActivity(

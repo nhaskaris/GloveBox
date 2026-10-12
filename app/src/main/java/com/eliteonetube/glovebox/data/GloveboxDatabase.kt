@@ -12,6 +12,9 @@ import com.eliteonetube.glovebox.data.dao.*
 import com.eliteonetube.glovebox.data.entity.*
 import org.json.JSONArray
 
+/** Current Room schema version; also used to validate imported backups. */
+const val DATABASE_VERSION = 16
+
 class VehicleDatabaseCallback(
     private val context: Context
 ) : RoomDatabase.Callback() {
@@ -80,8 +83,8 @@ class VehicleDatabaseCallback(
         ProspectVehicle::class,
         VehiclePart::class
     ],
-    version = 16,
-    exportSchema = false
+    version = DATABASE_VERSION,
+    exportSchema = true
 )
 abstract class GloveboxDatabase : RoomDatabase() {
     abstract fun vehicleDao(): VehicleDao
@@ -96,12 +99,6 @@ abstract class GloveboxDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: GloveboxDatabase? = null
-
-        val MIGRATION_10_11 = object : Migration(10, 11) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                // Currently no schema changes, just establishing formal migration path
-            }
-        }
 
         val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -167,9 +164,11 @@ abstract class GloveboxDatabase : RoomDatabase() {
                     GloveboxDatabase::class.java,
                     "glovebox_database"
                 )
-                    .addMigrations(MIGRATION_10_11, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
+                    .addMigrations(MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
                     .addCallback(VehicleDatabaseCallback(context))
-                    .fallbackToDestructiveMigration()
+                    // Only pre-release dev schemas (never shipped) may be wiped. Every shipped
+                    // version (16+) must get a real Migration when the schema changes.
+                    .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
                     .build()
 
                 INSTANCE = instance

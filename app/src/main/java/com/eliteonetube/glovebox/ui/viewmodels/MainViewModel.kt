@@ -2,6 +2,7 @@ package com.eliteonetube.glovebox.ui.viewmodels
 
 import android.app.Application
 import android.net.Uri
+import com.eliteonetube.glovebox.R
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eliteonetube.glovebox.data.ThemePreference
@@ -110,7 +111,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun exportBackup(uri: Uri) {
         viewModelScope.launch {
-            _backupStatus.value = "Exporting backup..."
+            _backupStatus.value = getApplication<Application>().getString(R.string.backup_exporting)
             val result = backupManager.exportDatabase(uri)
             handleBackupResult(result)
         }
@@ -118,11 +119,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun importBackup(uri: Uri) {
         viewModelScope.launch {
-            _backupStatus.value = "Importing backup..."
+            _backupStatus.value = getApplication<Application>().getString(R.string.backup_importing)
             val result = backupManager.importDatabase(uri)
             handleBackupResult(result)
             if (result is BackupResult.Success) {
-                _backupStatus.value = "Import successful! Refreshing..."
+                _backupStatus.value = getApplication<Application>().getString(R.string.backup_import_done)
                 _needsRecreate.value = true
             }
         }
@@ -137,10 +138,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             when (result) {
                 is BackupResult.Success -> {
                     userPreferencesRepository.setLastBackupTime(System.currentTimeMillis())
-                    _backupStatus.value = "Operation successful!"
+                    _backupStatus.value = getApplication<Application>().getString(R.string.backup_done)
                 }
                 is BackupResult.Error -> {
-                    _backupStatus.value = "Failed: ${result.message}"
+                    _backupStatus.value = getApplication<Application>().getString(R.string.backup_failed, result.message)
                 }
             }
         }

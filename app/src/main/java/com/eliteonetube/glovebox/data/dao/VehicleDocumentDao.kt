@@ -19,7 +19,7 @@ interface VehicleDocumentDao {
     @Query("SELECT * FROM vehicle_documents WHERE id = :id")
     suspend fun getDocumentById(id: Long): VehicleDocument?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertDocument(document: VehicleDocument): Long
 
     @Update

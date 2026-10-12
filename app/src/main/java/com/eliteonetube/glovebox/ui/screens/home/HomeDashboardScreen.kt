@@ -123,7 +123,7 @@ fun HomeDashboardScreen(
 fun AlertsSection(alerts: List<VehicleAlert>, onAlertClick: (VehicleAlert) -> Unit, onViewAll: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = "Priority Alerts",
+            text = stringResource(R.string.home_priority_alerts),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -180,7 +180,7 @@ fun AlertsSection(alerts: List<VehicleAlert>, onAlertClick: (VehicleAlert) -> Un
                 onClick = onViewAll,
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("View all (${alerts.size})")
+                Text(stringResource(R.string.home_view_all, alerts.size))
             }
         }
     }
@@ -327,7 +327,7 @@ fun QuickActionButton(
 fun RecentActivitySection(activities: List<DashboardActivity>, onActivityClick: (Long) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = "Recent Activity",
+            text = stringResource(R.string.home_recent_activity),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -392,16 +392,16 @@ fun EmptyDashboard(onNavigateToGarage: () -> Unit) {
                     Icon(Icons.Rounded.DirectionsCar, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
                 }
             }
-            Text("Welcome to Glovebox!", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.home_welcome_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(
-                "Add your first vehicle to see maintenance alerts and spend tracking on this dashboard.",
+                stringResource(R.string.home_welcome_body),
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(onClick = onNavigateToGarage) {
                 Icon(Icons.Rounded.Add, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Go to Garage")
+                Text(stringResource(R.string.home_go_to_garage))
             }
         }
     }

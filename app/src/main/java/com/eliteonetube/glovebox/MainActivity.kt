@@ -139,14 +139,15 @@ class MainActivity : AppCompatActivity() {
 
             // Handle Widget Intents
             LaunchedEffect(intent.action, activeVehicleId) {
-                if (activeVehicleId != null && activeVehicleId != 0L) {
+                val vehicleId = activeVehicleId
+                if (vehicleId != null && vehicleId != 0L) {
                     when (intent.action) {
                         "com.eliteonetube.glovebox.ACTION_ADD_FUEL" -> {
-                            backStack.add(GloveboxRoute.AddFuelLog(activeVehicleId!!))
+                            backStack.add(GloveboxRoute.AddFuelLog(vehicleId))
                             intent.action = null // Clear to prevent re-triggering
                         }
                         "com.eliteonetube.glovebox.ACTION_ADD_SERVICE" -> {
-                            backStack.add(GloveboxRoute.AddServiceLog(activeVehicleId!!))
+                            backStack.add(GloveboxRoute.AddServiceLog(vehicleId))
                             intent.action = null
                         }
                     }

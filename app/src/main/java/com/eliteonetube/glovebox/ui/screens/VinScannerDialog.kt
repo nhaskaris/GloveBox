@@ -33,6 +33,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -114,42 +115,55 @@ fun VinScannerDialog(
 fun CameraPreview(onVinDetected: (String) -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-    val scannerOptions = BarcodeScannerOptions.Builder()
-        .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS) // VIN is often Code 39 or Data Matrix
-        .build()
-    val scanner = remember { BarcodeScanning.getClient(scannerOptions) }
+    val currentOnVinDetected by rememberUpdatedState(onVinDetected)
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+    val handled = remember { AtomicBoolean(false) }
+    val scanner = remember {
+        runCatching {
+            BarcodeScanning.getClient(
+                BarcodeScannerOptions.Builder()
+                    .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS) // VIN is often Code 39 or Data Matrix
+                    .build()
+            )
+        }.getOrNull()
+    }
+    val previewView = remember {
+        PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
+    }
 
-    AndroidView(
-        factory = { ctx ->
-            PreviewView(ctx).apply {
-                scaleType = PreviewView.ScaleType.FILL_CENTER
-            }
-        },
-        modifier = Modifier.fillMaxSize(),
-        update = { previewView ->
-            cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
+    DisposableEffect(lifecycleOwner, scanner) {
+        val future = ProcessCameraProvider.getInstance(context)
+        val listener = Runnable {
+            try {
+                if (scanner == null) return@Runnable
+                val cameraProvider = future.get()
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                if (!cameraProvider.hasCamera(cameraSelector)) {
+                    Log.w("VinScanner", "No back camera available")
+                    return@Runnable
+                }
                 val preview = Preview.Builder().build().also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
                 }
-
                 val imageAnalysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
 
                 imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
                     val mediaImage = imageProxy.image
-                    if (mediaImage != null) {
+                    if (mediaImage == null || handled.get()) {
+                        imageProxy.close()
+                        return@setAnalyzer
+                    }
+                    try {
                         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                         scanner.process(image)
                             .addOnSuccessListener { barcodes ->
-                                for (barcode in barcodes) {
-                                    val rawValue = barcode.rawValue
-                                    if (rawValue != null && isValidVin(rawValue)) {
-                                        onVinDetected(rawValue)
-                                    }
+                                val vin = barcodes.firstNotNullOfOrNull { b ->
+                                    b.rawValue?.takeIf { isValidVin(it) }
+                                }
+                                if (vin != null && handled.compareAndSet(false, true)) {
+                                    previewView.post { currentOnVinDetected(vin) }
                                 }
                             }
                             .addOnFailureListener {
@@ -158,27 +172,32 @@ fun CameraPreview(onVinDetected: (String) -> Unit) {
                             .addOnCompleteListener {
                                 imageProxy.close()
                             }
-                    } else {
+                    } catch (e: Exception) {
+                        Log.e("VinScanner", "Analyzer failed", e)
                         imageProxy.close()
                     }
                 }
 
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                try {
-                    cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        imageAnalysis
-                    )
-                } catch (e: Exception) {
-                    Log.e("VinScanner", "Use case binding failed", e)
-                }
-            }, ContextCompat.getMainExecutor(context))
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageAnalysis)
+            } catch (e: Exception) {
+                Log.e("VinScanner", "Camera setup failed", e)
+            }
         }
-    )
+        future.addListener(listener, ContextCompat.getMainExecutor(context))
+
+        onDispose {
+            try {
+                if (future.isDone) future.get().unbindAll()
+            } catch (e: Exception) {
+                Log.e("VinScanner", "Camera unbind failed", e)
+            }
+            analysisExecutor.shutdown()
+            scanner?.close()
+        }
+    }
+
+    AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
 }
 
 private fun isValidVin(vin: String): Boolean {

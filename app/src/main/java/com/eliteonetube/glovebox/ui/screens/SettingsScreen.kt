@@ -177,8 +177,8 @@ fun SettingsScreen(
 
             // --- Measurement Section ---
             ListItem(
-                headlineContent = { Text("Measurement System") },
-                supportingContent = { Text("Choose between Metric and Imperial") },
+                headlineContent = { Text(stringResource(R.string.settings_measurement_system)) },
+                supportingContent = { Text(stringResource(R.string.settings_measurement_system_desc)) },
                 leadingContent = { Icon(Icons.Rounded.Speed, contentDescription = null) }
             )
 
@@ -188,12 +188,12 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ThemeOption(
-                    text = "Kilometers (km, L/100km)",
+                    text = stringResource(R.string.settings_unit_km),
                     selected = units.value == "km",
                     onClick = { viewModel.setUnitSystem("km") }
                 )
                 ThemeOption(
-                    text = "Miles (mi, MPG)",
+                    text = stringResource(R.string.settings_unit_mi),
                     selected = units.value == "mi",
                     onClick = { viewModel.setUnitSystem("mi") }
                 )
@@ -203,8 +203,8 @@ fun SettingsScreen(
 
             // --- Currency Section ---
             ListItem(
-                headlineContent = { Text("Preferred Currency") },
-                supportingContent = { Text("Used for fleet-wide cost summaries") },
+                headlineContent = { Text(stringResource(R.string.settings_preferred_currency)) },
+                supportingContent = { Text(stringResource(R.string.settings_currency_desc)) },
                 leadingContent = { Icon(Icons.Rounded.AttachMoney, contentDescription = null) }
             )
 
@@ -301,7 +301,7 @@ fun SettingsScreen(
                         OutlinedTextField(
                             value = regionQuery,
                             onValueChange = { regionQuery = it },
-                            placeholder = { Text("Search country...") },
+                            placeholder = { Text(stringResource(R.string.search_country_hint)) },
                             singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -399,10 +399,10 @@ fun SettingsScreen(
                 }
             }
 
-            if (lastBackup != null) {
+            lastBackup?.let { lastBackupTime ->
                 val sdf = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale.getDefault())
                 Text(
-                    text = stringResource(R.string.last_backup, sdf.format(java.util.Date(lastBackup!!))),
+                    text = stringResource(R.string.last_backup, sdf.format(java.util.Date(lastBackupTime))),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 56.dp)

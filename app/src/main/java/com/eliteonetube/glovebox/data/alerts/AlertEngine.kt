@@ -1,7 +1,10 @@
 package com.eliteonetube.glovebox.data.alerts
 
 import android.content.Context
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.data.GloveboxDatabase
+import com.eliteonetube.glovebox.data.entity.VehicleDocument
+import com.eliteonetube.glovebox.util.OdometerStats
 import kotlinx.coroutines.flow.first
 import java.util.concurrent.TimeUnit
 
@@ -12,92 +15,61 @@ object AlertEngine {
         try {
             val db = GloveboxDatabase.getDatabase(context)
             val vehicles = db.vehicleDao().getAllVehicles().first()
-            val allDocuments = db.vehicleDocumentDao().getUniversalDocuments().first() // Start with universal
+            val universalDocs = db.vehicleDocumentDao().getUniversalDocuments().first()
 
             for (vehicle in vehicles) {
                 val vehicleName = vehicle.nickname ?: "${vehicle.make} ${vehicle.model}"
                 
                 // 1. Process Vehicle-Specific Documents
                 val vehicleDocs = db.vehicleDocumentDao().getDocumentsForVehicle(vehicle.id).first()
-                for (doc in vehicleDocs) {
-                    doc.expiryDate?.let { expiry ->
-                        val daysRemaining = TimeUnit.MILLISECONDS.toDays(expiry - System.currentTimeMillis()).toInt()
-                        val severity = when {
-                            daysRemaining <= 7 -> AlertSeverity.CRITICAL
-                            daysRemaining <= 30 -> AlertSeverity.WARNING
-                            else -> null
-                        }
-                        
-                        if (severity != null) {
-                            alerts.add(
-                                VehicleAlert.DocumentExpiring(
-                                    vehicleId = vehicle.id,
-                                    vehicleName = vehicleName,
-                                    severity = severity,
-                                    message = "${doc.name} expires in $daysRemaining days",
-                                    documentType = doc.category,
-                                    daysRemaining = daysRemaining
-                                )
-                            )
-                        }
-                    }
-                }
+                alerts += documentAlerts(context, vehicleDocs, vehicle.id, vehicleName)
 
                 // 2. Process Maintenance Reminders (including predictive)
                 val reminders = db.reminderDao().getRemindersForVehicle(vehicle.id).first()
                 val fuels = db.fuelLogDao().getFuelLogsForVehicle(vehicle.id).first()
                 val services = db.serviceRecordDao().getServiceRecordsForVehicle(vehicle.id).first()
 
-                // Calculate average daily distance for prediction
-                val allOdoLogs = (fuels.map { it.date to it.odometer } + 
-                                 services.map { it.date to it.mileage })
-                    .sortedBy { it.first }
-                
-                val avgDailyDist = if (allOdoLogs.size >= 2) {
-                    val first = allOdoLogs.first()
-                    val last = allOdoLogs.last()
-                    val dist = last.second - first.second
-                    val days = TimeUnit.MILLISECONDS.toDays(last.first - first.first)
-                    if (dist > 0 && days > 0) dist.toDouble() / days else 0.0
-                } else 0.0
+                val avgDailyDist = OdometerStats.averageDailyDistance(
+                    fuels.map { it.date to it.odometer } + services.map { it.date to it.mileage }
+                ) ?: 0.0
+
+                val isMiles = vehicle.odometerUnit == "mi"
 
                 for (reminder in reminders.filter { !it.isCompleted }) {
-                    var kmRemaining: Int? = null
-                    var daysRemaining: Int? = null
-                    
-                    reminder.targetMileage?.let { target ->
-                        kmRemaining = target - vehicle.odometer
-                    }
-                    
-                    reminder.targetDate?.let { targetDate ->
-                        daysRemaining = TimeUnit.MILLISECONDS.toDays(targetDate - System.currentTimeMillis()).toInt()
-                    }
+                    val distanceRemaining: Int? = reminder.targetMileage?.let { it - vehicle.odometer }
 
-                    // If we have mileage but no date, try to predict the date
-                    if (daysRemaining == null && kmRemaining != null && avgDailyDist > 0) {
-                        daysRemaining = (kmRemaining!! / avgDailyDist).toInt()
-                    }
+                    // Without a due date, predict one from the mileage when we can.
+                    val daysRemaining: Int? = reminder.targetDate
+                        ?.let { TimeUnit.MILLISECONDS.toDays(it - System.currentTimeMillis()).toInt() }
+                        ?: if (distanceRemaining != null && avgDailyDist > 0) {
+                            (distanceRemaining / avgDailyDist).toInt()
+                        } else null
 
-                    val severity = when {
-                        (kmRemaining != null && kmRemaining!! <= 0) || (daysRemaining != null && daysRemaining!! <= 0) -> AlertSeverity.CRITICAL
-                        (kmRemaining != null && kmRemaining!! <= 100) || (daysRemaining != null && daysRemaining!! <= 3) -> AlertSeverity.CRITICAL
-                        (kmRemaining != null && kmRemaining!! <= 500) || (daysRemaining != null && daysRemaining!! <= 14) -> AlertSeverity.WARNING
-                        else -> null
-                    }
+                    val isOverdue = (distanceRemaining != null && distanceRemaining <= 0) ||
+                        (daysRemaining != null && daysRemaining <= 0)
+                    val severity = reminderSeverity(distanceRemaining, daysRemaining, isMiles) ?: continue
 
-                    if (severity != null) {
-                        alerts.add(
-                            VehicleAlert.ServiceDue(
-                                vehicleId = vehicle.id,
-                                vehicleName = vehicleName,
-                                severity = severity,
-                                message = "${reminder.description} is ${if ((kmRemaining ?: 1) <= 0 || (daysRemaining ?: 1) <= 0) "overdue" else "due soon"}",
-                                kmRemaining = kmRemaining,
-                                daysRemaining = daysRemaining
-                            )
+                    alerts.add(
+                        VehicleAlert.ServiceDue(
+                            vehicleId = vehicle.id,
+                            vehicleName = vehicleName,
+                            severity = severity,
+                            message = context.getString(
+                                if (isOverdue) R.string.alert_service_overdue else R.string.alert_service_due_soon,
+                                reminder.description
+                            ),
+                            kmRemaining = distanceRemaining,
+                            daysRemaining = daysRemaining
                         )
-                    }
+                    )
                 }
+            }
+
+            // Universal documents (not tied to a vehicle) are attributed to the first vehicle
+            // so the alert has somewhere to navigate to.
+            vehicles.firstOrNull()?.let { first ->
+                val name = first.nickname ?: "${first.make} ${first.model}"
+                alerts += documentAlerts(context, universalDocs, first.id, name)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -112,5 +84,48 @@ object AlertEngine {
                     }
                 }
         )
+    }
+
+    private fun documentAlerts(
+        context: Context,
+        documents: List<VehicleDocument>,
+        vehicleId: Long,
+        vehicleName: String
+    ): List<VehicleAlert> = documents.mapNotNull { doc ->
+        val expiry = doc.expiryDate ?: return@mapNotNull null
+        val daysRemaining = TimeUnit.MILLISECONDS.toDays(expiry - System.currentTimeMillis()).toInt()
+        val severity = documentSeverity(daysRemaining) ?: return@mapNotNull null
+        VehicleAlert.DocumentExpiring(
+            vehicleId = vehicleId,
+            vehicleName = vehicleName,
+            severity = severity,
+            message = if (daysRemaining < 0) context.getString(R.string.alert_doc_expired, doc.name)
+                      else context.getString(R.string.alert_doc_expires_in, doc.name, daysRemaining),
+            documentType = doc.category,
+            daysRemaining = daysRemaining
+        )
+    }
+
+    /** Severity for a document that expires in [daysRemaining] days (negative = already expired). */
+    internal fun documentSeverity(daysRemaining: Int): AlertSeverity? = when {
+        daysRemaining <= 7 -> AlertSeverity.CRITICAL
+        daysRemaining <= 30 -> AlertSeverity.WARNING
+        else -> null
+    }
+
+    /**
+     * Severity for a service reminder. Distance thresholds are 100/500 km, or 60/300 mi.
+     * Either input may be null when the reminder has no mileage or no (predictable) date.
+     */
+    internal fun reminderSeverity(distanceRemaining: Int?, daysRemaining: Int?, isMiles: Boolean): AlertSeverity? {
+        val criticalDistance = if (isMiles) 60 else 100
+        val warningDistance = if (isMiles) 300 else 500
+        return when {
+            (distanceRemaining != null && distanceRemaining <= criticalDistance) ||
+                (daysRemaining != null && daysRemaining <= 3) -> AlertSeverity.CRITICAL
+            (distanceRemaining != null && distanceRemaining <= warningDistance) ||
+                (daysRemaining != null && daysRemaining <= 14) -> AlertSeverity.WARNING
+            else -> null
+        }
     }
 }

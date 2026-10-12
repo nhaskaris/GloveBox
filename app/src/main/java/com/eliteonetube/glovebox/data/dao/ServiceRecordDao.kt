@@ -15,7 +15,7 @@ interface ServiceRecordDao {
     @Query("SELECT * FROM service_records WHERE id = :id")
     suspend fun getServiceRecordById(id: Long): ServiceRecord?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertServiceRecord(record: ServiceRecord): Long
 
     @Update

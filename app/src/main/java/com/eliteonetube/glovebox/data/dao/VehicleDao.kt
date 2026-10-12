@@ -12,7 +12,7 @@ interface VehicleDao {
     @Query("SELECT * FROM vehicles WHERE id = :id")
     suspend fun getVehicleById(id: Long): Vehicle?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertVehicle(vehicle: Vehicle): Long
 
     @Update
