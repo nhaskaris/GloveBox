@@ -27,6 +27,16 @@ class InvoiceScannerTest {
     }
 
     @Test
+    fun picksTheAmountNearestTheTotalLabel_evenWhenItEndsInZero() {
+        // Several amounts; the total is 1234.50, which a double prints as "1234.5".
+        val text = "Invoice 2026-03-05\nParts 20.00\nLabour 80.00\nTotal: 1,234.50\nPlease pay within 30 days"
+
+        val invoice = InvoiceScanner.extractMultipleServices(text).single()
+
+        assertEquals(1234.5, invoice.totalCost!!, 0.0)
+    }
+
+    @Test
     fun splitsMultipleServiceBlocksOnHeaders() {
         val text = """
             Minor Service 2026-01-10 total 80.00 and some filler text here

@@ -135,20 +135,20 @@ object InvoiceScanner {
         val amountPattern = Pattern.compile("[\\$€£]?\\s*(\\d[\\d,]*\\.\\d{2})")
         
         val costMatcher = amountPattern.matcher(cleanText)
-        val costCandidates = mutableListOf<Double>()
+        // Each amount together with where it appears in the text.
+        val costCandidates = mutableListOf<Pair<Double, Int>>()
         while (costMatcher.find()) {
-            costMatcher.group(1)?.replace(",", "")?.toDoubleOrNull()?.let { costCandidates.add(it) }
+            costMatcher.group(1)?.replace(",", "")?.toDoubleOrNull()?.let { costCandidates.add(it to costMatcher.start(1)) }
         }
         
-        // If "Cost" label exists, try to find the number nearest to it
+        // If a "Total"/"Cost"-style label exists, take the amount that appears nearest after it
         val labelMatcher = costLabelPattern.matcher(cleanText)
         if (labelMatcher.find()) {
             val labelEnd = labelMatcher.end()
-            // Find candidate closest to label
-            cost = costCandidates.minByOrNull { Math.abs(cleanText.indexOf(it.toString()) - labelEnd) }
+            cost = costCandidates.minByOrNull { Math.abs(it.second - labelEnd) }?.first
         }
         
-        if (cost == null) cost = costCandidates.maxOrNull() // Final fallback
+        if (cost == null) cost = costCandidates.maxOfOrNull { it.first } // Final fallback
 
         // 3. Extract Mileage
         val mileagePattern = Pattern.compile("(\\d[\\d,]{1,6})\\s*(?:Km|Miles|Mi|χλμ|Odometer|Mileage|Οδόμετρο)", Pattern.CASE_INSENSITIVE)

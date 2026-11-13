@@ -258,7 +258,7 @@ fun VehicleProfileContent(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -370,7 +370,7 @@ fun VehicleProfileContent(
                                     Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50))
                                 }
                                 IconButton(onClick = { showVinScanner = true }) {
-                                    Icon(Icons.Rounded.QrCodeScanner, contentDescription = null)
+                                    Icon(Icons.Rounded.QrCodeScanner, contentDescription = stringResource(R.string.cd_scan_vin))
                                 }
                                 if (isVinEnabled) {
                                     if (vinState is VinDecodingState.Loading) {

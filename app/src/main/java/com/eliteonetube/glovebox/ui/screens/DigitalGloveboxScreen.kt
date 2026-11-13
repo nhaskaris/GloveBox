@@ -61,7 +61,7 @@ fun DigitalGloveboxScreen(
                 navigationIcon = {
                     if (onOpenDrawer != null) {
                         IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Rounded.Menu, contentDescription = "Open Drawer")
+                            Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.cd_open_menu))
                         }
                     }
                 }
@@ -69,7 +69,7 @@ fun DigitalGloveboxScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddDocument) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add Document")
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.cd_add_document))
             }
         }
     ) { innerPadding ->
@@ -156,7 +156,7 @@ fun DocumentItem(
                     }
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
                 }
             }
         }

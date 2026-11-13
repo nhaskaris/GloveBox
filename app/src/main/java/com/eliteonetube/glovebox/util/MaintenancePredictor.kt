@@ -23,18 +23,14 @@ object MaintenancePredictor {
             fuels.map { it.date to it.odometer } + services.map { it.date to it.mileage }
         ) ?: return
 
-        // Standard maintenance intervals
         val unit = vehicle.odometerUnit
-        val standardServices = listOf(
-            "Oil Change" to if (unit == "mi") 5000 else 8000,
-            "Tire Rotation" to if (unit == "mi") 6000 else 10000,
-            "Brake Service" to if (unit == "mi") 40000 else 65000
-        )
 
         val dateFormat = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM)
 
-        standardServices.forEachIndexed { index, (name, interval) ->
-            val lastService = services.filter { it.serviceType.contains(name, ignoreCase = true) }
+        ServiceIntervals.predicted.forEachIndexed { index, serviceInterval ->
+            val interval = serviceInterval.distance(unit) ?: return@forEachIndexed
+            val name = context.getString(serviceInterval.nameRes ?: return@forEachIndexed)
+            val lastService = services.filter { serviceInterval.matches(it.serviceType) }
                 .maxByOrNull { it.date }
             
             val lastMileage = lastService?.mileage ?: 0

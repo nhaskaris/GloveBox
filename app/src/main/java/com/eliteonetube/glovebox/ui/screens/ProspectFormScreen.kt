@@ -250,7 +250,7 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
                 if (state.photoUri != null) {
                     AsyncImage(
                         model = state.photoUri,
-                        contentDescription = "Car Photo",
+                        contentDescription = stringResource(R.string.cd_car_photo),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -306,10 +306,10 @@ fun ProspectDetailsForm(viewModel: ProspectViewModel, state: com.eliteonetube.gl
                                     Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50))
                                 }
                                 IconButton(onClick = { showVinScanner = true }) {
-                                    Icon(Icons.Rounded.QrCodeScanner, contentDescription = null)
+                                    Icon(Icons.Rounded.QrCodeScanner, contentDescription = stringResource(R.string.cd_scan_vin))
                                 }
                                 IconButton(onClick = { viewModel.decodeVin() }) {
-                                    Icon(Icons.Rounded.AutoFixHigh, contentDescription = null)
+                                    Icon(Icons.Rounded.AutoFixHigh, contentDescription = stringResource(R.string.auto_fill_vin))
                                 }
                             }
                         },

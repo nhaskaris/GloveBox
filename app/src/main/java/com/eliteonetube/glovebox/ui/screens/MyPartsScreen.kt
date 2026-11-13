@@ -90,14 +90,14 @@ fun MyPartsScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Rounded.Menu, contentDescription = "Open Drawer")
+                        Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.cd_open_menu))
                     }
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showPartDialog = true }) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add Part")
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.cd_add_part))
             }
         }
     ) { innerPadding ->
@@ -193,10 +193,10 @@ fun PartItem(
                 }
             }
             IconButton(onClick = onEdit) {
-                Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit), modifier = Modifier.size(18.dp))
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
+                Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
             }
         }
     }

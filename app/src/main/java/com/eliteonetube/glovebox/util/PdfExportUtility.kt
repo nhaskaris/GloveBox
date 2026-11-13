@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
+import com.eliteonetube.glovebox.R
 import com.eliteonetube.glovebox.data.entity.FuelLog
 import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import com.eliteonetube.glovebox.data.entity.Vehicle
@@ -34,6 +35,7 @@ object PdfExportUtility {
         exchangeRates: ExchangeRates = ExchangeRates(preferredCurrency)
     ): File {
         var unconvertedCount = 0
+        val na = context.getString(R.string.pdf_na)
         // ...
         val pdfDocument = PdfDocument()
         val pageWidth = 595
@@ -88,25 +90,25 @@ object PdfExportUtility {
         }
 
         // 1. Title
-        canvas.drawText("Full Vehicle History Report", margin, currentY, titlePaint)
+        canvas.drawText(context.getString(R.string.pdf_title_full), margin, currentY, titlePaint)
         currentY += 40f
 
         // 2. Vehicle Information Section
-        canvas.drawText("Vehicle Information", margin, currentY, sectionHeaderPaint)
+        canvas.drawText(context.getString(R.string.pdf_vehicle_info), margin, currentY, sectionHeaderPaint)
         currentY += 25f
 
         val infoCol1 = margin
         val infoCol2 = margin + 200f
 
         val vehicleInfo = listOf(
-            "Nickname" to (vehicle.nickname ?: "N/A"),
-            "Make/Model" to "${vehicle.make} ${vehicle.model}",
-            "Year" to vehicle.year.toString(),
-            "VIN" to (vehicle.vin ?: "N/A"),
-            "Fuel Type" to (vehicle.fuelType ?: "N/A"),
-            "Current Odometer" to "${vehicle.odometer} ${vehicle.odometerUnit}",
-            "License Plate" to (vehicle.licensePlate ?: "N/A"),
-            "Color" to (vehicle.color ?: "N/A")
+            context.getString(R.string.pdf_label_nickname) to (vehicle.nickname ?: na),
+            context.getString(R.string.pdf_label_make_model) to "${vehicle.make} ${vehicle.model}",
+            context.getString(R.string.pdf_label_year) to vehicle.year.toString(),
+            context.getString(R.string.pdf_label_vin) to (vehicle.vin ?: na),
+            context.getString(R.string.pdf_label_fuel_type) to (vehicle.fuelType ?: na),
+            context.getString(R.string.pdf_label_odometer) to "${vehicle.odometer} ${vehicle.odometerUnit}",
+            context.getString(R.string.pdf_label_plate) to (vehicle.licensePlate ?: na),
+            context.getString(R.string.pdf_label_color) to (vehicle.color ?: na)
         )
 
         vehicleInfo.chunked(2).forEach { pair ->
@@ -119,7 +121,7 @@ object PdfExportUtility {
         currentY += 20f
 
         // 3. Maintenance History Section
-        canvas.drawText("Maintenance History", margin, currentY, sectionHeaderPaint)
+        canvas.drawText(context.getString(R.string.pdf_maintenance_history), margin, currentY, sectionHeaderPaint)
         currentY += 20f
 
         val mColDate = margin
@@ -128,14 +130,14 @@ object PdfExportUtility {
         val mColCost = margin + 300f
         val mColLocation = margin + 380f
 
-        canvas.drawText("Date", mColDate, currentY, tableHeaderPaint)
-        canvas.drawText("Service Type", mColType, currentY, tableHeaderPaint)
-        canvas.drawText("Mileage", mColMileage, currentY, tableHeaderPaint)
+        canvas.drawText(context.getString(R.string.pdf_col_date), mColDate, currentY, tableHeaderPaint)
+        canvas.drawText(context.getString(R.string.pdf_col_service_type), mColType, currentY, tableHeaderPaint)
+        canvas.drawText(context.getString(R.string.pdf_col_mileage), mColMileage, currentY, tableHeaderPaint)
         if (includeCosts) {
-            canvas.drawText("Cost", mColCost, currentY, tableHeaderPaint)
+            canvas.drawText(context.getString(R.string.pdf_col_cost), mColCost, currentY, tableHeaderPaint)
         }
         if (includeShop || includeMechanic) {
-            canvas.drawText("Location/Mechanic", mColLocation, currentY, tableHeaderPaint)
+            canvas.drawText(context.getString(R.string.pdf_col_location_mechanic), mColLocation, currentY, tableHeaderPaint)
         }
         currentY += 5f
         canvas.drawLine(margin, currentY, pageWidth - margin, currentY, linePaint)
@@ -148,7 +150,7 @@ object PdfExportUtility {
             checkNewPage()
 
             val dateStr = dateFormat.format(Date(record.date))
-            val typeStr = if (record.serviceType == "Other") record.otherDescription ?: "Other" else record.serviceType
+            val typeStr = if (record.serviceType == "Other") record.otherDescription ?: context.getString(R.string.pdf_other) else record.serviceType
             val costVal = record.cost ?: 0.0
             exchangeRates.convert(costVal, record.currency, preferredCurrency)?.let { totalMaintenanceCostConverted += it } ?: unconvertedCount++
 
@@ -161,15 +163,15 @@ object PdfExportUtility {
             }
 
             val loc = when {
-                record.isDiy -> "DIY"
+                record.isDiy -> context.getString(R.string.pdf_diy)
                 record.mechanicName != null -> {
-                    if (includeShop && includeMechanic) "${record.serviceLocation ?: "Shop"} (${record.mechanicName})"
-                    else if (includeShop) record.serviceLocation ?: "Shop"
+                    if (includeShop && includeMechanic) "${record.serviceLocation ?: context.getString(R.string.pdf_shop)} (${record.mechanicName})"
+                    else if (includeShop) record.serviceLocation ?: context.getString(R.string.pdf_shop)
                     else if (includeMechanic) record.mechanicName
                     else ""
                 }
                 else -> {
-                    if (includeShop) record.serviceLocation ?: "N/A"
+                    if (includeShop) record.serviceLocation ?: na
                     else ""
                 }
             }
@@ -186,7 +188,7 @@ object PdfExportUtility {
         // 4. Fuel Consumption History Section
         if (includeFuel) {
             checkNewPage()
-            canvas.drawText("Fuel Consumption History", margin, currentY, sectionHeaderPaint)
+            canvas.drawText(context.getString(R.string.pdf_fuel_history), margin, currentY, sectionHeaderPaint)
             currentY += 20f
 
             val fColDate = margin
@@ -195,14 +197,14 @@ object PdfExportUtility {
             val fColCost = margin + 270f
             val fColStation = margin + 370f
 
-            canvas.drawText("Date", fColDate, currentY, tableHeaderPaint)
-            canvas.drawText("Odometer", fColOdo, currentY, tableHeaderPaint)
-            canvas.drawText("Amount", fColAmount, currentY, tableHeaderPaint)
+            canvas.drawText(context.getString(R.string.pdf_col_date), fColDate, currentY, tableHeaderPaint)
+            canvas.drawText(context.getString(R.string.pdf_col_odometer), fColOdo, currentY, tableHeaderPaint)
+            canvas.drawText(context.getString(R.string.pdf_col_amount), fColAmount, currentY, tableHeaderPaint)
             if (includeCosts) {
-                canvas.drawText("Total Cost", fColCost, currentY, tableHeaderPaint)
+                canvas.drawText(context.getString(R.string.pdf_col_total_cost), fColCost, currentY, tableHeaderPaint)
             }
             if (includeShop) {
-                canvas.drawText("Station/Location", fColStation, currentY, tableHeaderPaint)
+                canvas.drawText(context.getString(R.string.pdf_col_station), fColStation, currentY, tableHeaderPaint)
             }
             currentY += 5f
             canvas.drawLine(margin, currentY, pageWidth - margin, currentY, linePaint)
@@ -216,12 +218,12 @@ object PdfExportUtility {
 
                 canvas.drawText(dateStr, fColDate, currentY, bodyPaint)
                 canvas.drawText("${log.odometer} ${vehicle.odometerUnit}", fColOdo, currentY, bodyPaint)
-                canvas.drawText("%.2f L".format(log.amount), fColAmount, currentY, bodyPaint)
+                canvas.drawText("%.2f %s".format(log.amount, context.getString(if (vehicle.odometerUnit == "mi") R.string.pdf_unit_gallons else R.string.pdf_unit_liters)), fColAmount, currentY, bodyPaint)
                 if (includeCosts) {
                     canvas.drawText(formatCost(log.totalCost, log.currency), fColCost, currentY, bodyPaint)
                 }
                 if (includeShop) {
-                    canvas.drawText((log.location ?: "N/A").take(30), fColStation, currentY, bodyPaint)
+                    canvas.drawText((log.location ?: na).take(30), fColStation, currentY, bodyPaint)
                 }
 
                 currentY += 15f
@@ -239,11 +241,11 @@ object PdfExportUtility {
         // 5. Summary Section
         if (includeSummary) {
             checkNewPage()
-            canvas.drawText("Summary (All values converted to $preferredCurrency)", margin, currentY, sectionHeaderPaint)
+            canvas.drawText(context.getString(R.string.pdf_summary_title, preferredCurrency), margin, currentY, sectionHeaderPaint)
             currentY += 25f
 
             if (includeCosts && unconvertedCount > 0) {
-                canvas.drawText("Note: $unconvertedCount record(s) in other currencies are not included in these totals.", margin, currentY, bodyPaint)
+                canvas.drawText(context.getString(R.string.pdf_unconverted_note, unconvertedCount), margin, currentY, bodyPaint)
                 currentY += 20f
             }
 
@@ -254,12 +256,12 @@ object PdfExportUtility {
             }
 
             if (includeCosts) {
-                canvas.drawText("Total Maintenance Cost:", margin, currentY, bodyPaint)
+                canvas.drawText(context.getString(R.string.pdf_total_maintenance), margin, currentY, bodyPaint)
                 canvas.drawText(formatCost(totalMaintenanceCostConverted, preferredCurrency), margin + 150f, currentY, summaryPaint)
                 currentY += 20f
 
                 if (includeFuel) {
-                    canvas.drawText("Total Fuel Cost:", margin, currentY, bodyPaint)
+                    canvas.drawText(context.getString(R.string.pdf_total_fuel), margin, currentY, bodyPaint)
                     canvas.drawText(formatCost(totalFuelCostConverted, preferredCurrency), margin + 150f, currentY, summaryPaint)
                     currentY += 20f
 
@@ -271,11 +273,11 @@ object PdfExportUtility {
                         textSize = 14f
                         color = Color.rgb(204, 0, 0)
                     }
-                    canvas.drawText("GRAND TOTAL:", margin, currentY, summaryPaint)
+                    canvas.drawText(context.getString(R.string.pdf_grand_total), margin, currentY, summaryPaint)
                     canvas.drawText(formatCost(totalMaintenanceCostConverted + totalFuelCostConverted, preferredCurrency), margin + 150f, currentY, grandTotalPaint)
                 }
             } else {
-                canvas.drawText("Total Records Exported:", margin, currentY, bodyPaint)
+                canvas.drawText(context.getString(R.string.pdf_total_records_exported), margin, currentY, bodyPaint)
                 canvas.drawText("${records.size + (if (includeFuel) fuelLogs.size else 0)}", margin + 150f, currentY, summaryPaint)
             }
         }
@@ -301,6 +303,7 @@ object PdfExportUtility {
         exchangeRates: ExchangeRates = ExchangeRates(preferredCurrency)
     ): File {
         var unconvertedCount = 0
+        val na = context.getString(R.string.pdf_na)
         // ...
         val pdfDocument = PdfDocument()
         val pageWidth = 595
@@ -338,14 +341,14 @@ object PdfExportUtility {
         }
 
         // 1. Header
-        canvas.drawText("Vehicle Service History", margin, currentY, titlePaint)
+        canvas.drawText(context.getString(R.string.pdf_title_service), margin, currentY, titlePaint)
         currentY += 40f
 
         val vehicleName = vehicle.nickname ?: "${vehicle.year} ${vehicle.make} ${vehicle.model}"
-        canvas.drawText("Vehicle: $vehicleName", margin, currentY, headerPaint)
+        canvas.drawText(context.getString(R.string.pdf_vehicle_line, vehicleName), margin, currentY, headerPaint)
         currentY += 20f
 
-        val vehicleDetails = "${vehicle.year} ${vehicle.make} ${vehicle.model} | VIN: ${vehicle.vin ?: "N/A"}"
+        val vehicleDetails = context.getString(R.string.pdf_vehicle_details, "${vehicle.year} ${vehicle.make} ${vehicle.model}", vehicle.vin ?: na)
         canvas.drawText(vehicleDetails, margin, currentY, bodyPaint)
         currentY += 40f
 
@@ -356,11 +359,11 @@ object PdfExportUtility {
         val colCost = margin + 320f
         val colLocation = margin + 400f
 
-        canvas.drawText("Date", colDate, currentY, headerPaint)
-        canvas.drawText("Type", colType, currentY, headerPaint)
-        canvas.drawText("Mileage", colMileage, currentY, headerPaint)
-        canvas.drawText("Cost", colCost, currentY, headerPaint)
-        canvas.drawText("Location", colLocation, currentY, headerPaint)
+        canvas.drawText(context.getString(R.string.pdf_col_date), colDate, currentY, headerPaint)
+        canvas.drawText(context.getString(R.string.pdf_col_type), colType, currentY, headerPaint)
+        canvas.drawText(context.getString(R.string.pdf_col_mileage), colMileage, currentY, headerPaint)
+        canvas.drawText(context.getString(R.string.pdf_col_cost), colCost, currentY, headerPaint)
+        canvas.drawText(context.getString(R.string.pdf_col_location), colLocation, currentY, headerPaint)
 
         currentY += 5f
         canvas.drawLine(margin, currentY, pageWidth - margin, currentY, linePaint)
@@ -380,12 +383,12 @@ object PdfExportUtility {
             }
 
             val dateStr = dateFormat.format(Date(record.date))
-            val typeStr = if (record.serviceType == "Other") record.otherDescription ?: "Other" else record.serviceType
+            val typeStr = if (record.serviceType == "Other") record.otherDescription ?: context.getString(R.string.pdf_other) else record.serviceType
             val mileageStr = "${record.mileage} ${vehicle.odometerUnit}"
             val costStr = formatCost(record.cost, record.currency)
             val locationStr = when {
-                record.isDiy -> "DIY"
-                record.mechanicName != null -> "${record.serviceLocation ?: "Shop"} (${record.mechanicName})"
+                record.isDiy -> context.getString(R.string.pdf_diy)
+                record.mechanicName != null -> "${record.serviceLocation ?: context.getString(R.string.pdf_shop)} (${record.mechanicName})"
                 else -> record.serviceLocation ?: ""
             }
 
@@ -406,7 +409,7 @@ object PdfExportUtility {
 
             // Draw notes if present
             if (record.notes.isNotBlank()) {
-                val notesStr = "Notes: ${record.notes}"
+                val notesStr = context.getString(R.string.pdf_notes, record.notes)
                 val truncatedNotes = if (notesStr.length > 100) notesStr.take(97) + "..." else notesStr
                 canvas.drawText(truncatedNotes, colType, currentY, bodyPaint.apply { textSize = 8f })
                 bodyPaint.textSize = 10f // Reset
@@ -426,12 +429,12 @@ object PdfExportUtility {
         }
 
         currentY += 20f
-        canvas.drawText("Total Records: ${records.size}", margin, currentY, headerPaint)
-        val totalCostStr = "Total Cost (converted to $preferredCurrency): ${formatCost(totalCostConverted, preferredCurrency)}"
+        canvas.drawText(context.getString(R.string.pdf_total_records, records.size), margin, currentY, headerPaint)
+        val totalCostStr = context.getString(R.string.pdf_total_cost_converted, preferredCurrency, formatCost(totalCostConverted, preferredCurrency))
         canvas.drawText(totalCostStr, colCost, currentY, headerPaint)
         if (unconvertedCount > 0) {
             currentY += 18f
-            canvas.drawText("$unconvertedCount record(s) in other currencies are not included in the total.", margin, currentY, headerPaint)
+            canvas.drawText(context.getString(R.string.pdf_unconverted_footer, unconvertedCount), margin, currentY, headerPaint)
         }
 
         pdfDocument.finishPage(currentPage)

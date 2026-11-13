@@ -10,6 +10,7 @@ import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import com.eliteonetube.glovebox.data.entity.Vehicle
 import com.eliteonetube.glovebox.util.ExchangeRates
 import com.eliteonetube.glovebox.util.FuelEfficiency
+import com.eliteonetube.glovebox.util.ServiceIntervals
 import com.eliteonetube.glovebox.util.sum
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -184,19 +185,13 @@ class InsightsViewModel(application: Application, initialVehicleId: Long) : Andr
                         }
                     }
 
-                    // Smart Auto-Predictions (Universal Intervals)
-                    val standardServices = listOf(
-                        com.eliteonetube.glovebox.R.string.oil_change to if (unit == "mi") 5000 else 8000,
-                        com.eliteonetube.glovebox.R.string.brake_service to if (unit == "mi") 40000 else 65000,
-                        com.eliteonetube.glovebox.R.string.tire_rotation to if (unit == "mi") 6000 else 10000,
-                        com.eliteonetube.glovebox.R.string.air_filter to if (unit == "mi") 20000 else 30000
-                    )
-
-                    standardServices.forEach { (resId, interval) ->
-                        // Simplified check - might need more robust matching if names vary
+                    // Smart Auto-Predictions (shared default intervals)
+                    ServiceIntervals.predicted.forEach { serviceInterval ->
+                        val resId = serviceInterval.nameRes ?: return@forEach
+                        val interval = serviceInterval.distance(unit) ?: return@forEach
                         val name = getApplication<Application>().getString(resId)
-                        if (manualDescriptions.none { it.contains(name.lowercase()) }) {
-                            val lastService = services.filter { it.vehicleId == vehicle.id && it.serviceType.lowercase().contains(name.lowercase()) }
+                        if (manualDescriptions.none { serviceInterval.matches(it) }) {
+                            val lastService = services.filter { it.vehicleId == vehicle.id && serviceInterval.matches(it.serviceType) }
                                 .maxByOrNull { it.date }
                             
                             val lastMileage = lastService?.mileage ?: 0

@@ -150,10 +150,10 @@ fun ProspectItem(
             }
             if (!isSelected) {
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
                 }
             } else {
-                Icon(Icons.Rounded.CheckCircle, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(8.dp))
+                Icon(Icons.Rounded.CheckCircle, contentDescription = stringResource(R.string.cd_selected), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(8.dp))
             }
         }
     }

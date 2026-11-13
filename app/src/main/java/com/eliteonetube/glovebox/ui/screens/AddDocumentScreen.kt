@@ -191,7 +191,7 @@ fun AddDocumentScreen(
                             .data(uiState.photoUri)
                             .crossfade(true)
                             .build(),
-                        contentDescription = "Document photo",
+                        contentDescription = stringResource(R.string.cd_document_photo),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit
                     )

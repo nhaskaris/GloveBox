@@ -75,7 +75,7 @@ fun InsightsScreen(
                 navigationIcon = {
                     if (onOpenDrawer != null) {
                         IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Rounded.Menu, contentDescription = "Open Drawer")
+                            Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.cd_open_menu))
                         }
                     }
                 }

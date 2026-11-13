@@ -285,14 +285,14 @@ fun HistoryContent(
                 navigationIcon = {
                     if (onOpenDrawer != null && showNavIcon) {
                         IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Rounded.Menu, contentDescription = null)
+                            Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.cd_open_menu))
                         }
                     }
                 },
                 actions = {
                     if (items.isNotEmpty()) {
                         IconButton(onClick = onExportPdf) {
-                            Icon(Icons.Rounded.PictureAsPdf, contentDescription = "Export PDF")
+                            Icon(Icons.Rounded.PictureAsPdf, contentDescription = stringResource(R.string.cd_export_pdf))
                         }
                     }
                     
@@ -362,7 +362,7 @@ fun HistoryContent(
                 ) {
                     Icon(
                         imageVector = if (showAddMenu) Icons.Rounded.Close else Icons.Rounded.Add,
-                        contentDescription = "Add"
+                        contentDescription = stringResource(R.string.cd_add)
                     )
                 }
             }

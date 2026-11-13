@@ -9,6 +9,7 @@ import com.eliteonetube.glovebox.data.entity.ServiceRecord
 import com.eliteonetube.glovebox.util.NotificationHelper
 import com.eliteonetube.glovebox.util.OdometerCheck
 import com.eliteonetube.glovebox.util.ReminderMatcher
+import com.eliteonetube.glovebox.util.ServiceIntervals
 import com.eliteonetube.glovebox.util.OdometerGuard
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -152,67 +153,10 @@ class ServiceLogFormViewModel(application: Application) : AndroidViewModel(appli
         var intervalMonths = _uiState.value.nextIntervalMonths
         val unit = _uiState.value.unit
 
-        if (currentTypes.isNotEmpty()) {
-            val latest = currentTypes.last().lowercase()
-            when {
-                latest.contains("oil") -> {
-                    autoSchedule = true
-                    intervalMileage = if (unit == "mi") "5000" else "8000"
-                    intervalMonths = "6"
-                }
-                latest.contains("tire") -> {
-                    autoSchedule = true
-                    intervalMileage = if (unit == "mi") "6000" else "10000"
-                    intervalMonths = "6"
-                }
-                latest.contains("brake") -> {
-                    autoSchedule = true
-                    intervalMileage = if (unit == "mi") "20000" else "30000"
-                    intervalMonths = "12"
-                }
-                latest.contains("filter") -> {
-                    autoSchedule = true
-                    intervalMileage = if (unit == "mi") "10000" else "15000"
-                    intervalMonths = "12"
-                }
-                latest.contains("spark") -> {
-                    autoSchedule = true
-                    intervalMileage = if (unit == "mi") "60000" else "100000"
-                    intervalMonths = "48"
-                }
-                latest.contains("transmission") -> {
-                    autoSchedule = true
-                    intervalMileage = if (unit == "mi") "50000" else "80000"
-                    intervalMonths = "36"
-                }
-                latest.contains("belt") -> {
-                    autoSchedule = true
-                    intervalMileage = if (unit == "mi") "80000" else "120000"
-                    intervalMonths = "60"
-                }
-                latest.contains("coolant") -> {
-                    autoSchedule = true
-                    intervalMileage = if (unit == "mi") "30000" else "50000"
-                    intervalMonths = "24"
-                }
-                latest.contains("alignment") -> {
-                    autoSchedule = true
-                    intervalMileage = if (unit == "mi") "10000" else "15000"
-                    intervalMonths = "12"
-                }
-                latest.contains("wiper") -> {
-                    autoSchedule = true
-                    intervalMonths = "6"
-                }
-                latest.contains("battery") -> {
-                    autoSchedule = true
-                    intervalMonths = "24"
-                }
-                latest.contains("inspection") -> {
-                    autoSchedule = true
-                    intervalMonths = "12"
-                }
-            }
+        currentTypes.lastOrNull()?.let { ServiceIntervals.forType(it) }?.let { interval ->
+            autoSchedule = true
+            interval.distance(unit)?.let { intervalMileage = it.toString() }
+            interval.months?.let { intervalMonths = it.toString() }
         }
 
         _uiState.value = _uiState.value.copy(

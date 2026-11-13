@@ -56,7 +56,7 @@ fun HomeDashboardScreen(
                 title = { Text(stringResource(R.string.app_name), fontWeight = FontWeight.Black) },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Rounded.Menu, contentDescription = "Menu")
+                        Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.cd_open_menu))
                     }
                 }
             )

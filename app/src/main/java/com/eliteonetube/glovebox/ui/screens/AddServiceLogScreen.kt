@@ -253,7 +253,7 @@ fun AddServiceLogScreen(
                             .data(uiState.receiptPhotoUri)
                             .crossfade(true)
                             .build(),
-                        contentDescription = "Receipt photo",
+                        contentDescription = stringResource(R.string.cd_receipt_photo),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
